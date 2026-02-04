@@ -4,6 +4,8 @@
 Build Calliope into a privacy-first, low-latency macOS communication coach that runs locally and gives real-time feedback on pace, filler words, and pauses during live calls.
 
 ## Sacred Principles
+- Create and maintain automated tests for each iteration.
+- Aim to keep 80% test coverage.
 - Keep audio and analysis strictly local. Never transmit audio or transcripts off-device.
 - Never record or process other participants' voices.
 - Maintain low latency and low CPU usage suitable for live calls.
@@ -25,6 +27,7 @@ Build Calliope into a privacy-first, low-latency macOS communication coach that 
 4. Run `swift build` when feasible.
 5. Update ticket status and note any new lessons.
 6. Update goals/status only if meaningfully changed.
+7. Commit all changes in the repository with the details of the iteration.
 
 ## Stopping Conditions
 - No ready tickets and no clear next task.
