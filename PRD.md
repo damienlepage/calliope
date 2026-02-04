@@ -1,0 +1,74 @@
+# Calliope PRD
+
+## Summary
+Calliope is a macOS app that acts as a real-time communication coach during conference calls. It isolates the user’s voice and provides immediate, visual feedback on speaking pace, filler words, and pauses while keeping all audio and data local to the device.
+
+## Goals
+- Help users improve spoken clarity and confidence during live calls.
+- Provide low-latency, real-time feedback without distracting the user.
+- Preserve privacy by never recording other participants and keeping data local.
+
+## Non-Goals
+- Recording or transcribing other participants’ voices.
+- Cloud storage, remote processing, or shared analytics.
+- Post-production editing or detailed call analytics beyond core feedback.
+
+## Target Users
+- Professionals who frequently present or lead meetings.
+- Sales and customer-facing teams.
+- Students and job seekers practicing interview communication.
+
+## Use Cases
+- Live coaching during Zoom/Google Meet/Teams calls.
+- Practice runs for presentations with live feedback.
+- Self-review of personal speaking habits over time using local recordings.
+
+## Requirements
+
+### Functional Requirements
+1. Voice isolation that captures only the user’s voice during live calls.
+2. Real-time visual cues for:
+   - Speaking pace/speed.
+   - Crutch word detection (e.g., “uh”, “ah”, “so”).
+   - Pause analysis (detect overly long or frequent pauses).
+3. Local storage of recordings and analysis artifacts on the user’s file system.
+4. Privacy safeguards ensuring other participants’ voices are not recorded.
+5. Support for common conferencing tools running on macOS (Zoom, Google Meet, Teams, etc.).
+
+### Non-Functional Requirements
+1. Low-latency processing suitable for live feedback.
+2. Reliable performance on typical macOS hardware (Apple Silicon and Intel).
+3. Secure local storage with clear data ownership by the user.
+4. Minimal CPU usage to avoid degrading call performance.
+5. Works as a native macOS app using Swift/SwiftUI, AVFoundation, Speech, and Core Audio.
+
+## UX Requirements
+- Always-on-top or easily accessible overlay for visual cues.
+- Visual indicators that are glanceable and non-intrusive.
+- Clear start/stop control with status indicator.
+- Simple preferences for sensitivity tuning (pace, crutch words, pause thresholds).
+
+## Data & Privacy
+- All audio and analysis remain on-device.
+- No network transmission of audio or transcripts.
+- Explicit disclosure that only the user’s voice is captured.
+
+## Assumptions
+- The app can access the microphone and audio input permissions.
+- Users are comfortable with local recording for self-improvement.
+- Conference call audio routing allows for isolating the user’s microphone input.
+
+## Out of Scope (Initial Release)
+- Multi-user profiles or team dashboards.
+- Cloud backup or cross-device sync.
+- Advanced coaching such as sentiment analysis or emotion detection.
+
+## Success Metrics
+- User-reported improvement in speaking clarity and confidence.
+- Low crash rate and stable real-time performance during calls.
+- High retention among users who take frequent calls.
+
+## Open Questions
+- What level of customization should be available for crutch word lists?
+- Should feedback be configurable per app (Zoom vs. Meet vs. Teams)?
+- How will we visualize pace and pauses to be effective yet unobtrusive?
