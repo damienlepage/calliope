@@ -60,10 +60,11 @@ final class RecordingManagerTests: XCTestCase {
         FileManager.default.createFile(atPath: txtURL.path, contents: Data())
 
         let recordings = manager.getAllRecordings()
+        let normalized = Set(recordings.map { $0.standardizedFileURL })
 
-        XCTAssertTrue(recordings.contains(m4aURL))
-        XCTAssertTrue(recordings.contains(wavURL))
-        XCTAssertFalse(recordings.contains(txtURL))
+        XCTAssertTrue(normalized.contains(m4aURL.standardizedFileURL))
+        XCTAssertTrue(normalized.contains(wavURL.standardizedFileURL))
+        XCTAssertFalse(normalized.contains(txtURL.standardizedFileURL))
     }
 
     func testDeleteRecordingRemovesFile() throws {
