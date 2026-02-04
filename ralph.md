@@ -6,6 +6,7 @@ Build Calliope into a privacy-first, low-latency macOS communication coach that 
 ## Sacred Principles
 - Create and maintain automated tests for each iteration.
 - Aim to keep 80% test coverage.
+- Always fix broken tests.
 - Keep audio and analysis strictly local. Never transmit audio or transcripts off-device.
 - Never record or process other participants' voices.
 - Maintain low latency and low CPU usage suitable for live calls.
