@@ -9,6 +9,7 @@ PID_FILE="$STATE_DIR/ralph.pid"
 
 ITERATION_DELAY="${ITERATION_DELAY:-300}"
 AGENT_CMD="${AGENT_CMD:-codex exec --full-auto}"
+MAX_ITERATIONS="${MAX_ITERATIONS:-20}"
 
 mkdir -p "$LOG_DIR" "$SESS_DIR"
 
@@ -128,6 +129,10 @@ main_loop() {
     fi
 
     local next_iteration=$((current_iteration + 1))
+    if [[ "$next_iteration" -gt "$MAX_ITERATIONS" ]]; then
+      log "Reached max iterations (${MAX_ITERATIONS}), exiting"
+      exit 0
+    fi
 
     if run_iteration "$next_iteration"; then
       local successes
