@@ -5,11 +5,13 @@
 //  Created on [Date]
 //
 
+import Combine
 import SwiftUI
 
 struct ContentView: View {
     @StateObject private var audioCapture = AudioCapture()
     @StateObject private var audioAnalyzer = AudioAnalyzer()
+    @StateObject private var feedbackViewModel = LiveFeedbackViewModel()
     @State private var hasAcceptedDisclosure = false
     @State private var hasConfirmedHeadphones = false
 
@@ -34,9 +36,9 @@ struct ContentView: View {
 
             // Real-time feedback panel (placeholder values)
             FeedbackPanel(
-                pace: audioAnalyzer.currentPace,
-                crutchWords: audioAnalyzer.crutchWordCount,
-                pauseCount: audioAnalyzer.pauseCount
+                pace: feedbackViewModel.state.pace,
+                crutchWords: feedbackViewModel.state.crutchWords,
+                pauseCount: feedbackViewModel.state.pauseCount
             )
 
             VStack(alignment: .leading, spacing: 8) {
@@ -69,6 +71,10 @@ struct ContentView: View {
         .frame(width: 400, height: 500)
         .onAppear {
             audioAnalyzer.setup(audioCapture: audioCapture)
+            feedbackViewModel.bind(
+                feedbackPublisher: audioAnalyzer.feedbackPublisher,
+                recordingPublisher: audioCapture.$isRecording.eraseToAnyPublisher()
+            )
         }
     }
 

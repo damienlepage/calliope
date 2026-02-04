@@ -13,6 +13,12 @@ class AudioAnalyzer: ObservableObject {
     @Published var crutchWordCount: Int = 0
     @Published var pauseCount: Int = 0
 
+    var feedbackPublisher: AnyPublisher<FeedbackState, Never> {
+        Publishers.CombineLatest3($currentPace, $crutchWordCount, $pauseCount)
+            .map { FeedbackState(pace: $0, crutchWords: $1, pauseCount: $2) }
+            .eraseToAnyPublisher()
+    }
+
     private var speechTranscriber: SpeechTranscriber?
     private var crutchWordDetector: CrutchWordDetector?
     private var paceAnalyzer: PaceAnalyzer?
