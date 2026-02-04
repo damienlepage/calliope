@@ -12,9 +12,18 @@ class RecordingManager {
     
     private let recordingsDirectory: URL
     private let fileManager: FileManager
+    private let now: () -> Date
+    private let uuid: () -> UUID
     
-    init(baseDirectory: URL? = nil, fileManager: FileManager = .default) {
+    init(
+        baseDirectory: URL? = nil,
+        fileManager: FileManager = .default,
+        now: @escaping () -> Date = Date.init,
+        uuid: @escaping () -> UUID = UUID.init
+    ) {
         self.fileManager = fileManager
+        self.now = now
+        self.uuid = uuid
 
         let documentsPath = baseDirectory ?? fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
         recordingsDirectory = documentsPath.appendingPathComponent("CalliopeRecordings", isDirectory: true)
@@ -26,8 +35,8 @@ class RecordingManager {
     }
     
     func getNewRecordingURL() -> URL {
-        let timestamp = Date().timeIntervalSince1970
-        let filename = "recording_\(Int(timestamp)).m4a"
+        let timestamp = Int64(now().timeIntervalSince1970 * 1000)
+        let filename = "recording_\(timestamp)_\(uuid().uuidString).m4a"
         return recordingsDirectory.appendingPathComponent(filename)
     }
     

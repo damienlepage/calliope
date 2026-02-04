@@ -23,6 +23,27 @@ final class RecordingManagerTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: expectedDirectory.path))
     }
 
+    func testNewRecordingURLIsUniqueAcrossCalls() {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        var uuidSeed = 0
+        let manager = RecordingManager(
+            baseDirectory: tempDir,
+            now: { Date(timeIntervalSince1970: 1000) },
+            uuid: {
+                uuidSeed += 1
+                return UUID(uuidString: String(format: "00000000-0000-0000-0000-%012d", uuidSeed))!
+            }
+        )
+
+        let first = manager.getNewRecordingURL()
+        let second = manager.getNewRecordingURL()
+
+        XCTAssertNotEqual(first.lastPathComponent, second.lastPathComponent)
+        XCTAssertTrue(first.lastPathComponent.contains("recording_"))
+        XCTAssertTrue(second.lastPathComponent.contains("recording_"))
+    }
+
     func testGetAllRecordingsFiltersByExtension() throws {
         let tempDir = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
