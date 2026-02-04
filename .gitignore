@@ -47,6 +47,10 @@ playground.xcworkspace
 # .swiftpm
 
 .build/
+.ralph-state/logs/
+.ralph-state/sessions/
+.ralph-state/STOP
+.ralph-state/ralph.pid
 
 # CocoaPods
 #

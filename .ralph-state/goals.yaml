@@ -1,0 +1,29 @@
+current_phase: "MVP Foundation"
+last_updated: "2026-02-04"
+
+objectives:
+  - id: "build_succeeds"
+    description: "swift build succeeds on a clean checkout"
+    target: true
+    current: true
+    status: "AT_TARGET"
+  - id: "app_launches"
+    description: "App launches and shows a window when run via swift run"
+    target: true
+    current: true
+    status: "AT_TARGET"
+  - id: "mic_capture_pipeline"
+    description: "Microphone capture pipeline runs without errors"
+    target: true
+    current: false
+    status: "BELOW_TARGET"
+  - id: "realtime_feedback"
+    description: "UI updates pace/crutch/pause from live audio"
+    target: true
+    current: false
+    status: "BELOW_TARGET"
+  - id: "privacy_guardrails"
+    description: "Privacy safeguards documented and enforced"
+    target: true
+    current: false
+    status: "BELOW_TARGET"
