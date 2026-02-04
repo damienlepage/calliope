@@ -34,9 +34,9 @@ struct ContentView: View {
             // Recording status
             HStack {
                 Circle()
-                    .fill(audioCapture.isRecording ? Color.red : Color.gray)
+                    .fill(statusColor(for: audioCapture.status))
                     .frame(width: 12, height: 12)
-                Text(audioCapture.isRecording ? "Recording" : "Stopped")
+                Text(audioCapture.statusText)
                     .font(.headline)
             }
 
@@ -133,6 +133,17 @@ struct ContentView: View {
     private func blockingReasonsText(_ reasons: [RecordingEligibility.Reason]) -> String {
         let details = reasons.map(\.message).joined(separator: " ")
         return "Start is disabled. \(details)"
+    }
+
+    private func statusColor(for status: AudioCaptureStatus) -> Color {
+        switch status {
+        case .idle:
+            return .gray
+        case .recording:
+            return .red
+        case .error:
+            return .orange
+        }
     }
 }
 

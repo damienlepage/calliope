@@ -15,8 +15,8 @@ objectives:
   - id: "mic_capture_pipeline"
     description: "Microphone capture pipeline runs without errors"
     target: true
-    current: false
-    status: "BELOW_TARGET"
+    current: true
+    status: "AT_TARGET"
   - id: "realtime_feedback"
     description: "UI updates pace/crutch/pause from live audio"
     target: true

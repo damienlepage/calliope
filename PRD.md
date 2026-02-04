@@ -74,7 +74,7 @@ Calliope is a macOS app that acts as a real-time communication coach during conf
 - How will we visualize pace and pauses to be effective yet unobtrusive?
 
 ## Ready Tickets
-1. [READY][P1] Define microphone capture pipeline baseline
+1. [DONE][P1] Define microphone capture pipeline baseline
 Acceptance Criteria: App can start and stop a local-only microphone capture session; capture errors are surfaced in the UI status; unit tests cover start/stop and error propagation.
 2. [READY][P1] Wire live analysis outputs to UI feedback indicators
 Acceptance Criteria: Pace, crutch word, and pause indicators update from live analysis stream; updates are throttled to avoid UI jank; unit tests validate mapping from analysis events to UI state.
