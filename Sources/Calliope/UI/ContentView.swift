@@ -21,10 +21,11 @@ struct ContentView: View {
             hasAcceptedDisclosure: hasAcceptedDisclosure,
             hasConfirmedHeadphones: hasConfirmedHeadphones
         )
-        let canStartRecording = RecordingEligibility.canStart(
+        let blockingReasons = RecordingEligibility.blockingReasons(
             privacyState: privacyState,
             microphonePermission: microphonePermission.state
         )
+        let canStartRecording = blockingReasons.isEmpty
         VStack(spacing: 20) {
             Text("Calliope")
                 .font(.largeTitle)
@@ -68,8 +69,8 @@ struct ContentView: View {
                     .foregroundColor(.secondary)
                 Toggle("I understand Calliope only analyzes my mic input", isOn: $hasAcceptedDisclosure)
                 Toggle("I am using headphones or a headset", isOn: $hasConfirmedHeadphones)
-                if !PrivacyGuardrails.canStartRecording(state: privacyState) {
-                    Text("Start is disabled until both privacy checks are confirmed.")
+                if !blockingReasons.isEmpty {
+                    Text(blockingReasonsText(blockingReasons))
                         .font(.footnote)
                         .foregroundColor(.secondary)
                 }
@@ -124,6 +125,11 @@ struct ContentView: View {
         case .restricted:
             return "Microphone access is restricted by system policy."
         }
+    }
+
+    private func blockingReasonsText(_ reasons: [RecordingEligibility.Reason]) -> String {
+        let details = reasons.map(\.message).joined(separator: " ")
+        return "Start is disabled. \(details)"
     }
 }
 
