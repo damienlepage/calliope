@@ -10,8 +10,14 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var audioCapture = AudioCapture()
     @StateObject private var audioAnalyzer = AudioAnalyzer()
+    @State private var hasAcceptedDisclosure = false
+    @State private var hasConfirmedHeadphones = false
 
     var body: some View {
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: hasAcceptedDisclosure,
+            hasConfirmedHeadphones: hasConfirmedHeadphones
+        )
         VStack(spacing: 20) {
             Text("Calliope")
                 .font(.largeTitle)
@@ -33,6 +39,22 @@ struct ContentView: View {
                 pauseCount: audioAnalyzer.pauseCount
             )
 
+            VStack(alignment: .leading, spacing: 8) {
+                Text(PrivacyGuardrails.disclosureTitle)
+                    .font(.headline)
+                Text(PrivacyGuardrails.disclosureBody)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                Toggle("I understand Calliope only analyzes my mic input", isOn: $hasAcceptedDisclosure)
+                Toggle("I am using headphones or a headset", isOn: $hasConfirmedHeadphones)
+                if !PrivacyGuardrails.canStartRecording(state: privacyState) {
+                    Text("Start is disabled until both privacy checks are confirmed.")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
             // Control buttons
             HStack(spacing: 20) {
                 Button(action: toggleRecording) {
@@ -40,6 +62,7 @@ struct ContentView: View {
                         .frame(width: 100, height: 40)
                 }
                 .buttonStyle(.borderedProminent)
+                .disabled(!audioCapture.isRecording && !PrivacyGuardrails.canStartRecording(state: privacyState))
             }
         }
         .padding()
@@ -53,7 +76,11 @@ struct ContentView: View {
         if audioCapture.isRecording {
             audioCapture.stopRecording()
         } else {
-            audioCapture.startRecording()
+            let privacyState = PrivacyGuardrails.State(
+                hasAcceptedDisclosure: hasAcceptedDisclosure,
+                hasConfirmedHeadphones: hasConfirmedHeadphones
+            )
+            audioCapture.startRecording(privacyState: privacyState)
         }
     }
 }

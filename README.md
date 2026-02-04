@@ -12,6 +12,11 @@ A macOS app that acts as a real-time communication coach during conference calls
 - **Local Storage**: All recordings stored securely on your local file system
 - **Privacy First**: Never records other participants' voices
 
+## Privacy Notes
+
+- Calliope only processes microphone input on-device and does not transmit audio or transcripts.
+- Use headphones or a headset to avoid capturing other participants through speaker bleed.
+
 ## Project Structure
 
 ```

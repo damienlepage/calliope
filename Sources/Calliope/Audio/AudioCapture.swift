@@ -27,8 +27,12 @@ class AudioCapture: NSObject, ObservableObject {
         // macOS doesn't use AVAudioSession - AVAudioEngine handles this directly
     }
 
-    func startRecording() {
+    func startRecording(privacyState: PrivacyGuardrails.State) {
         guard !isRecording else { return }
+        guard PrivacyGuardrails.canStartRecording(state: privacyState) else {
+            print("Privacy guardrails not satisfied. Recording blocked.")
+            return
+        }
 
         audioEngine = AVAudioEngine()
         guard let audioEngine = audioEngine else { return }
@@ -38,6 +42,7 @@ class AudioCapture: NSObject, ObservableObject {
 
         let recordingFormat = inputNode.outputFormat(forBus: 0)
 
+        // Recordings are written locally only; no network transmission.
         // Create audio file
         let url = recordingManager.getNewRecordingURL()
         do {
