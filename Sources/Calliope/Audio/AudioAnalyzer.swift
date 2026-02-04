@@ -43,13 +43,17 @@ class AudioAnalyzer: ObservableObject {
                 guard let self = self else { return }
                 if isRecording {
                     self.paceAnalyzer?.start()
+                    self.pauseDetector?.reset()
+                    self.pauseCount = 0
                     self.speechTranscriber?.startTranscription()
                 } else {
                     self.speechTranscriber?.stopTranscription()
                     self.paceAnalyzer?.reset()
                     self.crutchWordDetector?.reset()
+                    self.pauseDetector?.reset()
                     self.currentPace = 0.0
                     self.crutchWordCount = 0
+                    self.pauseCount = 0
                 }
             }
             .store(in: &cancellables)
@@ -66,7 +70,15 @@ class AudioAnalyzer: ObservableObject {
         // Process audio buffer for real-time analysis
         // This will be called continuously during recording
         speechTranscriber?.appendAudioBuffer(buffer)
-        _ = buffer
+        if let pauseDetector = pauseDetector {
+            let didDetectPause = pauseDetector.detectPause(in: buffer)
+            if didDetectPause {
+                let updatedCount = pauseDetector.getPauseCount()
+                DispatchQueue.main.async { [weak self] in
+                    self?.pauseCount = updatedCount
+                }
+            }
+        }
     }
 
     private func wordCount(in text: String) -> Int {

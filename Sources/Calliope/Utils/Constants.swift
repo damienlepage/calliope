@@ -16,6 +16,7 @@ enum Constants {
     static let targetPaceMin: Double = 120.0 // words per minute
     static let targetPaceMax: Double = 180.0 // words per minute
     static let pauseThreshold: TimeInterval = 1.0 // seconds
+    static let speechAmplitudeThreshold: Float = 0.02 // RMS amplitude threshold for speech
     
     // Crutch words
     static let crutchWords: [String] = [
