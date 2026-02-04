@@ -23,8 +23,11 @@ class SpeechTranscriber {
         
         recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
         guard let recognitionRequest = recognitionRequest else { return }
-        
+
         recognitionRequest.shouldReportPartialResults = true
+        if #available(macOS 10.15, *) {
+            recognitionRequest.requiresOnDeviceRecognition = true
+        }
         
         recognitionTask = speechRecognizer.recognitionTask(with: recognitionRequest) { [weak self] result, error in
             if let result = result {

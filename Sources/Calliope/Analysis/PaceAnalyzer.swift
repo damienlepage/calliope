@@ -8,12 +8,17 @@
 import Foundation
 
 class PaceAnalyzer {
+    private let now: () -> Date
     private var wordCount: Int = 0
     private var startTime: Date?
     private let targetPace: Double = 150.0 // words per minute
+
+    init(now: @escaping () -> Date = Date.init) {
+        self.now = now
+    }
     
     func start() {
-        startTime = Date()
+        startTime = now()
         wordCount = 0
     }
     
@@ -23,7 +28,7 @@ class PaceAnalyzer {
     
     func calculatePace() -> Double {
         guard let startTime = startTime else { return 0.0 }
-        let elapsedMinutes = Date().timeIntervalSince(startTime) / 60.0
+        let elapsedMinutes = now().timeIntervalSince(startTime) / 60.0
         guard elapsedMinutes > 0 else { return 0.0 }
         return Double(wordCount) / elapsedMinutes
     }
