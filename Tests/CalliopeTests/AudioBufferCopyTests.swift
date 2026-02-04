@@ -34,5 +34,71 @@ final class AudioBufferCopyTests: XCTestCase {
         XCTAssertEqual(copied.floatChannelData?.pointee[2], 0.3, accuracy: 0.0001)
         XCTAssertEqual(copied.floatChannelData?.pointee[3], 0.4, accuracy: 0.0001)
     }
+
+    func testCopyPreservesInt16Samples() {
+        guard let format = AVAudioFormat(commonFormat: .pcmFormatInt16,
+                                         sampleRate: 44_100,
+                                         channels: 1,
+                                         interleaved: false) else {
+            XCTFail("Missing int16 format")
+            return
+        }
+
+        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 4) else {
+            XCTFail("Missing int16 buffer")
+            return
+        }
+
+        buffer.frameLength = 4
+        buffer.int16ChannelData?.pointee[0] = 100
+        buffer.int16ChannelData?.pointee[1] = -200
+        buffer.int16ChannelData?.pointee[2] = 300
+        buffer.int16ChannelData?.pointee[3] = -400
+
+        guard let copied = AudioBufferCopy.copy(buffer) else {
+            XCTFail("Copy failed")
+            return
+        }
+
+        XCTAssertEqual(copied.frameLength, buffer.frameLength)
+        XCTAssertEqual(copied.frameCapacity, buffer.frameCapacity)
+        XCTAssertEqual(copied.int16ChannelData?.pointee[0], 100)
+        XCTAssertEqual(copied.int16ChannelData?.pointee[1], -200)
+        XCTAssertEqual(copied.int16ChannelData?.pointee[2], 300)
+        XCTAssertEqual(copied.int16ChannelData?.pointee[3], -400)
+    }
+
+    func testCopyPreservesInt32Samples() {
+        guard let format = AVAudioFormat(commonFormat: .pcmFormatInt32,
+                                         sampleRate: 44_100,
+                                         channels: 1,
+                                         interleaved: false) else {
+            XCTFail("Missing int32 format")
+            return
+        }
+
+        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 4) else {
+            XCTFail("Missing int32 buffer")
+            return
+        }
+
+        buffer.frameLength = 4
+        buffer.int32ChannelData?.pointee[0] = 1000
+        buffer.int32ChannelData?.pointee[1] = -2000
+        buffer.int32ChannelData?.pointee[2] = 3000
+        buffer.int32ChannelData?.pointee[3] = -4000
+
+        guard let copied = AudioBufferCopy.copy(buffer) else {
+            XCTFail("Copy failed")
+            return
+        }
+
+        XCTAssertEqual(copied.frameLength, buffer.frameLength)
+        XCTAssertEqual(copied.frameCapacity, buffer.frameCapacity)
+        XCTAssertEqual(copied.int32ChannelData?.pointee[0], 1000)
+        XCTAssertEqual(copied.int32ChannelData?.pointee[1], -2000)
+        XCTAssertEqual(copied.int32ChannelData?.pointee[2], 3000)
+        XCTAssertEqual(copied.int32ChannelData?.pointee[3], -4000)
+    }
 }
 #endif
