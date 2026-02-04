@@ -28,19 +28,18 @@ class RecordingManager {
         let documentsPath = baseDirectory ?? fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
         recordingsDirectory = documentsPath.appendingPathComponent("CalliopeRecordings", isDirectory: true)
         
-        // Create directory if it doesn't exist
-        if !fileManager.fileExists(atPath: recordingsDirectory.path) {
-            try? fileManager.createDirectory(at: recordingsDirectory, withIntermediateDirectories: true)
-        }
+        ensureDirectoryExists()
     }
     
     func getNewRecordingURL() -> URL {
+        ensureDirectoryExists()
         let timestamp = Int64(now().timeIntervalSince1970 * 1000)
         let filename = "recording_\(timestamp)_\(uuid().uuidString).m4a"
         return recordingsDirectory.appendingPathComponent(filename)
     }
     
     func getAllRecordings() -> [URL] {
+        ensureDirectoryExists()
         guard let files = try? fileManager.contentsOfDirectory(at: recordingsDirectory, includingPropertiesForKeys: nil) else {
             return []
         }
@@ -49,5 +48,11 @@ class RecordingManager {
     
     func deleteRecording(at url: URL) throws {
         try fileManager.removeItem(at: url)
+    }
+
+    private func ensureDirectoryExists() {
+        if !fileManager.fileExists(atPath: recordingsDirectory.path) {
+            try? fileManager.createDirectory(at: recordingsDirectory, withIntermediateDirectories: true)
+        }
     }
 }
