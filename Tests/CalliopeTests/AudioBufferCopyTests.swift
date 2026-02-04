@@ -1,3 +1,4 @@
+#if canImport(XCTest) && canImport(AVFoundation)
 import AVFoundation
 import XCTest
 @testable import Calliope
@@ -34,3 +35,4 @@ final class AudioBufferCopyTests: XCTestCase {
         XCTAssertEqual(copied.floatChannelData?.pointee[3], 0.4, accuracy: 0.0001)
     }
 }
+#endif
