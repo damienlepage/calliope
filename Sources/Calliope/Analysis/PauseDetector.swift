@@ -85,6 +85,17 @@ class PauseDetector {
             return sqrt(sum / Float(frameLength))
         }
 
+        if let int32ChannelData = buffer.int32ChannelData {
+            let samples = int32ChannelData[0]
+            var sum: Float = 0
+            let scale = 1.0 as Float / Float(Int32.max)
+            for index in 0..<frameLength {
+                let sample = Float(samples[index]) * scale
+                sum += sample * sample
+            }
+            return sqrt(sum / Float(frameLength))
+        }
+
         return 0
     }
 }
