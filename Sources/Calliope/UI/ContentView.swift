@@ -12,6 +12,7 @@ struct ContentView: View {
     @StateObject private var audioCapture = AudioCapture()
     @StateObject private var audioAnalyzer = AudioAnalyzer()
     @StateObject private var feedbackViewModel = LiveFeedbackViewModel()
+    @StateObject private var microphonePermission = MicrophonePermissionManager()
     @State private var hasAcceptedDisclosure = false
     @State private var hasConfirmedHeadphones = false
 
@@ -19,6 +20,10 @@ struct ContentView: View {
         let privacyState = PrivacyGuardrails.State(
             hasAcceptedDisclosure: hasAcceptedDisclosure,
             hasConfirmedHeadphones: hasConfirmedHeadphones
+        )
+        let canStartRecording = RecordingEligibility.canStart(
+            privacyState: privacyState,
+            microphonePermission: microphonePermission.state
         )
         VStack(spacing: 20) {
             Text("Calliope")
@@ -40,6 +45,20 @@ struct ContentView: View {
                 crutchWords: feedbackViewModel.state.crutchWords,
                 pauseCount: feedbackViewModel.state.pauseCount
             )
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Microphone Access")
+                    .font(.headline)
+                Text(microphonePermissionDescription(for: microphonePermission.state))
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                Button("Grant Microphone Access") {
+                    microphonePermission.requestAccess()
+                }
+                .buttonStyle(.bordered)
+                .disabled(microphonePermission.state == .authorized)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             VStack(alignment: .leading, spacing: 8) {
                 Text(PrivacyGuardrails.disclosureTitle)
@@ -64,7 +83,7 @@ struct ContentView: View {
                         .frame(width: 100, height: 40)
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(!audioCapture.isRecording && !PrivacyGuardrails.canStartRecording(state: privacyState))
+                .disabled(!audioCapture.isRecording && !canStartRecording)
             }
         }
         .padding()
@@ -75,6 +94,7 @@ struct ContentView: View {
                 feedbackPublisher: audioAnalyzer.feedbackPublisher,
                 recordingPublisher: audioCapture.$isRecording.eraseToAnyPublisher()
             )
+            microphonePermission.refresh()
         }
     }
 
@@ -86,7 +106,23 @@ struct ContentView: View {
                 hasAcceptedDisclosure: hasAcceptedDisclosure,
                 hasConfirmedHeadphones: hasConfirmedHeadphones
             )
-            audioCapture.startRecording(privacyState: privacyState)
+            audioCapture.startRecording(
+                privacyState: privacyState,
+                microphonePermission: microphonePermission.state
+            )
+        }
+    }
+
+    private func microphonePermissionDescription(for state: MicrophonePermissionState) -> String {
+        switch state {
+        case .authorized:
+            return "Microphone access is granted."
+        case .notDetermined:
+            return "Microphone access is required for live coaching."
+        case .denied:
+            return "Microphone access is denied. Enable it in System Settings > Privacy & Security > Microphone."
+        case .restricted:
+            return "Microphone access is restricted by system policy."
         }
     }
 }

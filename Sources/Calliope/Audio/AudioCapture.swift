@@ -27,10 +27,20 @@ class AudioCapture: NSObject, ObservableObject {
         // macOS doesn't use AVAudioSession - AVAudioEngine handles this directly
     }
 
-    func startRecording(privacyState: PrivacyGuardrails.State) {
+    func startRecording(
+        privacyState: PrivacyGuardrails.State,
+        microphonePermission: MicrophonePermissionState
+    ) {
         guard !isRecording else { return }
-        guard PrivacyGuardrails.canStartRecording(state: privacyState) else {
-            print("Privacy guardrails not satisfied. Recording blocked.")
+        guard RecordingEligibility.canStart(
+            privacyState: privacyState,
+            microphonePermission: microphonePermission
+        ) else {
+            if microphonePermission != .authorized {
+                print("Microphone permission not authorized. Recording blocked.")
+            } else {
+                print("Privacy guardrails not satisfied. Recording blocked.")
+            }
             return
         }
 
