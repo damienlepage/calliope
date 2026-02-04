@@ -87,7 +87,7 @@ class AudioAnalyzer: ObservableObject {
         }
     }
 
-    private func wordCount(in text: String) -> Int {
+    func wordCount(in text: String) -> Int {
         let tokens = text.lowercased()
             .components(separatedBy: CharacterSet.alphanumerics.inverted)
             .filter { !$0.isEmpty }
