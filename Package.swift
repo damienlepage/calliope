@@ -20,6 +20,11 @@ let package = Package(
             name: "Calliope",
             dependencies: [],
             path: "Sources"
+        ),
+        .testTarget(
+            name: "CalliopeTests",
+            dependencies: ["Calliope"],
+            path: "Tests"
         )
     ]
 )

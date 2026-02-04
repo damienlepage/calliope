@@ -8,10 +8,8 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var isRecording = false
-    @State private var pace: Double = 0
-    @State private var crutchWords: Int = 0
-    @State private var pauseCount: Int = 0
+    @StateObject private var audioCapture = AudioCapture()
+    @StateObject private var audioAnalyzer = AudioAnalyzer()
 
     var body: some View {
         VStack(spacing: 20) {
@@ -22,23 +20,23 @@ struct ContentView: View {
             // Recording status
             HStack {
                 Circle()
-                    .fill(isRecording ? Color.red : Color.gray)
+                    .fill(audioCapture.isRecording ? Color.red : Color.gray)
                     .frame(width: 12, height: 12)
-                Text(isRecording ? "Recording" : "Stopped")
+                Text(audioCapture.isRecording ? "Recording" : "Stopped")
                     .font(.headline)
             }
 
             // Real-time feedback panel (placeholder values)
             FeedbackPanel(
-                pace: pace,
-                crutchWords: crutchWords,
-                pauseCount: pauseCount
+                pace: audioAnalyzer.currentPace,
+                crutchWords: audioAnalyzer.crutchWordCount,
+                pauseCount: audioAnalyzer.pauseCount
             )
 
             // Control buttons
             HStack(spacing: 20) {
                 Button(action: toggleRecording) {
-                    Text(isRecording ? "Stop" : "Start")
+                    Text(audioCapture.isRecording ? "Stop" : "Start")
                         .frame(width: 100, height: 40)
                 }
                 .buttonStyle(.borderedProminent)
@@ -47,27 +45,16 @@ struct ContentView: View {
         .padding()
         .frame(width: 400, height: 500)
         .onAppear {
-            resetDemoValues()
+            audioAnalyzer.setup(audioCapture: audioCapture)
         }
     }
 
     private func toggleRecording() {
-        isRecording.toggle()
-
-        if isRecording {
-            // Simple demo values while "recording"
-            pace = 150
-            crutchWords = 2
-            pauseCount = 1
+        if audioCapture.isRecording {
+            audioCapture.stopRecording()
         } else {
-            resetDemoValues()
+            audioCapture.startRecording()
         }
-    }
-
-    private func resetDemoValues() {
-        pace = 0
-        crutchWords = 0
-        pauseCount = 0
     }
 }
 

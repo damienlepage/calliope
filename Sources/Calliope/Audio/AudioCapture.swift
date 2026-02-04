@@ -10,28 +10,34 @@ import Combine
 
 class AudioCapture: NSObject, ObservableObject {
     @Published var isRecording = false
-    
+
+    private let bufferSubject = PassthroughSubject<AVAudioPCMBuffer, Never>()
+    var audioBufferPublisher: AnyPublisher<AVAudioPCMBuffer, Never> {
+        bufferSubject.eraseToAnyPublisher()
+    }
+
     private var audioEngine: AVAudioEngine?
     private var inputNode: AVAudioInputNode?
     private var audioFile: AVAudioFile?
+    private var tapFrameCounter: UInt = 0
     private let recordingManager = RecordingManager.shared
-    
+
     override init() {
         super.init()
         // macOS doesn't use AVAudioSession - AVAudioEngine handles this directly
     }
-    
+
     func startRecording() {
         guard !isRecording else { return }
-        
+
         audioEngine = AVAudioEngine()
         guard let audioEngine = audioEngine else { return }
-        
+
         inputNode = audioEngine.inputNode
         guard let inputNode = inputNode else { return }
-        
+
         let recordingFormat = inputNode.outputFormat(forBus: 0)
-        
+
         // Create audio file
         let url = recordingManager.getNewRecordingURL()
         do {
@@ -40,17 +46,29 @@ class AudioCapture: NSObject, ObservableObject {
             print("Failed to create audio file: \(error)")
             return
         }
-        
+
+        tapFrameCounter = 0
+
         // Install tap to capture audio
         inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { [weak self] buffer, _ in
             guard let self = self, let audioFile = self.audioFile else { return }
+
+            if let copiedBuffer = AudioBufferCopy.copy(buffer) {
+                self.bufferSubject.send(copiedBuffer)
+            }
+
             do {
                 try audioFile.write(from: buffer)
             } catch {
                 print("Failed to write audio buffer: \(error)")
             }
+
+            self.tapFrameCounter += 1
+            if self.tapFrameCounter % 50 == 0 {
+                print("AudioCapture received \(self.tapFrameCounter) buffers")
+            }
         }
-        
+
         do {
             try audioEngine.start()
             isRecording = true
@@ -58,22 +76,16 @@ class AudioCapture: NSObject, ObservableObject {
             print("Failed to start audio engine: \(error)")
         }
     }
-    
+
     func stopRecording() {
         guard isRecording else { return }
-        
+
         inputNode?.removeTap(onBus: 0)
         audioEngine?.stop()
         audioFile = nil
         audioEngine = nil
         inputNode = nil
-        
+
         isRecording = false
-    }
-    
-    func getAudioBuffer() -> AVAudioPCMBuffer? {
-        // This will be used by the analyzer to process audio in real-time
-        // Implementation depends on how we want to share buffers
-        return nil
     }
 }
