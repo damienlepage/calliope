@@ -30,8 +30,10 @@ class AudioAnalyzer: ObservableObject {
             let totalWords = self.wordCount(in: transcript)
             self.paceAnalyzer?.updateWordCount(totalWords)
             let pace = self.paceAnalyzer?.calculatePace() ?? 0.0
+            let crutchCount = self.crutchWordDetector?.analyze(transcript) ?? 0
             DispatchQueue.main.async {
                 self.currentPace = pace
+                self.crutchWordCount = crutchCount
             }
         }
 
@@ -45,7 +47,9 @@ class AudioAnalyzer: ObservableObject {
                 } else {
                     self.speechTranscriber?.stopTranscription()
                     self.paceAnalyzer?.reset()
+                    self.crutchWordDetector?.reset()
                     self.currentPace = 0.0
+                    self.crutchWordCount = 0
                 }
             }
             .store(in: &cancellables)
