@@ -22,6 +22,8 @@ final class LiveFeedbackViewModel: ObservableObject {
         recordingPublisher: AnyPublisher<Bool, Never>,
         receiveOn queue: DispatchQueue = .main
     ) {
+        cancellables.removeAll()
+
         feedbackPublisher
             .receive(on: queue)
             .sink { [weak self] state in

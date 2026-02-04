@@ -67,4 +67,37 @@ final class LiveFeedbackViewModelTests: XCTestCase {
 
         wait(for: [expectation], timeout: 1.0)
     }
+
+    func testBindClearsPreviousSubscriptions() {
+        let feedbackSubject = PassthroughSubject<FeedbackState, Never>()
+        let recordingSubject = CurrentValueSubject<Bool, Never>(true)
+        let viewModel = LiveFeedbackViewModel()
+
+        viewModel.bind(
+            feedbackPublisher: feedbackSubject.eraseToAnyPublisher(),
+            recordingPublisher: recordingSubject.eraseToAnyPublisher(),
+            receiveOn: .main
+        )
+
+        viewModel.bind(
+            feedbackPublisher: feedbackSubject.eraseToAnyPublisher(),
+            recordingPublisher: recordingSubject.eraseToAnyPublisher(),
+            receiveOn: .main
+        )
+
+        let expectation = expectation(description: "Receives a single update after rebind")
+        expectation.expectedFulfillmentCount = 1
+        expectation.assertForOverFulfill = true
+
+        viewModel.$state
+            .dropFirst()
+            .sink { _ in
+                expectation.fulfill()
+            }
+            .store(in: &cancellables)
+
+        feedbackSubject.send(FeedbackState(pace: 120, crutchWords: 1, pauseCount: 0))
+
+        wait(for: [expectation], timeout: 1.0)
+    }
 }
