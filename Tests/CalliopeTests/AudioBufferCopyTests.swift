@@ -29,10 +29,15 @@ final class AudioBufferCopyTests: XCTestCase {
 
         XCTAssertEqual(copied.frameLength, buffer.frameLength)
         XCTAssertEqual(copied.frameCapacity, buffer.frameCapacity)
-        XCTAssertEqual(copied.floatChannelData?.pointee[0], 0.1, accuracy: 0.0001)
-        XCTAssertEqual(copied.floatChannelData?.pointee[1], 0.2, accuracy: 0.0001)
-        XCTAssertEqual(copied.floatChannelData?.pointee[2], 0.3, accuracy: 0.0001)
-        XCTAssertEqual(copied.floatChannelData?.pointee[3], 0.4, accuracy: 0.0001)
+        guard let copiedChannel = copied.floatChannelData?.pointee else {
+            XCTFail("Missing copied channel data")
+            return
+        }
+
+        XCTAssertEqual(copiedChannel[0], 0.1, accuracy: 0.0001)
+        XCTAssertEqual(copiedChannel[1], 0.2, accuracy: 0.0001)
+        XCTAssertEqual(copiedChannel[2], 0.3, accuracy: 0.0001)
+        XCTAssertEqual(copiedChannel[3], 0.4, accuracy: 0.0001)
     }
 
     func testCopyPreservesInt16Samples() {

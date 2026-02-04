@@ -1,3 +1,4 @@
+#if canImport(XCTest)
 //
 //  RecordingManagerTests.swift
 //  CalliopeTests
@@ -110,3 +111,4 @@ final class RecordingManagerTests: XCTestCase {
         XCTAssertEqual(url.deletingLastPathComponent(), recordingsDirectory)
     }
 }
+#endif

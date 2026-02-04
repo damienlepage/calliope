@@ -5,6 +5,7 @@
 //  Created on [Date]
 //
 
+#if canImport(XCTest)
 import Combine
 import XCTest
 @testable import Calliope
@@ -101,3 +102,4 @@ final class LiveFeedbackViewModelTests: XCTestCase {
         wait(for: [expectation], timeout: 1.0)
     }
 }
+#endif
