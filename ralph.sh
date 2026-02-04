@@ -109,6 +109,12 @@ run_iteration() {
 
 main_loop() {
   local single_iteration="${1:-false}"
+  local start_iteration
+  start_iteration=$(read_status_value "iteration")
+  if [[ -z "$start_iteration" ]]; then
+    start_iteration=0
+  fi
+  local max_iteration=$((start_iteration + MAX_ITERATIONS))
 
   while true; do
     if [[ -f "$STOP_FILE" ]]; then
@@ -129,8 +135,8 @@ main_loop() {
     fi
 
     local next_iteration=$((current_iteration + 1))
-    if [[ "$next_iteration" -gt "$MAX_ITERATIONS" ]]; then
-      log "Reached max iterations (${MAX_ITERATIONS}), exiting"
+    if [[ "$next_iteration" -gt "$max_iteration" ]]; then
+      log "Reached max iterations (${MAX_ITERATIONS}) from start (${start_iteration}), exiting"
       exit 0
     fi
 
