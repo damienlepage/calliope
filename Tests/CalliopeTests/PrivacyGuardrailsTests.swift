@@ -1,4 +1,3 @@
-#if canImport(XCTest)
 import XCTest
 @testable import Calliope
 
@@ -29,4 +28,3 @@ final class PrivacyGuardrailsTests: XCTestCase {
         XCTAssertTrue(PrivacyGuardrails.canStartRecording(state: satisfied))
     }
 }
-#endif

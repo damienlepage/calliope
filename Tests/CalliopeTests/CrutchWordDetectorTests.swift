@@ -1,4 +1,3 @@
-#if canImport(XCTest)
 import XCTest
 @testable import Calliope
 
@@ -39,4 +38,3 @@ final class CrutchWordDetectorTests: XCTestCase {
         XCTAssertEqual(count, 2)
     }
 }
-#endif

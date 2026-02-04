@@ -1,4 +1,3 @@
-#if canImport(XCTest)
 import XCTest
 @testable import Calliope
 
@@ -30,4 +29,3 @@ final class PaceAnalyzerTests: XCTestCase {
         XCTAssertEqual(analyzer.calculatePace(), 0.0, accuracy: 0.001)
     }
 }
-#endif

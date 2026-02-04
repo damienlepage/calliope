@@ -1,4 +1,3 @@
-#if canImport(XCTest)
 import XCTest
 @testable import Calliope
 
@@ -20,4 +19,3 @@ final class PaceFeedbackTests: XCTestCase {
         XCTAssertEqual(PaceFeedback.level(for: 141, minPace: minPace, maxPace: maxPace), .fast)
     }
 }
-#endif

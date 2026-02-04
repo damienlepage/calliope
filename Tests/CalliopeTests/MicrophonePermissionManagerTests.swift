@@ -1,4 +1,3 @@
-#if canImport(XCTest)
 import XCTest
 @testable import Calliope
 
@@ -52,4 +51,3 @@ final class MicrophonePermissionManagerTests: XCTestCase {
         wait(for: [expectation], timeout: 1.0)
     }
 }
-#endif

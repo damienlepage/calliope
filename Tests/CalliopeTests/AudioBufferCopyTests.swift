@@ -1,4 +1,3 @@
-#if canImport(XCTest) && canImport(AVFoundation)
 import AVFoundation
 import XCTest
 @testable import Calliope
@@ -125,4 +124,3 @@ final class AudioBufferCopyTests: XCTestCase {
         XCTAssertNil(AudioBufferCopy.copy(buffer))
     }
 }
-#endif

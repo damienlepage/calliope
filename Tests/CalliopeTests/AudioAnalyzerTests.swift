@@ -1,4 +1,3 @@
-#if canImport(XCTest)
 import XCTest
 @testable import Calliope
 
@@ -31,4 +30,3 @@ final class AudioAnalyzerTests: XCTestCase {
         XCTAssertEqual(count, 0)
     }
 }
-#endif

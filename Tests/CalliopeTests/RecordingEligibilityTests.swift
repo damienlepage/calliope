@@ -1,4 +1,3 @@
-#if canImport(XCTest)
 import XCTest
 @testable import Calliope
 
@@ -33,4 +32,3 @@ final class RecordingEligibilityTests: XCTestCase {
         )
     }
 }
-#endif

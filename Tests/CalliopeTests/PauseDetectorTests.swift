@@ -1,4 +1,3 @@
-#if canImport(XCTest) && canImport(AVFoundation)
 import AVFoundation
 import XCTest
 @testable import Calliope
@@ -162,4 +161,3 @@ final class PauseDetectorTests: XCTestCase {
         return buffer
     }
 }
-#endif
