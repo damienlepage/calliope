@@ -100,5 +100,24 @@ final class AudioBufferCopyTests: XCTestCase {
         XCTAssertEqual(copied.int32ChannelData?.pointee[2], 3000)
         XCTAssertEqual(copied.int32ChannelData?.pointee[3], -4000)
     }
+
+    func testCopyReturnsNilForUnsupportedFormat() {
+        guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat64,
+                                         sampleRate: 44_100,
+                                         channels: 1,
+                                         interleaved: false) else {
+            XCTFail("Missing float64 format")
+            return
+        }
+
+        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 1) else {
+            XCTFail("Missing float64 buffer")
+            return
+        }
+
+        buffer.frameLength = 1
+
+        XCTAssertNil(AudioBufferCopy.copy(buffer))
+    }
 }
 #endif
