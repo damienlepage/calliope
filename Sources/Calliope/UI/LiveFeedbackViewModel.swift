@@ -20,19 +20,28 @@ final class LiveFeedbackViewModel: ObservableObject {
     func bind(
         feedbackPublisher: AnyPublisher<FeedbackState, Never>,
         recordingPublisher: AnyPublisher<Bool, Never>,
-        receiveOn queue: DispatchQueue = .main
+        receiveOn queue: DispatchQueue = .main,
+        throttleInterval: DispatchQueue.SchedulerTimeType.Stride = .milliseconds(200)
     ) {
         cancellables.removeAll()
 
-        feedbackPublisher
+        let recordingState = recordingPublisher
+            .removeDuplicates()
+            .share()
+
+        recordingState
+            .map { isRecording in
+                isRecording ? feedbackPublisher : Empty().eraseToAnyPublisher()
+            }
+            .switchToLatest()
+            .throttle(for: throttleInterval, scheduler: queue, latest: true)
             .receive(on: queue)
             .sink { [weak self] state in
                 self?.state = state
             }
             .store(in: &cancellables)
 
-        recordingPublisher
-            .removeDuplicates()
+        recordingState
             .filter { !$0 }
             .receive(on: queue)
             .sink { [weak self] _ in

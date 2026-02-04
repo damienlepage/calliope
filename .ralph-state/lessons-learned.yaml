@@ -3,3 +3,4 @@ lessons:
   - "swift test hit the same SDK/toolchain mismatch and cache permission errors (ModuleCache under ~/.cache/clang)."
   - "swift build still fails when SwiftPM cache paths under ~/Library/org.swift.swiftpm are not writable and the SDK/toolchain versions are mismatched."
   - "swift build failed with ModuleCache permission errors under ~/.cache/clang and could not load the standard library for arm64-apple-macosx14.0."
+  - "swift build continues to fail when ~/.cache/clang/ModuleCache is not writable; manifests cannot load the arm64-apple-macosx14.0 standard library with the current SDK/toolchain."

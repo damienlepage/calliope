@@ -20,8 +20,8 @@ objectives:
   - id: "realtime_feedback"
     description: "UI updates pace/crutch/pause from live audio"
     target: true
-    current: false
-    status: "BELOW_TARGET"
+    current: true
+    status: "AT_TARGET"
   - id: "privacy_guardrails"
     description: "Privacy safeguards documented and enforced"
     target: true

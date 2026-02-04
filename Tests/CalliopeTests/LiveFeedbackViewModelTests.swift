@@ -100,4 +100,35 @@ final class LiveFeedbackViewModelTests: XCTestCase {
 
         wait(for: [expectation], timeout: 1.0)
     }
+
+    func testThrottlesFeedbackUpdates() {
+        let feedbackSubject = PassthroughSubject<FeedbackState, Never>()
+        let recordingSubject = CurrentValueSubject<Bool, Never>(true)
+        let viewModel = LiveFeedbackViewModel()
+
+        viewModel.bind(
+            feedbackPublisher: feedbackSubject.eraseToAnyPublisher(),
+            recordingPublisher: recordingSubject.eraseToAnyPublisher(),
+            receiveOn: .main,
+            throttleInterval: .milliseconds(200)
+        )
+
+        let expected = FeedbackState(pace: 190, crutchWords: 4, pauseCount: 2)
+        let expectation = expectation(description: "Receives throttled update")
+        expectation.expectedFulfillmentCount = 1
+        expectation.assertForOverFulfill = true
+
+        viewModel.$state
+            .dropFirst()
+            .sink { state in
+                XCTAssertEqual(state, expected)
+                expectation.fulfill()
+            }
+            .store(in: &cancellables)
+
+        feedbackSubject.send(FeedbackState(pace: 120, crutchWords: 1, pauseCount: 0))
+        feedbackSubject.send(expected)
+
+        wait(for: [expectation], timeout: 1.0)
+    }
 }
