@@ -8,20 +8,32 @@
 import Foundation
 
 class CrutchWordDetector {
-    private let singleWordCrutches: Set<String> = [
-        "uh", "um", "ah", "er", "hmm",
-        "so", "like", "well",
-        "actually", "basically", "literally"
-    ]
-    private let multiWordCrutches: [[String]] = [
-        ["you", "know"]
-    ]
+    private let singleWordCrutches: Set<String>
+    private let multiWordCrutches: [[String]]
 
-    private var wordCount: Int = 0
+    init(crutchWords: [String] = Constants.crutchWords) {
+        var singleWordCrutches = Set<String>()
+        var multiWordCrutches = [[String]]()
+
+        for crutch in crutchWords {
+            let tokens = crutch
+                .lowercased()
+                .split(separator: " ")
+                .map(String.init)
+            guard !tokens.isEmpty else { continue }
+            if tokens.count == 1, let token = tokens.first {
+                singleWordCrutches.insert(token)
+            } else {
+                multiWordCrutches.append(tokens)
+            }
+        }
+
+        self.singleWordCrutches = singleWordCrutches
+        self.multiWordCrutches = multiWordCrutches
+    }
     
     func analyze(_ text: String) -> Int {
         let tokens = tokenize(text)
-        wordCount += tokens.count
 
         var count = 0
         var index = 0
@@ -42,7 +54,7 @@ class CrutchWordDetector {
     }
     
     func reset() {
-        wordCount = 0
+        return
     }
 
     private func tokenize(_ text: String) -> [String] {

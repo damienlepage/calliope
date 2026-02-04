@@ -29,5 +29,14 @@ final class CrutchWordDetectorTests: XCTestCase {
 
         XCTAssertEqual(count, 0)
     }
+
+    func testCustomCrutchWordsAreParsed() {
+        let detector = CrutchWordDetector(crutchWords: ["next level", "rad"])
+        let text = "That was rad, next level."
+
+        let count = detector.analyze(text)
+
+        XCTAssertEqual(count, 2)
+    }
 }
 #endif
