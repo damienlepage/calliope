@@ -1,1 +1,2 @@
-lessons: []
+lessons:
+  - "swift build failed due to toolchain/SDK mismatch and cache permission errors; may require matching toolchain or writable cache path."
