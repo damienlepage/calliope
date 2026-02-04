@@ -53,12 +53,13 @@ struct FeedbackPanel: View {
     }
     
     private func paceColor(_ pace: Double) -> Color {
-        if pace < 120 {
+        switch PaceFeedback.level(for: pace) {
+        case .slow:
             return .blue // Too slow
-        } else if pace > 180 {
-            return .red // Too fast
-        } else {
+        case .target:
             return .green // Good pace
+        case .fast:
+            return .red // Too fast
         }
     }
 }
