@@ -11,14 +11,17 @@ class RecordingManager {
     static let shared = RecordingManager()
     
     private let recordingsDirectory: URL
+    private let fileManager: FileManager
     
-    private init() {
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    init(baseDirectory: URL? = nil, fileManager: FileManager = .default) {
+        self.fileManager = fileManager
+
+        let documentsPath = baseDirectory ?? fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
         recordingsDirectory = documentsPath.appendingPathComponent("CalliopeRecordings", isDirectory: true)
         
         // Create directory if it doesn't exist
-        if !FileManager.default.fileExists(atPath: recordingsDirectory.path) {
-            try? FileManager.default.createDirectory(at: recordingsDirectory, withIntermediateDirectories: true)
+        if !fileManager.fileExists(atPath: recordingsDirectory.path) {
+            try? fileManager.createDirectory(at: recordingsDirectory, withIntermediateDirectories: true)
         }
     }
     
@@ -29,13 +32,13 @@ class RecordingManager {
     }
     
     func getAllRecordings() -> [URL] {
-        guard let files = try? FileManager.default.contentsOfDirectory(at: recordingsDirectory, includingPropertiesForKeys: nil) else {
+        guard let files = try? fileManager.contentsOfDirectory(at: recordingsDirectory, includingPropertiesForKeys: nil) else {
             return []
         }
         return files.filter { $0.pathExtension == "m4a" || $0.pathExtension == "wav" }
     }
     
     func deleteRecording(at url: URL) throws {
-        try FileManager.default.removeItem(at: url)
+        try fileManager.removeItem(at: url)
     }
 }

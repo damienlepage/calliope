@@ -1,0 +1,61 @@
+//
+//  RecordingManagerTests.swift
+//  CalliopeTests
+//
+//  Created on [Date]
+//
+
+import Foundation
+import XCTest
+@testable import Calliope
+
+final class RecordingManagerTests: XCTestCase {
+    func testNewRecordingURLUsesLocalDirectoryAndM4AExtension() {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let manager = RecordingManager(baseDirectory: tempDir)
+
+        let url = manager.getNewRecordingURL()
+        let expectedDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
+
+        XCTAssertEqual(url.pathExtension, "m4a")
+        XCTAssertEqual(url.deletingLastPathComponent(), expectedDirectory)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: expectedDirectory.path))
+    }
+
+    func testGetAllRecordingsFiltersByExtension() throws {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let recordingsDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
+
+        let m4aURL = recordingsDirectory.appendingPathComponent("sample.m4a")
+        let wavURL = recordingsDirectory.appendingPathComponent("sample.wav")
+        let txtURL = recordingsDirectory.appendingPathComponent("sample.txt")
+
+        FileManager.default.createFile(atPath: m4aURL.path, contents: Data())
+        FileManager.default.createFile(atPath: wavURL.path, contents: Data())
+        FileManager.default.createFile(atPath: txtURL.path, contents: Data())
+
+        let recordings = manager.getAllRecordings()
+
+        XCTAssertTrue(recordings.contains(m4aURL))
+        XCTAssertTrue(recordings.contains(wavURL))
+        XCTAssertFalse(recordings.contains(txtURL))
+    }
+
+    func testDeleteRecordingRemovesFile() throws {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let recordingsDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
+        let fileURL = recordingsDirectory.appendingPathComponent("remove.m4a")
+
+        FileManager.default.createFile(atPath: fileURL.path, contents: Data())
+        XCTAssertTrue(FileManager.default.fileExists(atPath: fileURL.path))
+
+        try manager.deleteRecording(at: fileURL)
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: fileURL.path))
+    }
+}
