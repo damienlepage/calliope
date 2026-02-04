@@ -84,6 +84,38 @@ final class PauseDetectorTests: XCTestCase {
         XCTAssertFalse(detector.detectPause(in: speechBuffer))
     }
 
+    func testResetClearsPauseState() {
+        var now = Date(timeIntervalSince1970: 0)
+        let detector = PauseDetector(
+            pauseThreshold: 1.0,
+            speechThreshold: 0.02,
+            now: { now }
+        )
+
+        let speechBuffer = makeBuffer(amplitude: 0.1)
+        let silenceBuffer = makeBuffer(amplitude: 0.0)
+
+        XCTAssertFalse(detector.detectPause(in: speechBuffer))
+
+        now = Date(timeIntervalSince1970: 1.2)
+        XCTAssertTrue(detector.detectPause(in: silenceBuffer))
+        XCTAssertEqual(detector.getPauseCount(), 1)
+
+        detector.reset()
+        XCTAssertEqual(detector.getPauseCount(), 0)
+
+        now = Date(timeIntervalSince1970: 2.5)
+        XCTAssertFalse(detector.detectPause(in: silenceBuffer))
+        XCTAssertEqual(detector.getPauseCount(), 0)
+
+        now = Date(timeIntervalSince1970: 3.0)
+        XCTAssertFalse(detector.detectPause(in: speechBuffer))
+
+        now = Date(timeIntervalSince1970: 4.2)
+        XCTAssertTrue(detector.detectPause(in: silenceBuffer))
+        XCTAssertEqual(detector.getPauseCount(), 1)
+    }
+
     private func makeBuffer(amplitude: Float, frames: AVAudioFrameCount = 128) -> AVAudioPCMBuffer {
         let format = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 1)!
         let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frames)!
