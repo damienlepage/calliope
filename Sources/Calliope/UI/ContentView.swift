@@ -67,6 +67,9 @@ struct ContentView: View {
                 Text(PrivacyGuardrails.disclosureBody)
                     .font(.subheadline)
                     .foregroundColor(.secondary)
+                Text("Recordings are stored locally at \(RecordingManager.shared.recordingsDirectoryURL().path)")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
                 Toggle("I understand Calliope only analyzes my mic input", isOn: $hasAcceptedDisclosure)
                 Toggle("I am using headphones or a headset", isOn: $hasConfirmedHeadphones)
                 if !blockingReasons.isEmpty {

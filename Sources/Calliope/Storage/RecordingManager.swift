@@ -50,6 +50,11 @@ class RecordingManager {
         try fileManager.removeItem(at: url)
     }
 
+    func recordingsDirectoryURL() -> URL {
+        ensureDirectoryExists()
+        return recordingsDirectory
+    }
+
     private func ensureDirectoryExists() {
         if !fileManager.fileExists(atPath: recordingsDirectory.path) {
             try? fileManager.createDirectory(at: recordingsDirectory, withIntermediateDirectories: true)

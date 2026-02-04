@@ -110,4 +110,19 @@ final class RecordingManagerTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: recordingsDirectory.path))
         XCTAssertEqual(url.deletingLastPathComponent(), recordingsDirectory)
     }
+
+    func testRecordingsDirectoryURLRecreatesMissingDirectory() {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let recordingsDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
+
+        try? FileManager.default.removeItem(at: recordingsDirectory)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: recordingsDirectory.path))
+
+        let directoryURL = manager.recordingsDirectoryURL()
+
+        XCTAssertEqual(directoryURL, recordingsDirectory)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: recordingsDirectory.path))
+    }
 }
