@@ -8,7 +8,7 @@ STOP_FILE="$STATE_DIR/STOP"
 PID_FILE="$STATE_DIR/ralph.pid"
 
 ITERATION_DELAY="${ITERATION_DELAY:-300}"
-AGENT_CMD="${AGENT_CMD:-codex --full-auto}"
+AGENT_CMD="${AGENT_CMD:-codex exec --full-auto}"
 
 mkdir -p "$LOG_DIR" "$SESS_DIR"
 
