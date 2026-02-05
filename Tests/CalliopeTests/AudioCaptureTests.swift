@@ -372,6 +372,108 @@ final class AudioCaptureTests: XCTestCase {
         XCTAssertEqual(capture.inputDeviceName, "Secondary Mic")
         XCTAssertEqual(capture.status, .error(.engineConfigurationChanged))
     }
+
+    func testMicTestSucceedsWhenBufferReceived() {
+        let backend = FakeAudioCaptureBackend()
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let capture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() }
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startMicTest(
+            privacyState: privacyState,
+            microphonePermission: .authorized,
+            duration: 0.05
+        )
+        backend.simulateBuffer()
+
+        let testCompleted = expectation(description: "mic test completed")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            testCompleted.fulfill()
+        }
+        wait(for: [testCompleted], timeout: 1.0)
+
+        XCTAssertEqual(capture.micTestStatus, .success("Mic test succeeded."))
+        XCTAssertFalse(capture.isTestingMic)
+        XCTAssertTrue(backend.removeTapCalled)
+        XCTAssertFalse(backend.isStarted)
+    }
+
+    func testMicTestFailsWhenNoInputDetected() {
+        let backend = FakeAudioCaptureBackend()
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let capture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() }
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startMicTest(
+            privacyState: privacyState,
+            microphonePermission: .authorized,
+            duration: 0.05
+        )
+
+        let testCompleted = expectation(description: "mic test completed")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            testCompleted.fulfill()
+        }
+        wait(for: [testCompleted], timeout: 1.0)
+
+        XCTAssertEqual(
+            capture.micTestStatus,
+            .failure("No mic input detected during the mic test.")
+        )
+        XCTAssertFalse(capture.isTestingMic)
+        XCTAssertTrue(backend.removeTapCalled)
+    }
+
+    func testMicTestFailureWhenEngineStartFails() {
+        let backend = FakeAudioCaptureBackend()
+        backend.startError = TestError.engineStart
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let capture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() }
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startMicTest(
+            privacyState: privacyState,
+            microphonePermission: .authorized,
+            duration: 0.05
+        )
+
+        XCTAssertEqual(
+            capture.micTestStatus,
+            .failure(AudioCaptureError.engineStartFailed.message)
+        )
+        XCTAssertTrue(backend.removeTapCalled)
+        XCTAssertFalse(backend.isStarted)
+    }
 }
 
 private enum TestError: Error {
@@ -406,6 +508,7 @@ private final class FakeAudioCaptureBackend: AudioCaptureBackend {
     var installTapCalled = false
     var removeTapCalled = false
     var startError: Error?
+    private var tapHandler: ((AVAudioPCMBuffer) -> Void)?
     private var configurationChangeHandler: (() -> Void)?
 
     init(
@@ -419,10 +522,12 @@ private final class FakeAudioCaptureBackend: AudioCaptureBackend {
 
     func installTap(bufferSize: AVAudioFrameCount, handler: @escaping (AVAudioPCMBuffer) -> Void) {
         installTapCalled = true
+        tapHandler = handler
     }
 
     func removeTap() {
         removeTapCalled = true
+        tapHandler = nil
     }
 
     func setConfigurationChangeHandler(_ handler: @escaping () -> Void) {
@@ -446,6 +551,13 @@ private final class FakeAudioCaptureBackend: AudioCaptureBackend {
 
     func simulateConfigurationChange() {
         configurationChangeHandler?()
+    }
+
+    func simulateBuffer() {
+        guard let tapHandler else { return }
+        let buffer = AVAudioPCMBuffer(pcmFormat: inputFormat, frameCapacity: 1)!
+        buffer.frameLength = 1
+        tapHandler(buffer)
     }
 }
 

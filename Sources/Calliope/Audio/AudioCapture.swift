@@ -49,6 +49,26 @@ enum AudioCaptureStatus: Equatable {
     case error(AudioCaptureError)
 }
 
+enum MicTestStatus: Equatable {
+    case idle
+    case running
+    case success(String)
+    case failure(String)
+
+    var message: String? {
+        switch self {
+        case .idle:
+            return nil
+        case .running:
+            return "Mic test running..."
+        case .success(let message):
+            return message
+        case .failure(let message):
+            return message
+        }
+    }
+}
+
 enum AudioCaptureBackendStatus: Equatable {
     case standard
     case voiceIsolation
@@ -231,6 +251,7 @@ class AudioCapture: NSObject, ObservableObject {
 
     @Published var isRecording = false
     @Published private(set) var status: AudioCaptureStatus = .idle
+    @Published private(set) var micTestStatus: MicTestStatus = .idle
     @Published private(set) var currentRecordingURL: URL?
     @Published private(set) var inputDeviceName: String = "Unknown Microphone"
     @Published private(set) var backendStatus: AudioCaptureBackendStatus = .standard
@@ -243,6 +264,9 @@ class AudioCapture: NSObject, ObservableObject {
     private var backend: AudioCaptureBackend?
     private var audioFile: AudioFileWritable?
     private var tapFrameCounter: UInt = 0
+    private var micTestBackend: AudioCaptureBackend?
+    private var micTestWorkItem: DispatchWorkItem?
+    private var micTestDidReceiveBuffer = false
     private let recordingManager: RecordingManager
     private let capturePreferencesStore: AudioCapturePreferencesStore
     private let backendSelector: AudioCaptureBackendSelector
@@ -298,11 +322,23 @@ class AudioCapture: NSObject, ObservableObject {
         backendStatus.message
     }
 
+    var micTestStatusText: String? {
+        micTestStatus.message
+    }
+
+    var isTestingMic: Bool {
+        if case .running = micTestStatus {
+            return true
+        }
+        return false
+    }
+
     func startRecording(
         privacyState: PrivacyGuardrails.State,
         microphonePermission: MicrophonePermissionState
     ) {
         guard !isRecording else { return }
+        guard !isTestingMic else { return }
         guard RecordingEligibility.canStart(
             privacyState: privacyState,
             microphonePermission: microphonePermission
@@ -372,6 +408,64 @@ class AudioCapture: NSObject, ObservableObject {
         }
     }
 
+    func startMicTest(
+        privacyState: PrivacyGuardrails.State,
+        microphonePermission: MicrophonePermissionState,
+        duration: TimeInterval = 2.5
+    ) {
+        guard !isRecording else {
+            updateMicTestStatus(.failure("Stop the current recording before running a mic test."))
+            return
+        }
+        guard !isTestingMic else { return }
+        guard RecordingEligibility.canStart(
+            privacyState: privacyState,
+            microphonePermission: microphonePermission
+        ) else {
+            let error: AudioCaptureError = microphonePermission != .authorized
+                ? permissionError(for: microphonePermission)
+                : .privacyGuardrailsNotSatisfied
+            updateMicTestStatus(.failure(error.message))
+            return
+        }
+
+        let preferences = capturePreferencesStore.current
+        let selection = backendSelector(preferences)
+        let backend = selection.backend
+        backendStatus = selection.status
+        guard backend.inputSource == .microphone else {
+            updateMicTestStatus(.failure(AudioCaptureError.systemAudioCaptureNotAllowed.message))
+            return
+        }
+
+        micTestBackend = backend
+        refreshInputDeviceName(from: backend)
+        backend.setConfigurationChangeHandler { [weak self] in
+            self?.handleMicTestConfigurationChange()
+        }
+
+        micTestDidReceiveBuffer = false
+        updateMicTestStatus(.running)
+
+        backend.installTap(bufferSize: 1024) { [weak self] _ in
+            guard let self else { return }
+            self.micTestDidReceiveBuffer = true
+        }
+
+        do {
+            try backend.start()
+        } catch {
+            stopMicTest(status: .failure(AudioCaptureError.engineStartFailed.message))
+            return
+        }
+
+        let workItem = DispatchWorkItem { [weak self] in
+            self?.finishMicTest()
+        }
+        micTestWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + duration, execute: workItem)
+    }
+
     func startRecording(
         privacyState: PrivacyGuardrails.State,
         microphonePermissionProvider: MicrophonePermissionProviding
@@ -401,6 +495,17 @@ class AudioCapture: NSObject, ObservableObject {
         updateStatus(statusOverride)
     }
 
+    private func stopMicTest(status: MicTestStatus) {
+        micTestWorkItem?.cancel()
+        micTestWorkItem = nil
+        micTestBackend?.clearConfigurationChangeHandler()
+        micTestBackend?.removeTap()
+        micTestBackend?.stop()
+        micTestBackend = nil
+        micTestDidReceiveBuffer = false
+        updateMicTestStatus(status)
+    }
+
     private func handleCaptureError(_ error: AudioCaptureError) {
         DispatchQueue.main.async { [weak self] in
             self?.stopRecordingInternal(statusOverride: .error(error))
@@ -415,12 +520,37 @@ class AudioCapture: NSObject, ObservableObject {
         }
     }
 
+    private func handleMicTestConfigurationChange() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.isTestingMic else { return }
+            self.refreshInputDeviceName(from: self.micTestBackend)
+            self.stopMicTest(status: .failure(AudioCaptureError.engineConfigurationChanged.message))
+        }
+    }
+
+    private func finishMicTest() {
+        let status: MicTestStatus = micTestDidReceiveBuffer
+            ? .success("Mic test succeeded.")
+            : .failure("No mic input detected during the mic test.")
+        stopMicTest(status: status)
+    }
+
     private func updateStatus(_ newStatus: AudioCaptureStatus) {
         if Thread.isMainThread {
             status = newStatus
         } else {
             DispatchQueue.main.async { [weak self] in
                 self?.status = newStatus
+            }
+        }
+    }
+
+    private func updateMicTestStatus(_ newStatus: MicTestStatus) {
+        if Thread.isMainThread {
+            micTestStatus = newStatus
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                self?.micTestStatus = newStatus
             }
         }
     }

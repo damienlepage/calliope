@@ -193,6 +193,16 @@ struct ContentView: View {
                         Text("Capture")
                             .font(.headline)
                         Toggle("Enable voice isolation (if supported)", isOn: $audioCapturePreferencesStore.voiceIsolationEnabled)
+                        Button("Test Mic") {
+                            runMicTest()
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(audioCapture.isRecording || audioCapture.isTestingMic)
+                        if let statusText = audioCapture.micTestStatusText {
+                            Text(statusText)
+                                .font(.footnote)
+                                .foregroundColor(micTestStatusColor(for: audioCapture.micTestStatus))
+                        }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -205,7 +215,7 @@ struct ContentView: View {
                                 .frame(width: 100, height: 40)
                         }
                         .buttonStyle(.borderedProminent)
-                        .disabled(!audioCapture.isRecording && !canStartRecording)
+                        .disabled(audioCapture.isTestingMic || (!audioCapture.isRecording && !canStartRecording))
                     }
                 }
                 .padding()
@@ -283,6 +293,17 @@ struct ContentView: View {
         }
     }
 
+    private func runMicTest() {
+        microphonePermission.refresh()
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: hasAcceptedDisclosure
+        )
+        audioCapture.startMicTest(
+            privacyState: privacyState,
+            microphonePermission: microphonePermission.state
+        )
+    }
+
     private func microphonePermissionDescription(for state: MicrophonePermissionState) -> String {
         switch state {
         case .authorized:
@@ -315,6 +336,19 @@ struct ContentView: View {
         case .recording:
             return .red
         case .error:
+            return .orange
+        }
+    }
+
+    private func micTestStatusColor(for status: MicTestStatus) -> Color {
+        switch status {
+        case .idle:
+            return .secondary
+        case .running:
+            return .secondary
+        case .success:
+            return .green
+        case .failure:
             return .orange
         }
     }
