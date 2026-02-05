@@ -17,6 +17,7 @@ struct ContentView: View {
     @StateObject private var overlayPreferencesStore: OverlayPreferencesStore
     @State private var privacyDisclosureStore: PrivacyDisclosureStore
     @State private var hasAcceptedDisclosure: Bool
+    @State private var isDisclosureSheetPresented: Bool
 
     init(
         overlayPreferencesStore: OverlayPreferencesStore = OverlayPreferencesStore(),
@@ -24,7 +25,11 @@ struct ContentView: View {
     ) {
         _privacyDisclosureStore = State(initialValue: privacyDisclosureStore)
         _overlayPreferencesStore = StateObject(wrappedValue: overlayPreferencesStore)
-        _hasAcceptedDisclosure = State(initialValue: privacyDisclosureStore.hasAcceptedDisclosure)
+        let accepted = privacyDisclosureStore.hasAcceptedDisclosure
+        _hasAcceptedDisclosure = State(initialValue: accepted)
+        _isDisclosureSheetPresented = State(
+            initialValue: PrivacyDisclosureGate.requiresDisclosure(hasAcceptedDisclosure: accepted)
+        )
     }
 
     var body: some View {
@@ -95,7 +100,13 @@ struct ContentView: View {
                 Text("Recordings are stored locally at \(RecordingManager.shared.recordingsDirectoryURL().path)")
                     .font(.footnote)
                     .foregroundColor(.secondary)
-                Toggle("I understand Calliope only analyzes my mic input", isOn: $hasAcceptedDisclosure)
+                Text(
+                    hasAcceptedDisclosure
+                        ? "Disclosure accepted."
+                        : "Disclosure required before starting a session."
+                )
+                .font(.footnote)
+                .foregroundColor(.secondary)
                 if !blockingReasons.isEmpty {
                     Text(blockingReasonsText(blockingReasons))
                         .font(.footnote)
@@ -196,9 +207,20 @@ struct ContentView: View {
         }
         .onChange(of: hasAcceptedDisclosure) { newValue in
             privacyDisclosureStore.hasAcceptedDisclosure = newValue
+            isDisclosureSheetPresented = PrivacyDisclosureGate.requiresDisclosure(
+                hasAcceptedDisclosure: newValue
+            )
         }
         .onChange(of: overlayPreferencesStore.alwaysOnTop) { newValue in
             WindowLevelController.apply(alwaysOnTop: newValue)
+        }
+        .sheet(isPresented: $isDisclosureSheetPresented) {
+            PrivacyDisclosureSheet(
+                recordingsPath: RecordingManager.shared.recordingsDirectoryURL().path
+            ) {
+                hasAcceptedDisclosure = true
+            }
+            .interactiveDismissDisabled(true)
         }
     }
 

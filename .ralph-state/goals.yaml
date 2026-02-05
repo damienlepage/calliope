@@ -25,8 +25,8 @@ objectives:
   - id: "privacy_guardrails"
     description: "Privacy safeguards documented and enforced; disclosure acknowledged once and persists"
     target: true
-    current: false
-    status: "BELOW_TARGET"
+    current: true
+    status: "AT_TARGET"
   - id: "stop_without_errors"
     description: "Stop action completes without speech recognition errors when no speech is detected"
     target: true
