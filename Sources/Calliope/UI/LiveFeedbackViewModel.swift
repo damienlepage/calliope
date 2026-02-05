@@ -37,6 +37,15 @@ final class LiveFeedbackViewModel: ObservableObject {
             .share()
 
         recordingState
+            .filter { $0 }
+            .receive(on: queue)
+            .sink { [weak self] _ in
+                self?.state = .zero
+                self?.sessionDurationSeconds = 0
+            }
+            .store(in: &cancellables)
+
+        recordingState
             .map { isRecording in
                 isRecording ? feedbackPublisher : Empty().eraseToAnyPublisher()
             }
@@ -53,6 +62,7 @@ final class LiveFeedbackViewModel: ObservableObject {
             .receive(on: queue)
             .sink { [weak self] _ in
                 self?.state = .zero
+                self?.sessionDurationSeconds = nil
             }
             .store(in: &cancellables)
 

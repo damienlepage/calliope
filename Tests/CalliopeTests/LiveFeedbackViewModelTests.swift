@@ -62,8 +62,61 @@ final class LiveFeedbackViewModelTests: XCTestCase {
             }
             .store(in: &cancellables)
 
-        feedbackSubject.send(FeedbackState(pace: 140, crutchWords: 3, pauseCount: 2))
+        feedbackSubject.send(
+            FeedbackState(
+                pace: 140,
+                crutchWords: 3,
+                pauseCount: 2,
+                inputLevel: 0.7,
+                showSilenceWarning: true
+            )
+        )
         recordingSubject.send(false)
+
+        wait(for: [expectation], timeout: 1.0)
+    }
+
+    func testResetsWhenRecordingStarts() {
+        let feedbackSubject = PassthroughSubject<FeedbackState, Never>()
+        let recordingSubject = CurrentValueSubject<Bool, Never>(false)
+        let initialState = FeedbackState(
+            pace: 120,
+            crutchWords: 2,
+            pauseCount: 1,
+            inputLevel: 0.8,
+            showSilenceWarning: true
+        )
+        let viewModel = LiveFeedbackViewModel(initialState: initialState)
+
+        viewModel.bind(
+            feedbackPublisher: feedbackSubject.eraseToAnyPublisher(),
+            recordingPublisher: recordingSubject.eraseToAnyPublisher(),
+            receiveOn: .main
+        )
+
+        let expectation = expectation(description: "Resets on start")
+        expectation.expectedFulfillmentCount = 2
+        expectation.assertForOverFulfill = true
+
+        viewModel.$state
+            .dropFirst()
+            .sink { state in
+                if state == .zero {
+                    expectation.fulfill()
+                }
+            }
+            .store(in: &cancellables)
+
+        viewModel.$sessionDurationSeconds
+            .dropFirst()
+            .sink { value in
+                if value == 0 {
+                    expectation.fulfill()
+                }
+            }
+            .store(in: &cancellables)
+
+        recordingSubject.send(true)
 
         wait(for: [expectation], timeout: 1.0)
     }
