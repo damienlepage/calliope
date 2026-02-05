@@ -13,7 +13,8 @@ final class SpeechTranscriberTests: XCTestCase {
             speechRecognizer: recognizer,
             requestAuthorization: { _ in
                 didRequestAuthorization = true
-            }
+            },
+            logger: NoOpSpeechTranscriberLogger()
         )
         var observedStates: [SpeechTranscriberState] = []
         transcriber.onStateChange = { observedStates.append($0) }
@@ -25,7 +26,7 @@ final class SpeechTranscriberTests: XCTestCase {
     }
 
     func testNoSpeechErrorMapsToStoppedState() {
-        let transcriber = SpeechTranscriber()
+        let transcriber = SpeechTranscriber(logger: NoOpSpeechTranscriberLogger())
         var observedStates: [SpeechTranscriberState] = []
         transcriber.onStateChange = { observedStates.append($0) }
 
@@ -40,7 +41,7 @@ final class SpeechTranscriberTests: XCTestCase {
     }
 
     func testCanceledErrorMapsToStoppedState() {
-        let transcriber = SpeechTranscriber()
+        let transcriber = SpeechTranscriber(logger: NoOpSpeechTranscriberLogger())
         var observedStates: [SpeechTranscriberState] = []
         transcriber.onStateChange = { observedStates.append($0) }
 
@@ -55,7 +56,7 @@ final class SpeechTranscriberTests: XCTestCase {
     }
 
     func testUnknownErrorMapsToErrorState() {
-        let transcriber = SpeechTranscriber()
+        let transcriber = SpeechTranscriber(logger: NoOpSpeechTranscriberLogger())
         var observedStates: [SpeechTranscriberState] = []
         transcriber.onStateChange = { observedStates.append($0) }
 
@@ -66,7 +67,7 @@ final class SpeechTranscriberTests: XCTestCase {
     }
 
     func testStopIgnoresSubsequentErrors() {
-        let transcriber = SpeechTranscriber()
+        let transcriber = SpeechTranscriber(logger: NoOpSpeechTranscriberLogger())
         var observedStates: [SpeechTranscriberState] = []
         transcriber.onStateChange = { observedStates.append($0) }
 
@@ -77,6 +78,11 @@ final class SpeechTranscriberTests: XCTestCase {
 
         XCTAssertEqual(observedStates.last, .stopped)
     }
+}
+
+private struct NoOpSpeechTranscriberLogger: SpeechTranscriberLogging {
+    func info(_ message: String) {}
+    func error(_ message: String) {}
 }
 
 private final class FakeSpeechRecognizer: SpeechRecognizing {

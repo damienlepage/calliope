@@ -17,6 +17,21 @@ protocol SpeechRecognizing {
     ) -> SFSpeechRecognitionTask
 }
 
+protocol SpeechTranscriberLogging {
+    func info(_ message: String)
+    func error(_ message: String)
+}
+
+struct SystemSpeechTranscriberLogger: SpeechTranscriberLogging {
+    func info(_ message: String) {
+        print(message)
+    }
+
+    func error(_ message: String) {
+        print(message)
+    }
+}
+
 final class SystemSpeechRecognizer: SpeechRecognizing {
     private let recognizer: SFSpeechRecognizer?
 
@@ -64,6 +79,7 @@ enum SpeechTranscriberState: Equatable {
 class SpeechTranscriber: SpeechTranscribing {
     private let speechRecognizer: SpeechRecognizing
     private let requestAuthorization: (@escaping (SFSpeechRecognizerAuthorizationStatus) -> Void) -> Void
+    private let logger: SpeechTranscriberLogging
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
     private var isStopping = false
@@ -75,22 +91,24 @@ class SpeechTranscriber: SpeechTranscribing {
 
     init(
         speechRecognizer: SpeechRecognizing = SystemSpeechRecognizer(locale: Locale(identifier: "en-US")),
-        requestAuthorization: @escaping (@escaping (SFSpeechRecognizerAuthorizationStatus) -> Void) -> Void = SFSpeechRecognizer.requestAuthorization
+        requestAuthorization: @escaping (@escaping (SFSpeechRecognizerAuthorizationStatus) -> Void) -> Void = SFSpeechRecognizer.requestAuthorization,
+        logger: SpeechTranscriberLogging = SystemSpeechTranscriberLogger()
     ) {
         self.speechRecognizer = speechRecognizer
         self.requestAuthorization = requestAuthorization
+        self.logger = logger
     }
     
     func startTranscription() {
         isStopping = false
         guard speechRecognizer.isAvailable else {
-            print("Speech recognizer not available")
+            logger.error("Speech recognizer not available")
             updateState(.error)
             return
         }
 
         guard speechRecognizer.supportsOnDeviceRecognition else {
-            print("On-device speech recognition not supported")
+            logger.error("On-device speech recognition not supported")
             updateState(.error)
             return
         }
@@ -99,7 +117,7 @@ class SpeechTranscriber: SpeechTranscribing {
             DispatchQueue.main.async {
                 guard let self = self else { return }
                 guard status == .authorized else {
-                    print("Speech recognition not authorized: \(status)")
+                    self.logger.error("Speech recognition not authorized: \(status)")
                     self.updateState(.error)
                     return
                 }
@@ -155,7 +173,7 @@ class SpeechTranscriber: SpeechTranscribing {
         }
 
         updateState(.error)
-        print("Recognition error: \(error)")
+        logger.error("Recognition error: \(error)")
     }
 
     func isBenignRecognitionError(_ error: Error) -> Bool {
