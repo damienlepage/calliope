@@ -12,6 +12,7 @@ enum AudioCaptureError: Equatable {
     case microphonePermissionNotDetermined
     case microphonePermissionDenied
     case microphonePermissionRestricted
+    case microphoneUnavailable
     case privacyGuardrailsNotSatisfied
     case systemAudioCaptureNotAllowed
     case audioFileCreationFailed
@@ -28,6 +29,8 @@ enum AudioCaptureError: Equatable {
             return "Microphone access is denied. Enable it in System Settings > Privacy & Security > Microphone."
         case .microphonePermissionRestricted:
             return "Microphone access is restricted by system policy."
+        case .microphoneUnavailable:
+            return "No microphone input detected. Connect or enable a microphone."
         case .privacyGuardrailsNotSatisfied:
             return "Privacy guardrails must be accepted to start."
         case .systemAudioCaptureNotAllowed:
@@ -348,19 +351,21 @@ class AudioCapture: NSObject, ObservableObject {
 
     func startRecording(
         privacyState: PrivacyGuardrails.State,
-        microphonePermission: MicrophonePermissionState
+        microphonePermission: MicrophonePermissionState,
+        hasMicrophoneInput: Bool = true
     ) {
         guard !isRecording else { return }
         guard !isTestingMic else { return }
         micTestStatus = .idle
-        guard RecordingEligibility.canStart(
+        let blockingReasons = RecordingEligibility.blockingReasons(
             privacyState: privacyState,
-            microphonePermission: microphonePermission
-        ) else {
-            let error: AudioCaptureError = microphonePermission != .authorized
-                ? permissionError(for: microphonePermission)
-                : .privacyGuardrailsNotSatisfied
-            updateStatus(.error(error))
+            microphonePermission: microphonePermission,
+            hasMicrophoneInput: hasMicrophoneInput
+        )
+        guard blockingReasons.isEmpty else {
+            if let reason = blockingReasons.first {
+                updateStatus(.error(error(for: reason)))
+            }
             return
         }
 
@@ -429,6 +434,7 @@ class AudioCapture: NSObject, ObservableObject {
     func startMicTest(
         privacyState: PrivacyGuardrails.State,
         microphonePermission: MicrophonePermissionState,
+        hasMicrophoneInput: Bool = true,
         duration: TimeInterval = 2.5
     ) {
         guard !isRecording else {
@@ -436,14 +442,15 @@ class AudioCapture: NSObject, ObservableObject {
             return
         }
         guard !isTestingMic else { return }
-        guard RecordingEligibility.canStart(
+        let blockingReasons = RecordingEligibility.blockingReasons(
             privacyState: privacyState,
-            microphonePermission: microphonePermission
-        ) else {
-            let error: AudioCaptureError = microphonePermission != .authorized
-                ? permissionError(for: microphonePermission)
-                : .privacyGuardrailsNotSatisfied
-            updateMicTestStatus(.failure(error.message))
+            microphonePermission: microphonePermission,
+            hasMicrophoneInput: hasMicrophoneInput
+        )
+        guard blockingReasons.isEmpty else {
+            if let reason = blockingReasons.first {
+                updateMicTestStatus(.failure(error(for: reason).message))
+            }
             return
         }
 
@@ -486,10 +493,15 @@ class AudioCapture: NSObject, ObservableObject {
 
     func startRecording(
         privacyState: PrivacyGuardrails.State,
-        microphonePermissionProvider: MicrophonePermissionProviding
+        microphonePermissionProvider: MicrophonePermissionProviding,
+        hasMicrophoneInput: Bool = true
     ) {
         let state = microphonePermissionProvider.authorizationState()
-        startRecording(privacyState: privacyState, microphonePermission: state)
+        startRecording(
+            privacyState: privacyState,
+            microphonePermission: state,
+            hasMicrophoneInput: hasMicrophoneInput
+        )
     }
 
     func stopRecording() {
@@ -594,16 +606,18 @@ class AudioCapture: NSObject, ObservableObject {
         }
     }
 
-    private func permissionError(for state: MicrophonePermissionState) -> AudioCaptureError {
-        switch state {
-        case .notDetermined:
+    private func error(for reason: RecordingEligibility.Reason) -> AudioCaptureError {
+        switch reason {
+        case .microphonePermissionNotDetermined:
             return .microphonePermissionNotDetermined
-        case .denied:
+        case .microphonePermissionDenied:
             return .microphonePermissionDenied
-        case .restricted:
+        case .microphonePermissionRestricted:
             return .microphonePermissionRestricted
-        case .authorized:
-            return .microphonePermissionNotDetermined
+        case .microphoneUnavailable:
+            return .microphoneUnavailable
+        case .disclosureNotAccepted:
+            return .privacyGuardrailsNotSatisfied
         }
     }
 

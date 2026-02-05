@@ -144,7 +144,7 @@ Acceptance Criteria: Starting a recording clears any prior mic test success/fail
 Acceptance Criteria: `SpeechTranscriber` refuses to start when on-device recognition is unsupported; authorization is not requested when on-device recognition is unsupported; unit tests cover the on-device support gate.
 34. [DONE][P2] Clean up zero-byte recordings when capture fails to start
 Acceptance Criteria: When recording fails before entering the recording state, any zero-byte recording file created for that attempt is removed; recordings that successfully start are unaffected; unit tests cover cleanup on engine start failure.
-35. [READY][P1] Guard Start when no microphone input device is available
+35. [DONE][P1] Guard Start when no microphone input device is available
 Acceptance Criteria: If the system reports no available microphone input device, Start is disabled and the status UI shows a clear, actionable message to connect or enable a mic; when a device becomes available, Start re-enables automatically; unit tests cover unavailable and available device states with mocked device lists.
 36. [READY][P1] Reset live feedback state on start/stop to avoid stale indicators
 Acceptance Criteria: Starting capture resets pace/crutch/pause indicators, input level, silence warnings, and elapsed timer to neutral defaults before first live updates; stopping capture clears the live feedback state and hides any warnings; unit tests cover reset behavior on start and stop paths.

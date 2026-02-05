@@ -10,6 +10,7 @@ struct RecordingEligibility {
         case microphonePermissionNotDetermined
         case microphonePermissionDenied
         case microphonePermissionRestricted
+        case microphoneUnavailable
         case disclosureNotAccepted
 
         var message: String {
@@ -20,6 +21,8 @@ struct RecordingEligibility {
                 return "Microphone access is denied. Enable it in System Settings > Privacy & Security > Microphone."
             case .microphonePermissionRestricted:
                 return "Microphone access is restricted by system policy."
+            case .microphoneUnavailable:
+                return "No microphone input detected. Connect or enable a microphone."
             case .disclosureNotAccepted:
                 return "Confirm the privacy disclosure."
             }
@@ -28,7 +31,8 @@ struct RecordingEligibility {
 
     static func blockingReasons(
         privacyState: PrivacyGuardrails.State,
-        microphonePermission: MicrophonePermissionState
+        microphonePermission: MicrophonePermissionState,
+        hasMicrophoneInput: Bool = true
     ) -> [Reason] {
         var reasons: [Reason] = []
         if microphonePermission != .authorized {
@@ -43,6 +47,9 @@ struct RecordingEligibility {
                 break
             }
         }
+        if !hasMicrophoneInput {
+            reasons.append(.microphoneUnavailable)
+        }
         if !privacyState.hasAcceptedDisclosure {
             reasons.append(.disclosureNotAccepted)
         }
@@ -51,11 +58,13 @@ struct RecordingEligibility {
 
     static func canStart(
         privacyState: PrivacyGuardrails.State,
-        microphonePermission: MicrophonePermissionState
+        microphonePermission: MicrophonePermissionState,
+        hasMicrophoneInput: Bool = true
     ) -> Bool {
         blockingReasons(
             privacyState: privacyState,
-            microphonePermission: microphonePermission
+            microphonePermission: microphonePermission,
+            hasMicrophoneInput: hasMicrophoneInput
         ).isEmpty
     }
 }

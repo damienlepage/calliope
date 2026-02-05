@@ -13,6 +13,7 @@ struct ContentView: View {
     @StateObject private var audioAnalyzer = AudioAnalyzer()
     @StateObject private var feedbackViewModel = LiveFeedbackViewModel()
     @StateObject private var microphonePermission = MicrophonePermissionManager()
+    @StateObject private var microphoneDevices = MicrophoneDeviceManager()
     @StateObject private var audioCapturePreferencesStore: AudioCapturePreferencesStore
     @StateObject private var preferencesStore = AnalysisPreferencesStore()
     @StateObject private var recordingsViewModel = RecordingListViewModel()
@@ -47,7 +48,8 @@ struct ContentView: View {
             .map(SessionDurationFormatter.format)
         let blockingReasons = RecordingEligibility.blockingReasons(
             privacyState: privacyState,
-            microphonePermission: microphonePermission.state
+            microphonePermission: microphonePermission.state,
+            hasMicrophoneInput: microphoneDevices.hasMicrophoneInput
         )
         let canStartRecording = blockingReasons.isEmpty
         ZStack(alignment: .topTrailing) {
@@ -251,6 +253,7 @@ struct ContentView: View {
                 recordingPublisher: audioCapture.$isRecording.eraseToAnyPublisher()
             )
             microphonePermission.refresh()
+            microphoneDevices.refresh()
             WindowLevelController.apply(alwaysOnTop: overlayPreferencesStore.alwaysOnTop)
         }
         .onChange(of: preferencesStore.paceMin) { newValue in
@@ -287,24 +290,28 @@ struct ContentView: View {
             audioCapture.stopRecording()
         } else {
             microphonePermission.refresh()
+            microphoneDevices.refresh()
             let privacyState = PrivacyGuardrails.State(
                 hasAcceptedDisclosure: hasAcceptedDisclosure
             )
             audioCapture.startRecording(
                 privacyState: privacyState,
-                microphonePermission: microphonePermission.state
+                microphonePermission: microphonePermission.state,
+                hasMicrophoneInput: microphoneDevices.hasMicrophoneInput
             )
         }
     }
 
     private func runMicTest() {
         microphonePermission.refresh()
+        microphoneDevices.refresh()
         let privacyState = PrivacyGuardrails.State(
             hasAcceptedDisclosure: hasAcceptedDisclosure
         )
         audioCapture.startMicTest(
             privacyState: privacyState,
-            microphonePermission: microphonePermission.state
+            microphonePermission: microphonePermission.state,
+            hasMicrophoneInput: microphoneDevices.hasMicrophoneInput
         )
     }
 
