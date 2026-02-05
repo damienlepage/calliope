@@ -1,6 +1,6 @@
 ---
 id: cal-3c6k
-status: ready
+status: closed
 deps: []
 links: []
 created: 2026-02-05T00:41:00Z
@@ -19,3 +19,9 @@ Ensure new users explicitly acknowledge privacy guardrails with a dedicated firs
 - The sheet is not dismissible until acceptance is recorded.
 - After acceptance, the sheet does not appear on subsequent launches.
 - Unit tests cover persistence and the first-launch gating logic.
+
+## Notes
+
+**2026-02-05T00:00:00Z**
+
+Confirmed the first-launch privacy disclosure sheet is implemented in `PrivacyDisclosureSheet`, gated via persisted acceptance, and covered by unit tests. Closing ticket.
