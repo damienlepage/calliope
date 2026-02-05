@@ -88,3 +88,5 @@ Acceptance Criteria: Preferences model persists pace min/max, pause threshold, a
 Acceptance Criteria: User-facing toggle enables/disables always-on-top behavior; window level switches between floating and normal; toggle persists across launches; unit tests cover default and persistence.
 7. [DONE][P2] Normalize crutch word input
 Acceptance Criteria: Crutch word parsing trims whitespace, lowercases entries, deduplicates while preserving order; unit tests cover normalization behavior.
+8. [DONE][P2] Sort recordings newest-first and ignore directories
+Acceptance Criteria: Recording listing returns only `.m4a`/`.wav` files (no directories) ordered by most recent modification date; unit tests cover sorting and filtering.

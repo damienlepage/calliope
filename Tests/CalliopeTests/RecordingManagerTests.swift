@@ -125,4 +125,36 @@ final class RecordingManagerTests: XCTestCase {
         XCTAssertEqual(directoryURL, recordingsDirectory)
         XCTAssertTrue(FileManager.default.fileExists(atPath: recordingsDirectory.path))
     }
+
+    func testGetAllRecordingsSortsNewestFirstAndIgnoresDirectories() throws {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let recordingsDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
+
+        let olderURL = recordingsDirectory.appendingPathComponent("older.m4a")
+        let newerURL = recordingsDirectory.appendingPathComponent("newer.wav")
+        let directoryURL = recordingsDirectory.appendingPathComponent("archive.m4a", isDirectory: true)
+
+        FileManager.default.createFile(atPath: olderURL.path, contents: Data())
+        FileManager.default.createFile(atPath: newerURL.path, contents: Data())
+        try FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: false)
+
+        let now = Date()
+        try FileManager.default.setAttributes(
+            [.modificationDate: now.addingTimeInterval(-120)],
+            ofItemAtPath: olderURL.path
+        )
+        try FileManager.default.setAttributes(
+            [.modificationDate: now],
+            ofItemAtPath: newerURL.path
+        )
+
+        let recordings = manager.getAllRecordings()
+
+        XCTAssertEqual(recordings.count, 2)
+        XCTAssertEqual(recordings.first?.standardizedFileURL, newerURL.standardizedFileURL)
+        XCTAssertEqual(recordings.last?.standardizedFileURL, olderURL.standardizedFileURL)
+        XCTAssertFalse(recordings.contains { $0.standardizedFileURL == directoryURL.standardizedFileURL })
+    }
 }

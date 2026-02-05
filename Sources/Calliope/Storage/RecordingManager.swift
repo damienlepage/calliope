@@ -40,10 +40,32 @@ class RecordingManager {
     
     func getAllRecordings() -> [URL] {
         ensureDirectoryExists()
-        guard let files = try? fileManager.contentsOfDirectory(at: recordingsDirectory, includingPropertiesForKeys: nil) else {
+        let keys: [URLResourceKey] = [
+            .isRegularFileKey,
+            .contentModificationDateKey
+        ]
+        guard let files = try? fileManager.contentsOfDirectory(
+            at: recordingsDirectory,
+            includingPropertiesForKeys: keys,
+            options: [.skipsHiddenFiles]
+        ) else {
             return []
         }
-        return files.filter { $0.pathExtension == "m4a" || $0.pathExtension == "wav" }
+        let filtered = files.compactMap { url -> (URL, Date)? in
+            let values = try? url.resourceValues(forKeys: Set(keys))
+            guard values?.isRegularFile == true else {
+                return nil
+            }
+            let ext = url.pathExtension.lowercased()
+            guard ext == "m4a" || ext == "wav" else {
+                return nil
+            }
+            let modified = values?.contentModificationDate ?? .distantPast
+            return (url, modified)
+        }
+        return filtered
+            .sorted { $0.1 > $1.1 }
+            .map { $0.0 }
     }
     
     func deleteRecording(at url: URL) throws {
