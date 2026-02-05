@@ -13,7 +13,13 @@ struct ContentView: View {
     @StateObject private var audioAnalyzer = AudioAnalyzer()
     @StateObject private var feedbackViewModel = LiveFeedbackViewModel()
     @StateObject private var microphonePermission = MicrophonePermissionManager()
-    @State private var hasAcceptedDisclosure = false
+    private let privacyDisclosureStore: PrivacyDisclosureStore
+    @State private var hasAcceptedDisclosure: Bool
+
+    init(privacyDisclosureStore: PrivacyDisclosureStore = PrivacyDisclosureStore()) {
+        self.privacyDisclosureStore = privacyDisclosureStore
+        _hasAcceptedDisclosure = State(initialValue: privacyDisclosureStore.hasAcceptedDisclosure)
+    }
 
     var body: some View {
         let privacyState = PrivacyGuardrails.State(
@@ -101,6 +107,9 @@ struct ContentView: View {
                 recordingPublisher: audioCapture.$isRecording.eraseToAnyPublisher()
             )
             microphonePermission.refresh()
+        }
+        .onChange(of: hasAcceptedDisclosure) { newValue in
+            privacyDisclosureStore.hasAcceptedDisclosure = newValue
         }
     }
 

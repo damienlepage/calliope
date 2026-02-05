@@ -1,6 +1,6 @@
 ---
 id: cal-t8f2
-status: ready
+status: closed
 deps: []
 links: []
 created: 2026-02-05T12:30:00Z
@@ -20,4 +20,5 @@ Prevent stop actions from surfacing speech recognition errors when no speech is 
 - No changes to audio routing, network behavior, or privacy guardrails.
 
 ## Outcome
-- TBD
+- Suppressed benign no-speech and cancelation speech recognition errors by mapping them to a stopped state.
+- Added speech transcriber state tracking and tests to ensure silent stop paths do not surface errors.

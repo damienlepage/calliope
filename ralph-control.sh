@@ -36,7 +36,7 @@ status() {
 }
 
 logs() {
-  tail -n 200 "$LOG_DIR/ralph-output.log"
+  tail -f -n 200 "$LOG_DIR/ralph-output.log"
 }
 
 sessions() {
