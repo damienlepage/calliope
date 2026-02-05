@@ -74,6 +74,8 @@ Calliope is a macOS app that acts as a real-time communication coach during conf
 - How will we visualize pace and pauses to be effective yet unobtrusive?
 
 ## Ready Tickets
+1. [READY][P2] Add quick link to System Settings for mic permission blocks
+Acceptance Criteria: When Start is disabled due to denied or restricted microphone permission, the status UI presents a clear "Open System Settings" action; the action opens the system privacy microphone settings pane locally; the action is hidden when permission is granted or not determined; unit tests cover action visibility and invocation with a mocked settings opener; no network usage is introduced.
 1. [DONE][P2] Refresh microphone permission when app becomes active
 Acceptance Criteria: Microphone permission state refreshes when the app becomes active (e.g., after returning from System Settings); Start button availability updates accordingly; unit tests cover the refresh-on-activation path.
 1. [DONE][P1] Add capture start timeout and user guidance
