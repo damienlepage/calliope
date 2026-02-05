@@ -98,7 +98,7 @@ Acceptance Criteria: A non-dismissible modal sheet appears on first launch until
 Acceptance Criteria: A compact overlay view shows pace/crutch/pause; visibility is controlled by a user-facing toggle and persists across launches; overlay respects the always-on-top preference; unit tests cover overlay preference persistence and show/hide behavior.
 12. [DONE][P1] Add microphone permission preflight and UI messaging
 Acceptance Criteria: Starting capture checks microphone permission status before starting the audio engine; if denied or restricted, the status UI shows a clear, actionable message and capture does not start; unit tests cover granted, denied, and restricted permission states with mocked authorization responses.
-13. [READY][P1] Add capture pipeline smoke test with local input audio
+13. [DONE][P1] Add capture pipeline smoke test with local input audio
 Acceptance Criteria: A test-only input path can inject a bundled mono WAV into `AudioCapture` without using the system audio graph; starting and stopping capture produces a local recording file with non-zero size; tests verify file creation and that the input path remains microphone-only in production builds.
 14. [READY][P2] Add recording management actions in recordings list
 Acceptance Criteria: The recordings list supports reveal-in-Finder and delete actions for `.m4a`/`.wav` items; deletion removes the file locally and updates the list; unit tests cover delete behavior and list refresh.

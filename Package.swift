@@ -24,7 +24,10 @@ let package = Package(
         .testTarget(
             name: "CalliopeTests",
             dependencies: ["Calliope"],
-            path: "Tests"
+            path: "Tests",
+            resources: [
+                .process("Resources")
+            ]
         )
     ]
 )
