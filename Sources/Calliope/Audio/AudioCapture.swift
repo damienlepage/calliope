@@ -352,6 +352,7 @@ class AudioCapture: NSObject, ObservableObject {
     ) {
         guard !isRecording else { return }
         guard !isTestingMic else { return }
+        micTestStatus = .idle
         guard RecordingEligibility.canStart(
             privacyState: privacyState,
             microphonePermission: microphonePermission

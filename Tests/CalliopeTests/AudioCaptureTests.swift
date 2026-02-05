@@ -471,6 +471,43 @@ final class AudioCaptureTests: XCTestCase {
         XCTAssertFalse(backend.isStarted)
     }
 
+    func testStartRecordingClearsMicTestStatus() {
+        let backend = FakeAudioCaptureBackend()
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let capture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() }
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startMicTest(
+            privacyState: privacyState,
+            microphonePermission: .authorized,
+            duration: 0.05
+        )
+        backend.simulateBuffer()
+
+        let testCompleted = expectation(description: "mic test completed")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            testCompleted.fulfill()
+        }
+        wait(for: [testCompleted], timeout: 1.0)
+
+        XCTAssertEqual(capture.micTestStatus, .success("Mic test succeeded."))
+
+        capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+
+        XCTAssertEqual(capture.micTestStatus, .idle)
+        capture.stopRecording()
+    }
+
     func testMicTestFailsWhenNoInputDetected() {
         let backend = FakeAudioCaptureBackend()
         let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
