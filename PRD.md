@@ -120,3 +120,5 @@ Acceptance Criteria: Test-only analysis input path can inject a bundled mono WAV
 Acceptance Criteria: Recordings section includes an "Open Folder" action that reveals the local recordings directory; unit tests verify the recordings list view model requests the workspace to open the recordings directory; no network usage is introduced.
 23. [DONE][P1] Add voice isolation capture backend
 Acceptance Criteria: Add a voice isolation capture backend using the platform voice processing/voice isolation path; expose a user-facing preference to enable/disable and persist it locally; enable by default when supported with a clear fallback status when not supported; keep capture microphone-only and local; unit tests cover backend selection, preference persistence, and fallback behavior.
+24. [DONE][P2] Add reset action for sensitivity preferences
+Acceptance Criteria: A "Reset to Defaults" action restores pace, pause, and crutch word settings to default values; defaults persist across launches; unit tests cover reset behavior and persistence.

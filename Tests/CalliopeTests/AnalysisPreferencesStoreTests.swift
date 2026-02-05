@@ -69,4 +69,33 @@ final class AnalysisPreferencesStoreTests: XCTestCase {
         XCTAssertEqual(store.pauseThreshold, Constants.pauseThreshold)
         XCTAssertEqual(store.crutchWords, ["uh", "um"])
     }
+
+    func testResetToDefaultsRestoresValuesAndPersists() {
+        let suiteName = "AnalysisPreferencesStoreTests.reset"
+        guard let defaults = UserDefaults(suiteName: suiteName) else {
+            XCTFail("Expected test defaults suite")
+            return
+        }
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let store = AnalysisPreferencesStore(defaults: defaults)
+        store.paceMin = 90
+        store.paceMax = 190
+        store.pauseThreshold = 3.0
+        store.crutchWords = ["alpha", "beta"]
+
+        store.resetToDefaults()
+
+        XCTAssertEqual(store.paceMin, Constants.targetPaceMin)
+        XCTAssertEqual(store.paceMax, Constants.targetPaceMax)
+        XCTAssertEqual(store.pauseThreshold, Constants.pauseThreshold)
+        XCTAssertEqual(store.crutchWords, Constants.crutchWords)
+
+        let reloaded = AnalysisPreferencesStore(defaults: defaults)
+        XCTAssertEqual(reloaded.paceMin, Constants.targetPaceMin)
+        XCTAssertEqual(reloaded.paceMax, Constants.targetPaceMax)
+        XCTAssertEqual(reloaded.pauseThreshold, Constants.pauseThreshold)
+        XCTAssertEqual(reloaded.crutchWords, Constants.crutchWords)
+    }
 }

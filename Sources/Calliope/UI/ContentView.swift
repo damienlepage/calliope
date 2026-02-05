@@ -174,6 +174,10 @@ struct ContentView: View {
                             TextField("uh, um, you know", text: crutchWordsBinding())
                                 .textFieldStyle(.roundedBorder)
                         }
+                        Button("Reset to Defaults") {
+                            preferencesStore.resetToDefaults()
+                        }
+                        .buttonStyle(.bordered)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
 

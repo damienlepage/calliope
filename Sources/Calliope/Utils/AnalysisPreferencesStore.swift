@@ -119,6 +119,14 @@ final class AnalysisPreferencesStore: ObservableObject {
             .eraseToAnyPublisher()
     }
 
+    func resetToDefaults() {
+        let defaultsPreferences = AnalysisPreferences.default
+        paceMin = defaultsPreferences.paceMin
+        paceMax = defaultsPreferences.paceMax
+        pauseThreshold = defaultsPreferences.pauseThreshold
+        crutchWords = defaultsPreferences.crutchWords
+    }
+
     static func parseCrutchWords(from text: String) -> [String] {
         var seen = Set<String>()
         return text.split(whereSeparator: { $0 == "," || $0 == "\n" })
