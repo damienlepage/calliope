@@ -82,8 +82,6 @@ class SpeechTranscriber {
         switch code {
         case .noSpeech, .canceled:
             return true
-        default:
-            return false
         }
     }
 

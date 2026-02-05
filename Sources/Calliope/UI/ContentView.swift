@@ -15,14 +15,14 @@ struct ContentView: View {
     @StateObject private var microphonePermission = MicrophonePermissionManager()
     @StateObject private var preferencesStore = AnalysisPreferencesStore()
     @StateObject private var overlayPreferencesStore: OverlayPreferencesStore
-    private let privacyDisclosureStore: PrivacyDisclosureStore
+    @State private var privacyDisclosureStore: PrivacyDisclosureStore
     @State private var hasAcceptedDisclosure: Bool
 
     init(
         overlayPreferencesStore: OverlayPreferencesStore = OverlayPreferencesStore(),
         privacyDisclosureStore: PrivacyDisclosureStore = PrivacyDisclosureStore()
     ) {
-        self.privacyDisclosureStore = privacyDisclosureStore
+        _privacyDisclosureStore = State(initialValue: privacyDisclosureStore)
         _overlayPreferencesStore = StateObject(wrappedValue: overlayPreferencesStore)
         _hasAcceptedDisclosure = State(initialValue: privacyDisclosureStore.hasAcceptedDisclosure)
     }
