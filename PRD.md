@@ -30,7 +30,7 @@ Calliope is a macOS app that acts as a real-time communication coach during conf
 2. Real-time visual cues for:
    - Speaking pace/speed.
    - Crutch word detection (e.g., “uh”, “ah”, “so”).
-   - Pause analysis (detect overly long or frequent pauses).
+   - Pause analysis (detect effective frequency and duration of pauses).
 3. Local storage of recordings and analysis artifacts on the user’s file system.
 4. Privacy safeguards ensuring other participants’ voices are not recorded.
 5. Support for common conferencing tools running on macOS (Zoom, Google Meet, Teams, etc.).
