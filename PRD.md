@@ -106,7 +106,7 @@ Acceptance Criteria: The recordings list supports reveal-in-Finder and delete ac
 Acceptance Criteria: When a recording session stops, the recordings list reloads so new files appear without relaunching; unit tests cover the reload trigger on recording stop.
 16. [DONE][P2] Show recording duration and size in recordings list
 Acceptance Criteria: The recordings list shows each file's duration and size alongside the modified date; metadata is loaded from local file data only; unit tests cover mapping of duration and size into recording items.
-17. [READY][P1] Add live input level indicator and silence warning
+17. [DONE][P1] Add live input level indicator and silence warning
 Acceptance Criteria: While capture is running, compute a lightweight input level from the user's microphone buffers and display a small level meter in the live feedback UI; if no meaningful input is detected for 5 seconds, surface a clear "No mic input detected" warning without stopping capture; updates are throttled to avoid UI jank; unit tests cover level mapping and silence timer behavior.
 18. [READY][P2] Persist per-recording analysis summary artifacts
 Acceptance Criteria: When a recording stops, write a local JSON summary (pace stats, pause stats, crutch word counts) alongside the audio file; summaries are stored only on-device with no network usage; recording deletion also removes its summary; unit tests cover summary creation and deletion wiring.

@@ -57,19 +57,14 @@ struct ContentView: View {
                         Text(audioCapture.statusText)
                             .font(.headline)
                     }
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Input Level")
-                            .font(.subheadline)
-                        ProgressView(value: audioAnalyzer.inputLevel)
-                            .progressViewStyle(.linear)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
 
                     // Real-time feedback panel (placeholder values)
                     FeedbackPanel(
                         pace: feedbackViewModel.state.pace,
                         crutchWords: feedbackViewModel.state.crutchWords,
                         pauseCount: feedbackViewModel.state.pauseCount,
+                        inputLevel: feedbackViewModel.state.inputLevel,
+                        showSilenceWarning: feedbackViewModel.state.showSilenceWarning,
                         paceMin: preferencesStore.paceMin,
                         paceMax: preferencesStore.paceMax
                     )
@@ -197,6 +192,8 @@ struct ContentView: View {
                     pace: feedbackViewModel.state.pace,
                     crutchWords: feedbackViewModel.state.crutchWords,
                     pauseCount: feedbackViewModel.state.pauseCount,
+                    inputLevel: feedbackViewModel.state.inputLevel,
+                    showSilenceWarning: feedbackViewModel.state.showSilenceWarning,
                     paceMin: preferencesStore.paceMin,
                     paceMax: preferencesStore.paceMax
                 )

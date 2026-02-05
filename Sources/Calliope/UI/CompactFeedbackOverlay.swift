@@ -11,26 +11,37 @@ struct CompactFeedbackOverlay: View {
     let pace: Double
     let crutchWords: Int
     let pauseCount: Int
+    let inputLevel: Double
+    let showSilenceWarning: Bool
     let paceMin: Double
     let paceMax: Double
 
     var body: some View {
-        HStack(spacing: 12) {
-            metric(
-                title: "Pace",
-                value: "\(Int(pace))",
-                color: paceColor(pace)
-            )
-            metric(
-                title: "Crutch",
-                value: "\(crutchWords)",
-                color: crutchWords > 5 ? .orange : .green
-            )
-            metric(
-                title: "Pause",
-                value: "\(pauseCount)",
-                color: .primary
-            )
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 12) {
+                metric(
+                    title: "Pace",
+                    value: "\(Int(pace))",
+                    color: paceColor(pace)
+                )
+                metric(
+                    title: "Crutch",
+                    value: "\(crutchWords)",
+                    color: crutchWords > 5 ? .orange : .green
+                )
+                metric(
+                    title: "Pause",
+                    value: "\(pauseCount)",
+                    color: .primary
+                )
+            }
+            InputLevelMeterView(level: inputLevel)
+                .frame(width: 180)
+            if showSilenceWarning {
+                Text("No mic input detected")
+                    .font(.caption)
+                    .foregroundColor(.orange)
+            }
         }
         .padding(12)
         .background(Color(NSColor.windowBackgroundColor).opacity(0.95))
@@ -73,6 +84,8 @@ struct CompactFeedbackOverlay_Previews: PreviewProvider {
             pace: 165,
             crutchWords: 2,
             pauseCount: 1,
+            inputLevel: 0.6,
+            showSilenceWarning: false,
             paceMin: Constants.targetPaceMin,
             paceMax: Constants.targetPaceMax
         )

@@ -13,10 +13,20 @@ class AudioAnalyzer: ObservableObject {
     @Published var crutchWordCount: Int = 0
     @Published var pauseCount: Int = 0
     @Published var inputLevel: Double = 0.0
+    @Published var silenceWarning: Bool = false
 
     var feedbackPublisher: AnyPublisher<FeedbackState, Never> {
-        Publishers.CombineLatest3($currentPace, $crutchWordCount, $pauseCount)
-            .map { FeedbackState(pace: $0, crutchWords: $1, pauseCount: $2) }
+        Publishers.CombineLatest4($currentPace, $crutchWordCount, $pauseCount, $inputLevel)
+            .combineLatest($silenceWarning)
+            .map { combined, warning in
+                FeedbackState(
+                    pace: combined.0,
+                    crutchWords: combined.1,
+                    pauseCount: combined.2,
+                    inputLevel: combined.3,
+                    showSilenceWarning: warning
+                )
+            }
             .eraseToAnyPublisher()
     }
 
@@ -25,6 +35,9 @@ class AudioAnalyzer: ObservableObject {
     private var paceAnalyzer: PaceAnalyzer?
     private(set) var pauseDetector: PauseDetector?
     private var cancellables = Set<AnyCancellable>()
+    private let silenceMonitor = SilenceMonitor()
+    private var silenceTimer: DispatchSourceTimer?
+    private var isRecording = false
 
     func setup(audioCapture: AudioCapture, preferencesStore: AnalysisPreferencesStore) {
         speechTranscriber = SpeechTranscriber()
@@ -54,13 +67,18 @@ class AudioAnalyzer: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] isRecording in
                 guard let self = self else { return }
+                self.isRecording = isRecording
                 if isRecording {
                     self.paceAnalyzer?.start()
                     self.pauseDetector?.reset()
                     self.pauseCount = 0
                     self.inputLevel = 0.0
+                    self.silenceWarning = false
+                    self.silenceMonitor.reset()
+                    self.startSilenceTimer()
                     self.speechTranscriber?.startTranscription()
                 } else {
+                    self.stopSilenceTimer()
                     self.speechTranscriber?.stopTranscription()
                     self.paceAnalyzer?.reset()
                     self.crutchWordDetector?.reset()
@@ -69,6 +87,7 @@ class AudioAnalyzer: ObservableObject {
                     self.crutchWordCount = 0
                     self.pauseCount = 0
                     self.inputLevel = 0.0
+                    self.silenceWarning = false
                 }
             }
             .store(in: &cancellables)
@@ -104,10 +123,16 @@ class AudioAnalyzer: ObservableObject {
 
     private func updateInputLevel(from buffer: AVAudioPCMBuffer) {
         let rms = rmsAmplitude(in: buffer)
-        let scaled = min(max(Double(rms) * 8.0, 0.0), 1.0)
+        let scaled = InputLevelMeter.scaledLevel(for: rms)
+        silenceMonitor.registerLevel(scaled)
+        if silenceWarning, scaled >= InputLevelMeter.meaningfulThreshold {
+            DispatchQueue.main.async { [weak self] in
+                self?.silenceWarning = false
+            }
+        }
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            self.inputLevel = (self.inputLevel * 0.7) + (scaled * 0.3)
+            self.inputLevel = InputLevelMeter.smoothedLevel(previous: self.inputLevel, target: scaled)
         }
     }
 
@@ -155,5 +180,27 @@ class AudioAnalyzer: ObservableObject {
             .components(separatedBy: CharacterSet.alphanumerics.inverted)
             .filter { !$0.isEmpty }
         return tokens.count
+    }
+
+    private func startSilenceTimer() {
+        stopSilenceTimer()
+        let timer = DispatchSource.makeTimerSource(queue: DispatchQueue.global(qos: .utility))
+        timer.schedule(deadline: .now() + 1.0, repeating: 1.0)
+        timer.setEventHandler { [weak self] in
+            guard let self, self.isRecording else { return }
+            let shouldWarn = self.silenceMonitor.isSilenceWarningActive()
+            if shouldWarn != self.silenceWarning {
+                DispatchQueue.main.async { [weak self] in
+                    self?.silenceWarning = shouldWarn
+                }
+            }
+        }
+        silenceTimer = timer
+        timer.resume()
+    }
+
+    private func stopSilenceTimer() {
+        silenceTimer?.cancel()
+        silenceTimer = nil
     }
 }

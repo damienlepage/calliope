@@ -11,6 +11,8 @@ struct FeedbackPanel: View {
     let pace: Double // words per minute
     let crutchWords: Int
     let pauseCount: Int
+    let inputLevel: Double
+    let showSilenceWarning: Bool
     let paceMin: Double
     let paceMax: Double
     
@@ -48,6 +50,17 @@ struct FeedbackPanel: View {
                 Text("\(pauseCount)")
                     .font(.subheadline)
             }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Input Level")
+                    .font(.subheadline)
+                InputLevelMeterView(level: inputLevel)
+                if showSilenceWarning {
+                    Text("No mic input detected")
+                        .font(.footnote)
+                        .foregroundColor(.orange)
+                }
+            }
         }
         .padding()
         .background(Color(NSColor.controlBackgroundColor))
@@ -73,6 +86,8 @@ struct FeedbackPanel_Previews: PreviewProvider {
             pace: 150,
             crutchWords: 3,
             pauseCount: 2,
+            inputLevel: 0.4,
+            showSilenceWarning: false,
             paceMin: Constants.targetPaceMin,
             paceMax: Constants.targetPaceMax
         )
