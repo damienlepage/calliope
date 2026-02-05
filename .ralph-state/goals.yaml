@@ -16,24 +16,24 @@ objectives:
     description: "Microphone capture pipeline runs without errors and records user speech when Start is pressed"
     target: true
     current: false
-    status: "BEHIND"
+    status: "BELOW_TARGET"
   - id: "realtime_feedback"
     description: "UI updates pace/crutch/pause from live audio with glanceable live feedback"
     target: true
     current: false
-    status: "BEHIND"
+    status: "BELOW_TARGET"
   - id: "privacy_guardrails"
     description: "Privacy safeguards documented and enforced; disclosure acknowledged once and persists"
     target: true
     current: false
-    status: "BEHIND"
+    status: "BELOW_TARGET"
   - id: "stop_without_errors"
     description: "Stop action completes without speech recognition errors when no speech is detected"
     target: true
     current: false
-    status: "BEHIND"
+    status: "BELOW_TARGET"
   - id: "input_device_flexibility"
     description: "Works with built-in mic or headset without requiring a headset confirmation gate"
     target: true
     current: false
-    status: "BEHIND"
+    status: "BELOW_TARGET"
