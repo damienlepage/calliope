@@ -21,11 +21,13 @@ struct ContentView: View {
     @State private var privacyDisclosureStore: PrivacyDisclosureStore
     @State private var hasAcceptedDisclosure: Bool
     @State private var isDisclosureSheetPresented: Bool
+    private let settingsActionModel: MicrophoneSettingsActionModel
 
     init(
         audioCapturePreferencesStore: AudioCapturePreferencesStore = AudioCapturePreferencesStore(),
         overlayPreferencesStore: OverlayPreferencesStore = OverlayPreferencesStore(),
-        privacyDisclosureStore: PrivacyDisclosureStore = PrivacyDisclosureStore()
+        privacyDisclosureStore: PrivacyDisclosureStore = PrivacyDisclosureStore(),
+        settingsActionModel: MicrophoneSettingsActionModel = MicrophoneSettingsActionModel()
     ) {
         _privacyDisclosureStore = State(initialValue: privacyDisclosureStore)
         _overlayPreferencesStore = StateObject(wrappedValue: overlayPreferencesStore)
@@ -38,6 +40,7 @@ struct ContentView: View {
         _isDisclosureSheetPresented = State(
             initialValue: PrivacyDisclosureGate.requiresDisclosure(hasAcceptedDisclosure: accepted)
         )
+        self.settingsActionModel = settingsActionModel
     }
 
     var body: some View {
@@ -52,6 +55,7 @@ struct ContentView: View {
             hasMicrophoneInput: microphoneDevices.hasMicrophoneInput
         )
         let canStartRecording = blockingReasons.isEmpty
+        let showOpenSettingsAction = settingsActionModel.shouldShow(for: blockingReasons)
         ZStack(alignment: .topTrailing) {
             ScrollView {
                 VStack(spacing: 20) {
@@ -99,6 +103,12 @@ struct ContentView: View {
                         }
                         .buttonStyle(.bordered)
                         .disabled(microphonePermission.state == .authorized)
+                        if showOpenSettingsAction {
+                            Button("Open System Settings") {
+                                settingsActionModel.openSystemSettings()
+                            }
+                            .buttonStyle(.bordered)
+                        }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
 
