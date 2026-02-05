@@ -19,6 +19,7 @@ class SpeechTranscriber {
     private let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
+    private var isStopping = false
 
     private(set) var state: SpeechTranscriberState = .idle
     
@@ -26,6 +27,7 @@ class SpeechTranscriber {
     var onStateChange: ((SpeechTranscriberState) -> Void)?
     
     func startTranscription() {
+        isStopping = false
         guard let speechRecognizer = speechRecognizer, speechRecognizer.isAvailable else {
             print("Speech recognizer not available")
             updateState(.error)
@@ -73,6 +75,7 @@ class SpeechTranscriber {
     }
     
     func stopTranscription() {
+        isStopping = true
         recognitionRequest?.endAudio()
         recognitionTask?.cancel()
         recognitionRequest = nil
@@ -81,6 +84,10 @@ class SpeechTranscriber {
     }
 
     func handleRecognitionError(_ error: Error) {
+        if isStopping {
+            updateState(.stopped)
+            return
+        }
         if isBenignRecognitionError(error) {
             updateState(.stopped)
             return

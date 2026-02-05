@@ -30,8 +30,8 @@ objectives:
   - id: "stop_without_errors"
     description: "Stop action completes without speech recognition errors when no speech is detected"
     target: true
-    current: false
-    status: "BELOW_TARGET"
+    current: true
+    status: "AT_TARGET"
   - id: "input_device_flexibility"
     description: "Works with built-in mic or headset without requiring a headset confirmation gate"
     target: true

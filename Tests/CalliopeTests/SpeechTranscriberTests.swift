@@ -43,4 +43,17 @@ final class SpeechTranscriberTests: XCTestCase {
 
         XCTAssertEqual(observedStates.last, .error)
     }
+
+    func testStopIgnoresSubsequentErrors() {
+        let transcriber = SpeechTranscriber()
+        var observedStates: [SpeechTranscriberState] = []
+        transcriber.onStateChange = { observedStates.append($0) }
+
+        transcriber.stopTranscription()
+
+        let error = NSError(domain: "TestErrorDomain", code: 1, userInfo: nil)
+        transcriber.handleRecognitionError(error)
+
+        XCTAssertEqual(observedStates.last, .stopped)
+    }
 }
