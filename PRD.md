@@ -152,5 +152,5 @@ Acceptance Criteria: If the system reports no available microphone input device,
 Acceptance Criteria: Starting capture resets pace/crutch/pause indicators, input level, silence warnings, and elapsed timer to neutral defaults before first live updates; stopping capture clears the live feedback state and hides any warnings; unit tests cover reset behavior on start and stop paths.
 37. [DONE][P2] Add local playback controls for recordings
 Acceptance Criteria: Recordings list supports play/pause and stop for `.m4a`/`.wav` items using local-only playback; only one recording can play at a time; UI indicates which item is playing; stopping playback clears the indicator; unit tests cover play, pause, stop, and single-active-playback enforcement with local-only audio APIs.
-38. [READY][P1] Add capture start validation for real microphone input
+38. [DONE][P1] Add capture start validation for real microphone input
 Acceptance Criteria: When capture starts, verify within 2 seconds that input level crosses a minimal threshold and the recording file size grows above zero; if either check fails, stop capture and show a clear local-only status message instructing the user to retry or select another mic; successful starts do not show the error; unit tests cover success and failure paths with mocked level and file-size providers.

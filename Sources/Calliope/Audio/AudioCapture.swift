@@ -21,6 +21,7 @@ enum AudioCaptureError: Equatable {
     case bufferWriteFailed
     case engineConfigurationChanged
     case captureStartTimedOut
+    case captureStartValidationFailed
 
     var message: String {
         switch self {
@@ -46,6 +47,8 @@ enum AudioCaptureError: Equatable {
             return "Input device changed. Press Start again."
         case .captureStartTimedOut:
             return "Capture did not start in time. Press Start again."
+        case .captureStartValidationFailed:
+            return "No mic input detected. Retry or select another microphone."
         }
     }
 }
@@ -295,6 +298,13 @@ class AudioCapture: NSObject, ObservableObject {
     private let recordingStartTimeoutQueue: DispatchQueue
     private let recordingStartConfirmation: () -> Bool
     private var recordingStartWorkItem: DispatchWorkItem?
+    private let captureStartValidationTimeout: TimeInterval
+    private let captureStartValidationQueue: DispatchQueue
+    private let inputLevelProvider: (AVAudioPCMBuffer) -> Double
+    private let fileSizeProvider: (URL) -> Int
+    private let captureStartValidationThreshold: Double
+    private var captureStartValidationWorkItem: DispatchWorkItem?
+    private var didReceiveMeaningfulInput = false
 
     var statusText: String {
         switch status {
@@ -316,7 +326,52 @@ class AudioCapture: NSObject, ObservableObject {
         },
         recordingStartTimeout: TimeInterval = 1.0,
         recordingStartTimeoutQueue: DispatchQueue = .main,
-        recordingStartConfirmation: @escaping () -> Bool = { true }
+        recordingStartConfirmation: @escaping () -> Bool = { true },
+        captureStartValidationTimeout: TimeInterval = 2.0,
+        captureStartValidationQueue: DispatchQueue = .main,
+        captureStartValidationThreshold: Double = InputLevelMeter.meaningfulThreshold,
+        inputLevelProvider: @escaping (AVAudioPCMBuffer) -> Double = { buffer in
+            let frameLength = Int(buffer.frameLength)
+            guard frameLength > 0 else { return 0 }
+
+            if let floatChannelData = buffer.floatChannelData {
+                let samples = floatChannelData[0]
+                var sum: Float = 0
+                for index in 0..<frameLength {
+                    let sample = samples[index]
+                    sum += sample * sample
+                }
+                return InputLevelMeter.scaledLevel(for: sqrt(sum / Float(frameLength)))
+            }
+
+            if let int16ChannelData = buffer.int16ChannelData {
+                let samples = int16ChannelData[0]
+                var sum: Float = 0
+                let scale = 1.0 as Float / Float(Int16.max)
+                for index in 0..<frameLength {
+                    let sample = Float(samples[index]) * scale
+                    sum += sample * sample
+                }
+                return InputLevelMeter.scaledLevel(for: sqrt(sum / Float(frameLength)))
+            }
+
+            if let int32ChannelData = buffer.int32ChannelData {
+                let samples = int32ChannelData[0]
+                var sum: Float = 0
+                let scale = 1.0 as Float / Float(Int32.max)
+                for index in 0..<frameLength {
+                    let sample = Float(samples[index]) * scale
+                    sum += sample * sample
+                }
+                return InputLevelMeter.scaledLevel(for: sqrt(sum / Float(frameLength)))
+            }
+
+            return 0
+        },
+        fileSizeProvider: @escaping (URL) -> Int = { url in
+            let values = try? url.resourceValues(forKeys: [.fileSizeKey])
+            return values?.fileSize ?? 0
+        }
     ) {
         self.recordingManager = recordingManager
         self.capturePreferencesStore = capturePreferencesStore
@@ -325,6 +380,11 @@ class AudioCapture: NSObject, ObservableObject {
         self.recordingStartTimeout = recordingStartTimeout
         self.recordingStartTimeoutQueue = recordingStartTimeoutQueue
         self.recordingStartConfirmation = recordingStartConfirmation
+        self.captureStartValidationTimeout = captureStartValidationTimeout
+        self.captureStartValidationQueue = captureStartValidationQueue
+        self.inputLevelProvider = inputLevelProvider
+        self.fileSizeProvider = fileSizeProvider
+        self.captureStartValidationThreshold = captureStartValidationThreshold
         super.init()
         // macOS doesn't use AVAudioSession - AVAudioEngine handles this directly
     }
@@ -411,6 +471,8 @@ class AudioCapture: NSObject, ObservableObject {
         }
 
         tapFrameCounter = 0
+        didReceiveMeaningfulInput = false
+        cancelCaptureStartValidation()
 
         // Install tap to capture audio
         backend.installTap(bufferSize: 1024) { [weak self] buffer in
@@ -418,6 +480,11 @@ class AudioCapture: NSObject, ObservableObject {
 
             if let copiedBuffer = AudioBufferCopy.copy(buffer) {
                 self.bufferSubject.send(copiedBuffer)
+            }
+
+            let level = self.inputLevelProvider(buffer)
+            if level >= self.captureStartValidationThreshold {
+                self.didReceiveMeaningfulInput = true
             }
 
             do {
@@ -533,6 +600,7 @@ class AudioCapture: NSObject, ObservableObject {
     private func stopRecordingInternal(statusOverride: AudioCaptureStatus) {
         let wasRecording = isRecording
         cancelRecordingStartTimeout()
+        cancelCaptureStartValidation()
         backend?.clearConfigurationChangeHandler()
         backend?.removeTap()
         backend?.stop()
@@ -590,6 +658,7 @@ class AudioCapture: NSObject, ObservableObject {
         }
         if case .error = newStatus {
             cancelRecordingStartTimeout()
+            cancelCaptureStartValidation()
         }
         if Thread.isMainThread {
             status = newStatus
@@ -644,6 +713,7 @@ class AudioCapture: NSObject, ObservableObject {
     private func markRecordingStarted() {
         isRecording = true
         updateStatus(.recording)
+        scheduleCaptureStartValidation()
     }
 
     private func scheduleRecordingStartTimeout() {
@@ -668,6 +738,33 @@ class AudioCapture: NSObject, ObservableObject {
     private func cancelRecordingStartTimeout() {
         recordingStartWorkItem?.cancel()
         recordingStartWorkItem = nil
+    }
+
+    private func scheduleCaptureStartValidation() {
+        cancelCaptureStartValidation()
+        let workItem = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            guard self.isRecording else { return }
+            if case .error = self.status {
+                return
+            }
+            guard let url = self.currentRecordingURL else { return }
+            let fileSize = self.fileSizeProvider(url)
+            guard self.didReceiveMeaningfulInput, fileSize > 0 else {
+                self.stopRecordingInternal(statusOverride: .error(.captureStartValidationFailed))
+                return
+            }
+        }
+        captureStartValidationWorkItem = workItem
+        captureStartValidationQueue.asyncAfter(
+            deadline: .now() + captureStartValidationTimeout,
+            execute: workItem
+        )
+    }
+
+    private func cancelCaptureStartValidation() {
+        captureStartValidationWorkItem?.cancel()
+        captureStartValidationWorkItem = nil
     }
 
     private func cleanupFailedRecordingIfNeeded(wasRecording: Bool) {

@@ -378,6 +378,111 @@ final class AudioCaptureTests: XCTestCase {
         XCTAssertFalse(backend.removeTapCalled)
     }
 
+    func testCaptureStartValidationStopsWhenInputLevelMissing() {
+        let backend = FakeAudioCaptureBackend()
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let capture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() },
+            captureStartValidationTimeout: 0.05,
+            captureStartValidationThreshold: 0.5,
+            inputLevelProvider: { _ in 0.0 },
+            fileSizeProvider: { _ in 1 }
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+        backend.simulateBuffer()
+
+        let validationHandled = expectation(description: "validation handled")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            validationHandled.fulfill()
+        }
+        wait(for: [validationHandled], timeout: 1.0)
+
+        XCTAssertFalse(capture.isRecording)
+        XCTAssertEqual(capture.status, .error(.captureStartValidationFailed))
+        XCTAssertTrue(backend.removeTapCalled)
+        XCTAssertFalse(backend.isStarted)
+    }
+
+    func testCaptureStartValidationStopsWhenFileSizeMissing() {
+        let backend = FakeAudioCaptureBackend()
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let capture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() },
+            captureStartValidationTimeout: 0.05,
+            captureStartValidationThreshold: 0.5,
+            inputLevelProvider: { _ in 1.0 },
+            fileSizeProvider: { _ in 0 }
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+        backend.simulateBuffer()
+
+        let validationHandled = expectation(description: "validation handled")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            validationHandled.fulfill()
+        }
+        wait(for: [validationHandled], timeout: 1.0)
+
+        XCTAssertFalse(capture.isRecording)
+        XCTAssertEqual(capture.status, .error(.captureStartValidationFailed))
+        XCTAssertTrue(backend.removeTapCalled)
+        XCTAssertFalse(backend.isStarted)
+    }
+
+    func testCaptureStartValidationDoesNotFireOnSuccess() {
+        let backend = FakeAudioCaptureBackend()
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let capture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() },
+            captureStartValidationTimeout: 0.05,
+            captureStartValidationThreshold: 0.5,
+            inputLevelProvider: { _ in 1.0 },
+            fileSizeProvider: { _ in 10 }
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+        backend.simulateBuffer()
+
+        let validationHandled = expectation(description: "validation handled")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            validationHandled.fulfill()
+        }
+        wait(for: [validationHandled], timeout: 1.0)
+
+        XCTAssertTrue(capture.isRecording)
+        XCTAssertEqual(capture.status, .recording)
+        XCTAssertTrue(backend.isStarted)
+        XCTAssertFalse(backend.removeTapCalled)
+    }
+
     func testStopRecordingClearsErrorWhenNotRecording() {
         let backend = FakeAudioCaptureBackend()
         let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
