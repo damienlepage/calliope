@@ -124,3 +124,7 @@ Acceptance Criteria: Add a voice isolation capture backend using the platform vo
 Acceptance Criteria: A "Reset to Defaults" action restores pace, pause, and crutch word settings to default values; defaults persist across launches; unit tests cover reset behavior and persistence.
 25. [DONE][P2] Show analysis summary stats in recordings list
 Acceptance Criteria: Recording list items surface locally stored analysis summary stats (average pace, pause count, crutch word total) when a summary JSON exists; loading remains local-only with no network usage; unit tests cover summary loading and display text formatting.
+26. [DONE][P2] Confirm before deleting recordings
+Acceptance Criteria: Deleting a recording requires an explicit confirmation; canceling the prompt leaves recordings untouched; unit tests cover pending delete, confirm, and cancel behaviors.
+27. [READY][P1] Add in-app mic capture diagnostics
+Acceptance Criteria: A "Test Mic" control runs a short (<=3s) local-only capture using the existing microphone pipeline without saving audio; the UI reports success/failure with a clear status message; the test auto-stops and returns the app to idle; unit tests cover success, failure, and auto-stop states with mocked capture behavior.

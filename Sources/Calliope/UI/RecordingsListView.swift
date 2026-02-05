@@ -46,7 +46,7 @@ struct RecordingsListView: View {
                         }
                         .buttonStyle(.bordered)
                         Button("Delete") {
-                            viewModel.delete(item)
+                            viewModel.requestDelete(item)
                         }
                         .buttonStyle(.bordered)
                     }
@@ -57,6 +57,18 @@ struct RecordingsListView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .onAppear {
             viewModel.loadRecordings()
+        }
+        .alert(item: $viewModel.pendingDelete) { item in
+            Alert(
+                title: Text("Delete recording?"),
+                message: Text("This will remove the recording and its analysis summary."),
+                primaryButton: .destructive(Text("Delete")) {
+                    viewModel.confirmDelete(item)
+                },
+                secondaryButton: .cancel {
+                    viewModel.cancelDelete()
+                }
+            )
         }
     }
 }

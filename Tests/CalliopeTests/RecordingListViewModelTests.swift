@@ -77,7 +77,7 @@ final class RecordingListViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.recordings.map(\.fileSizeBytes), [sizes[urlA]!, sizes[urlB]!])
     }
 
-    func testDeleteRecordingReloadsList() {
+    func testConfirmDeleteRecordingReloadsList() {
         let urlA = URL(fileURLWithPath: "/tmp/remove.m4a")
         let urlB = URL(fileURLWithPath: "/tmp/keep.wav")
         let manager = MockRecordingManager(recordings: [urlA, urlB])
@@ -92,10 +92,36 @@ final class RecordingListViewModelTests: XCTestCase {
         viewModel.loadRecordings()
         XCTAssertEqual(viewModel.recordings.count, 2)
 
-        viewModel.delete(viewModel.recordings[0])
+        let target = viewModel.recordings[0]
+        viewModel.requestDelete(target)
+        viewModel.confirmDelete(target)
 
         XCTAssertEqual(manager.deleted, [urlA])
         XCTAssertEqual(viewModel.recordings.map(\.url), [urlB])
+    }
+
+    func testCancelDeleteClearsPendingWithoutDeleting() {
+        let urlA = URL(fileURLWithPath: "/tmp/remove.m4a")
+        let manager = MockRecordingManager(recordings: [urlA])
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) },
+            durationProvider: { _ in nil },
+            fileSizeProvider: { _ in nil }
+        )
+
+        viewModel.loadRecordings()
+
+        let target = viewModel.recordings[0]
+        viewModel.requestDelete(target)
+        XCTAssertEqual(viewModel.pendingDelete, target)
+
+        viewModel.cancelDelete()
+
+        XCTAssertNil(viewModel.pendingDelete)
+        XCTAssertTrue(manager.deleted.isEmpty)
+        XCTAssertEqual(viewModel.recordings.map(\.url), [urlA])
     }
 
     func testReloadsWhenRecordingStops() {

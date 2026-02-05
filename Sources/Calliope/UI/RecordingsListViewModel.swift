@@ -87,6 +87,7 @@ struct RecordingItem: Identifiable, Equatable {
 @MainActor
 final class RecordingListViewModel: ObservableObject {
     @Published private(set) var recordings: [RecordingItem] = []
+    @Published var pendingDelete: RecordingItem?
 
     private let manager: RecordingManaging
     private let workspace: WorkspaceOpening
@@ -143,13 +144,22 @@ final class RecordingListViewModel: ObservableObject {
         workspace.activateFileViewerSelecting([manager.recordingsDirectoryURL()])
     }
 
-    func delete(_ item: RecordingItem) {
+    func requestDelete(_ item: RecordingItem) {
+        pendingDelete = item
+    }
+
+    func confirmDelete(_ item: RecordingItem) {
+        pendingDelete = nil
         do {
             try manager.deleteRecording(at: item.url)
         } catch {
             return
         }
         loadRecordings()
+    }
+
+    func cancelDelete() {
+        pendingDelete = nil
     }
 
     private static func defaultModificationDate(_ url: URL) -> Date {
