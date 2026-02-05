@@ -82,7 +82,7 @@ Acceptance Criteria: Pace, crutch word, and pause indicators update from live an
 Acceptance Criteria: App settings UI clearly states local-only processing and user-only capture; code enforces microphone-only input path with no system audio capture; tests assert settings copy and enforcement.
 4. [DONE][P2] Remove headset confirmation gate for recording eligibility
 Acceptance Criteria: Recording eligibility no longer blocks on headset confirmation; UI removes headset confirmation toggle; tests cover updated eligibility and guardrail behavior.
-5. [READY][P1] Add sensitivity preferences for pace, pause, and crutch words
+5. [DONE][P1] Add sensitivity preferences for pace, pause, and crutch words
 Acceptance Criteria: Preferences model persists pace min/max, pause threshold, and crutch word list locally; UI provides simple controls to edit these values; analysis uses stored preferences for pace, pause, and crutch word detection; defaults match current Constants values; unit tests cover defaults, persistence, and analyzer wiring.
 6. [READY][P2] Add always-on-top overlay toggle
 Acceptance Criteria: User-facing toggle enables/disables always-on-top behavior; window level switches between floating and normal; toggle persists across launches; unit tests cover default and persistence.

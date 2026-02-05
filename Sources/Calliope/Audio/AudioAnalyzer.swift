@@ -20,16 +20,15 @@ class AudioAnalyzer: ObservableObject {
     }
 
     private var speechTranscriber: SpeechTranscriber?
-    private var crutchWordDetector: CrutchWordDetector?
+    private(set) var crutchWordDetector: CrutchWordDetector?
     private var paceAnalyzer: PaceAnalyzer?
-    private var pauseDetector: PauseDetector?
+    private(set) var pauseDetector: PauseDetector?
     private var cancellables = Set<AnyCancellable>()
 
-    func setup(audioCapture: AudioCapture) {
+    func setup(audioCapture: AudioCapture, preferencesStore: AnalysisPreferencesStore) {
         speechTranscriber = SpeechTranscriber()
-        crutchWordDetector = CrutchWordDetector()
         paceAnalyzer = PaceAnalyzer()
-        pauseDetector = PauseDetector()
+        applyPreferences(preferencesStore.current)
 
         speechTranscriber?.onTranscription = { [weak self] transcript in
             guard let self = self else { return }
@@ -42,6 +41,13 @@ class AudioAnalyzer: ObservableObject {
                 self.crutchWordCount = crutchCount
             }
         }
+
+        preferencesStore.preferencesPublisher
+            .removeDuplicates()
+            .sink { [weak self] preferences in
+                self?.applyPreferences(preferences)
+            }
+            .store(in: &cancellables)
 
         audioCapture.$isRecording
             .receive(on: DispatchQueue.main)
@@ -70,6 +76,11 @@ class AudioAnalyzer: ObservableObject {
                 self?.processAudioBuffer(buffer)
             }
             .store(in: &cancellables)
+    }
+
+    func applyPreferences(_ preferences: AnalysisPreferences) {
+        crutchWordDetector = CrutchWordDetector(crutchWords: preferences.crutchWords)
+        pauseDetector = PauseDetector(pauseThreshold: preferences.pauseThreshold)
     }
 
     func processAudioBuffer(_ buffer: AVAudioPCMBuffer) {

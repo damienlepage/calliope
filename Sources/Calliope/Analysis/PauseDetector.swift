@@ -9,7 +9,7 @@ import Foundation
 import AVFoundation
 
 class PauseDetector {
-    private let pauseThreshold: TimeInterval
+    private(set) var pauseThreshold: TimeInterval
     private let speechThreshold: Float
     private let now: () -> Date
     private var lastSpeechTime: Date?

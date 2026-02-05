@@ -13,6 +13,7 @@ struct ContentView: View {
     @StateObject private var audioAnalyzer = AudioAnalyzer()
     @StateObject private var feedbackViewModel = LiveFeedbackViewModel()
     @StateObject private var microphonePermission = MicrophonePermissionManager()
+    @StateObject private var preferencesStore = AnalysisPreferencesStore()
     private let privacyDisclosureStore: PrivacyDisclosureStore
     @State private var hasAcceptedDisclosure: Bool
 
@@ -48,7 +49,9 @@ struct ContentView: View {
             FeedbackPanel(
                 pace: feedbackViewModel.state.pace,
                 crutchWords: feedbackViewModel.state.crutchWords,
-                pauseCount: feedbackViewModel.state.pauseCount
+                pauseCount: feedbackViewModel.state.pauseCount,
+                paceMin: preferencesStore.paceMin,
+                paceMax: preferencesStore.paceMax
             )
 
             VStack(alignment: .leading, spacing: 8) {
@@ -88,6 +91,57 @@ struct ContentView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Sensitivity Preferences")
+                    .font(.headline)
+                HStack {
+                    Text("Pace Min")
+                        .font(.subheadline)
+                    Spacer()
+                    Stepper(
+                        value: $preferencesStore.paceMin,
+                        in: 60...220,
+                        step: 5
+                    ) {
+                        Text("\(Int(preferencesStore.paceMin)) WPM")
+                            .font(.subheadline)
+                    }
+                }
+                HStack {
+                    Text("Pace Max")
+                        .font(.subheadline)
+                    Spacer()
+                    Stepper(
+                        value: $preferencesStore.paceMax,
+                        in: 80...260,
+                        step: 5
+                    ) {
+                        Text("\(Int(preferencesStore.paceMax)) WPM")
+                            .font(.subheadline)
+                    }
+                }
+                HStack {
+                    Text("Pause Threshold")
+                        .font(.subheadline)
+                    Spacer()
+                    Stepper(
+                        value: $preferencesStore.pauseThreshold,
+                        in: 0.5...5.0,
+                        step: 0.1
+                    ) {
+                        Text(String(format: "%.1f s", preferencesStore.pauseThreshold))
+                            .font(.subheadline)
+                    }
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Crutch Words (comma or newline separated)")
+                        .font(.subheadline)
+                    TextField("uh, um, you know", text: crutchWordsBinding())
+                        .textFieldStyle(.roundedBorder)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
             // Control buttons
             HStack(spacing: 20) {
                 Button(action: toggleRecording) {
@@ -99,14 +153,24 @@ struct ContentView: View {
             }
         }
         .padding()
-        .frame(width: 400, height: 500)
+        .frame(width: 400, height: 620)
         .onAppear {
-            audioAnalyzer.setup(audioCapture: audioCapture)
+            audioAnalyzer.setup(audioCapture: audioCapture, preferencesStore: preferencesStore)
             feedbackViewModel.bind(
                 feedbackPublisher: audioAnalyzer.feedbackPublisher,
                 recordingPublisher: audioCapture.$isRecording.eraseToAnyPublisher()
             )
             microphonePermission.refresh()
+        }
+        .onChange(of: preferencesStore.paceMin) { newValue in
+            if newValue > preferencesStore.paceMax {
+                preferencesStore.paceMax = newValue
+            }
+        }
+        .onChange(of: preferencesStore.paceMax) { newValue in
+            if newValue < preferencesStore.paceMin {
+                preferencesStore.paceMin = newValue
+            }
         }
         .onChange(of: hasAcceptedDisclosure) { newValue in
             privacyDisclosureStore.hasAcceptedDisclosure = newValue
@@ -143,6 +207,13 @@ struct ContentView: View {
     private func blockingReasonsText(_ reasons: [RecordingEligibility.Reason]) -> String {
         let details = reasons.map(\.message).joined(separator: " ")
         return "Start is disabled. \(details)"
+    }
+
+    private func crutchWordsBinding() -> Binding<String> {
+        Binding(
+            get: { AnalysisPreferencesStore.formatCrutchWords(preferencesStore.crutchWords) },
+            set: { preferencesStore.crutchWords = AnalysisPreferencesStore.parseCrutchWords(from: $0) }
+        )
     }
 
     private func statusColor(for status: AudioCaptureStatus) -> Color {

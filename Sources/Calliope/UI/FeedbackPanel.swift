@@ -11,6 +11,8 @@ struct FeedbackPanel: View {
     let pace: Double // words per minute
     let crutchWords: Int
     let pauseCount: Int
+    let paceMin: Double
+    let paceMax: Double
     
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
@@ -53,7 +55,7 @@ struct FeedbackPanel: View {
     }
     
     private func paceColor(_ pace: Double) -> Color {
-        switch PaceFeedback.level(for: pace) {
+        switch PaceFeedback.level(for: pace, minPace: paceMin, maxPace: paceMax) {
         case .slow:
             return .blue // Too slow
         case .target:
@@ -67,7 +69,13 @@ struct FeedbackPanel: View {
 #if DEBUG
 struct FeedbackPanel_Previews: PreviewProvider {
     static var previews: some View {
-        FeedbackPanel(pace: 150, crutchWords: 3, pauseCount: 2)
+        FeedbackPanel(
+            pace: 150,
+            crutchWords: 3,
+            pauseCount: 2,
+            paceMin: Constants.targetPaceMin,
+            paceMax: Constants.targetPaceMax
+        )
             .padding()
     }
 }

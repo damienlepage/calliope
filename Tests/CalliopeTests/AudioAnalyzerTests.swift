@@ -29,4 +29,20 @@ final class AudioAnalyzerTests: XCTestCase {
 
         XCTAssertEqual(count, 0)
     }
+
+    func testApplyPreferencesWiresDetectors() {
+        let analyzer = AudioAnalyzer()
+        let preferences = AnalysisPreferences(
+            paceMin: 110,
+            paceMax: 170,
+            pauseThreshold: 2.2,
+            crutchWords: ["alpha", "you know"]
+        )
+
+        analyzer.applyPreferences(preferences)
+
+        XCTAssertEqual(analyzer.crutchWordDetector?.analyze("alpha"), 1)
+        XCTAssertEqual(analyzer.crutchWordDetector?.analyze("you know"), 1)
+        XCTAssertEqual(analyzer.pauseDetector?.pauseThreshold, 2.2)
+    }
 }
