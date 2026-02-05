@@ -114,3 +114,5 @@ Acceptance Criteria: When a recording stops, write a local JSON summary (pace st
 Acceptance Criteria: The UI displays the current microphone input device name while recording; if the device changes during an active session, the capture stops with a clear message instructing the user to press Start again; the device name updates after the change; unit tests cover device name exposure and change handling.
 20. [DONE][P2] Ignore zero-byte recordings in list
 Acceptance Criteria: Recording listing ignores `.m4a`/`.wav` files with zero byte size; unit tests cover filtering out zero-byte files while keeping valid recordings.
+21. [READY][P1] Add end-to-end live analysis smoke test with bundled audio
+Acceptance Criteria: Test-only analysis input path can inject a bundled mono WAV into the live analysis pipeline without using the system audio graph; the live feedback view model receives paced/crutch/pause updates that differ from defaults; tests assert updates are throttled and remain local-only with no network usage.
