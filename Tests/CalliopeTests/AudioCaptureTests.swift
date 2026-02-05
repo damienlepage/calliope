@@ -110,6 +110,29 @@ final class AudioCaptureTests: XCTestCase {
         XCTAssertFalse(backend.isStarted)
         XCTAssertFalse(backend.installTapCalled)
     }
+
+    func testStopRecordingClearsErrorWhenNotRecording() {
+        let backend = FakeAudioCaptureBackend()
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let capture = AudioCapture(
+            recordingManager: manager,
+            backendFactory: { backend },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() }
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startRecording(privacyState: privacyState, microphonePermission: .denied)
+
+        XCTAssertFalse(capture.isRecording)
+        XCTAssertEqual(capture.status, .error(.microphonePermissionMissing))
+
+        capture.stopRecording()
+
+        XCTAssertEqual(capture.status, .idle)
+    }
 }
 
 private enum TestError: Error {

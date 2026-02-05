@@ -216,8 +216,13 @@ class AudioCapture: NSObject, ObservableObject {
     }
 
     func stopRecording() {
-        guard isRecording else { return }
-        stopRecordingInternal(statusOverride: .idle)
+        if isRecording {
+            stopRecordingInternal(statusOverride: .idle)
+            return
+        }
+        if case .error = status {
+            updateStatus(.idle)
+        }
     }
 
     private func stopRecordingInternal(statusOverride: AudioCaptureStatus) {
