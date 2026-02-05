@@ -1,6 +1,6 @@
 ---
 id: cal-mq2d
-status: ready
+status: closed
 deps: []
 links: []
 created: 2026-02-05T19:00:00Z
@@ -19,3 +19,7 @@ Provide a simple toggle so the coaching window can stay above other apps during 
 - When enabled, the main window level uses a floating/overlay level; when disabled it returns to normal.
 - The toggle persists across app launches.
 - Unit tests cover the persistence of the toggle state and default value.
+
+## Outcome
+- Verified always-on-top toggle in `ContentView` binds to `OverlayPreferencesStore` and drives `WindowLevelController`.
+- Confirmed persistence and default value tests in `OverlayPreferencesStoreTests`.
