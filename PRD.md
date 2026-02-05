@@ -134,3 +134,5 @@ Acceptance Criteria: A "Test Mic" control runs a short (<=3s) local-only capture
 Acceptance Criteria: While recording, the main view and compact overlay show an elapsed time label in mm:ss; the timer updates once per second without adding noticeable CPU usage; stopping recording resets the timer and hides the label; unit tests cover formatting and timer start/stop with a controllable clock.
 29. [DONE][P2] Surface pace guidance text alongside WPM
 Acceptance Criteria: The feedback panel and compact overlay display a short text label ("Slow", "On Target", "Fast") derived from `PaceFeedback.level` next to the pace value; labels update with live feedback; unit tests cover mapping from pace values to label text.
+30. [DONE][P2] Clarify Start disabled reasons for mic permission states
+Acceptance Criteria: When Start is disabled due to microphone permission, the blocking reason text reflects whether permission is not determined, denied, or restricted with clear guidance; unit tests cover each permission state mapping.

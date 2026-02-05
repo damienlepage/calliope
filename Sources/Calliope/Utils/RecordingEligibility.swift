@@ -7,13 +7,19 @@
 
 struct RecordingEligibility {
     enum Reason: Equatable {
-        case microphonePermissionMissing
+        case microphonePermissionNotDetermined
+        case microphonePermissionDenied
+        case microphonePermissionRestricted
         case disclosureNotAccepted
 
         var message: String {
             switch self {
-            case .microphonePermissionMissing:
-                return "Microphone access is required."
+            case .microphonePermissionNotDetermined:
+                return "Microphone access is required. Click Grant Microphone Access."
+            case .microphonePermissionDenied:
+                return "Microphone access is denied. Enable it in System Settings > Privacy & Security > Microphone."
+            case .microphonePermissionRestricted:
+                return "Microphone access is restricted by system policy."
             case .disclosureNotAccepted:
                 return "Confirm the privacy disclosure."
             }
@@ -26,7 +32,16 @@ struct RecordingEligibility {
     ) -> [Reason] {
         var reasons: [Reason] = []
         if microphonePermission != .authorized {
-            reasons.append(.microphonePermissionMissing)
+            switch microphonePermission {
+            case .notDetermined:
+                reasons.append(.microphonePermissionNotDetermined)
+            case .denied:
+                reasons.append(.microphonePermissionDenied)
+            case .restricted:
+                reasons.append(.microphonePermissionRestricted)
+            case .authorized:
+                break
+            }
         }
         if !privacyState.hasAcceptedDisclosure {
             reasons.append(.disclosureNotAccepted)
