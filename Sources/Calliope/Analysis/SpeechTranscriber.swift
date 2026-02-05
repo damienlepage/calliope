@@ -31,20 +31,35 @@ class SpeechTranscriber {
             updateState(.error)
             return
         }
-        
+
+        SFSpeechRecognizer.requestAuthorization { [weak self] status in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                guard status == .authorized else {
+                    print("Speech recognition not authorized: \(status)")
+                    self.updateState(.error)
+                    return
+                }
+
+                self.beginRecognition(with: speechRecognizer)
+            }
+        }
+    }
+
+    private func beginRecognition(with speechRecognizer: SFSpeechRecognizer) {
         recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
         guard let recognitionRequest = recognitionRequest else { return }
 
         recognitionRequest.shouldReportPartialResults = true
-        if #available(macOS 10.15, *) {
+        if #available(macOS 10.15, *), speechRecognizer.supportsOnDeviceRecognition {
             recognitionRequest.requiresOnDeviceRecognition = true
         }
-        
+
         recognitionTask = speechRecognizer.recognitionTask(with: recognitionRequest) { [weak self] result, error in
             if let result = result {
                 self?.onTranscription?(result.bestTranscription.formattedString)
             }
-            
+
             if let error = error {
                 self?.handleRecognitionError(error)
             }
@@ -77,12 +92,19 @@ class SpeechTranscriber {
 
     func isBenignRecognitionError(_ error: Error) -> Bool {
         let nsError = error as NSError
+        if isAFAssistantNoSpeechError(nsError) {
+            return true
+        }
         guard nsError.domain == SFSpeechRecognizerErrorDomain else { return false }
         guard let code = SFSpeechRecognizerErrorCode(rawValue: nsError.code) else { return false }
         switch code {
         case .noSpeech, .canceled:
             return true
         }
+    }
+
+    private func isAFAssistantNoSpeechError(_ error: NSError) -> Bool {
+        return error.domain == "kAFAssistantErrorDomain" && error.code == 1110
     }
 
     private func updateState(_ newState: SpeechTranscriberState) {

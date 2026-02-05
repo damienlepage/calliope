@@ -50,6 +50,13 @@ struct ContentView: View {
                 Text(audioCapture.statusText)
                     .font(.headline)
             }
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Input Level")
+                    .font(.subheadline)
+                ProgressView(value: audioAnalyzer.inputLevel)
+                    .progressViewStyle(.linear)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             // Real-time feedback panel (placeholder values)
             FeedbackPanel(
