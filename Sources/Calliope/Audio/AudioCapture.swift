@@ -503,6 +503,7 @@ class AudioCapture: NSObject, ObservableObject {
     }
 
     private func stopRecordingInternal(statusOverride: AudioCaptureStatus) {
+        let wasRecording = isRecording
         cancelRecordingStartTimeout()
         backend?.clearConfigurationChangeHandler()
         backend?.removeTap()
@@ -512,6 +513,7 @@ class AudioCapture: NSObject, ObservableObject {
 
         isRecording = false
         updateStatus(statusOverride)
+        cleanupFailedRecordingIfNeeded(wasRecording: wasRecording)
     }
 
     private func stopMicTest(status: MicTestStatus) {
@@ -636,5 +638,14 @@ class AudioCapture: NSObject, ObservableObject {
     private func cancelRecordingStartTimeout() {
         recordingStartWorkItem?.cancel()
         recordingStartWorkItem = nil
+    }
+
+    private func cleanupFailedRecordingIfNeeded(wasRecording: Bool) {
+        guard !wasRecording else { return }
+        guard let url = currentRecordingURL else { return }
+        let values = try? url.resourceValues(forKeys: [.fileSizeKey])
+        let fileSize = values?.fileSize ?? 0
+        guard fileSize == 0 else { return }
+        try? recordingManager.deleteRecording(at: url)
     }
 }

@@ -237,6 +237,38 @@ final class AudioCaptureTests: XCTestCase {
         XCTAssertTrue(backend.removeTapCalled)
     }
 
+    func testStartRecordingEngineFailureCleansUpEmptyRecordingFile() {
+        let backend = FakeAudioCaptureBackend()
+        backend.startError = TestError.engineStart
+        let tempRoot = FileManager.default.temporaryDirectory
+            .appendingPathComponent("AudioCaptureTests.\(UUID().uuidString)", isDirectory: true)
+        let manager = RecordingManager(baseDirectory: tempRoot)
+        let capture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
+            audioFileFactory: { url, _ in
+                FileManager.default.createFile(atPath: url.path, contents: Data(), attributes: nil)
+                return FakeAudioFileWriter()
+            }
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+
+        XCTAssertEqual(capture.status, .error(.engineStartFailed))
+        guard let url = capture.currentRecordingURL else {
+            XCTFail("Expected a recording URL")
+            return
+        }
+        XCTAssertFalse(FileManager.default.fileExists(atPath: url.path))
+    }
+
     func testStartRecordingAudioFileFailureSetsError() {
         let backend = FakeAudioCaptureBackend()
         let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)

@@ -142,3 +142,5 @@ Acceptance Criteria: If deleting a recording fails, the recordings section shows
 Acceptance Criteria: Starting a recording clears any prior mic test success/failure status so stale messages are not shown; unit tests cover the reset behavior.
 33. [DONE][P1] Enforce on-device speech recognition only
 Acceptance Criteria: `SpeechTranscriber` refuses to start when on-device recognition is unsupported; authorization is not requested when on-device recognition is unsupported; unit tests cover the on-device support gate.
+34. [DONE][P2] Clean up zero-byte recordings when capture fails to start
+Acceptance Criteria: When recording fails before entering the recording state, any zero-byte recording file created for that attempt is removed; recordings that successfully start are unaffected; unit tests cover cleanup on engine start failure.
