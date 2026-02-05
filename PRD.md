@@ -80,3 +80,5 @@ Acceptance Criteria: App can start and stop a local-only microphone capture sess
 Acceptance Criteria: Pace, crutch word, and pause indicators update from live analysis stream; updates are throttled to avoid UI jank; unit tests validate mapping from analysis events to UI state.
 3. [DONE][P2] Document and enforce privacy guardrails in capture settings
 Acceptance Criteria: App settings UI clearly states local-only processing and user-only capture; code enforces microphone-only input path with no system audio capture; tests assert settings copy and enforcement.
+4. [DONE][P2] Remove headset confirmation gate for recording eligibility
+Acceptance Criteria: Recording eligibility no longer blocks on headset confirmation; UI removes headset confirmation toggle; tests cover updated eligibility and guardrail behavior.

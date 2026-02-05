@@ -35,5 +35,5 @@ objectives:
   - id: "input_device_flexibility"
     description: "Works with built-in mic or headset without requiring a headset confirmation gate"
     target: true
-    current: false
-    status: "BELOW_TARGET"
+    current: true
+    status: "AT_TARGET"

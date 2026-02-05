@@ -4,12 +4,10 @@ import XCTest
 final class RecordingEligibilityTests: XCTestCase {
     func testCanStartRequiresPrivacyAndMicPermission() {
         let privacySatisfied = PrivacyGuardrails.State(
-            hasAcceptedDisclosure: true,
-            hasConfirmedHeadphones: true
+            hasAcceptedDisclosure: true
         )
         let privacyMissing = PrivacyGuardrails.State(
-            hasAcceptedDisclosure: false,
-            hasConfirmedHeadphones: true
+            hasAcceptedDisclosure: false
         )
 
         XCTAssertTrue(
@@ -34,8 +32,7 @@ final class RecordingEligibilityTests: XCTestCase {
 
     func testBlockingReasonsIncludeMicAndPrivacyFailuresInOrder() {
         let privacyMissing = PrivacyGuardrails.State(
-            hasAcceptedDisclosure: false,
-            hasConfirmedHeadphones: false
+            hasAcceptedDisclosure: false
         )
 
         let reasons = RecordingEligibility.blockingReasons(
@@ -47,16 +44,14 @@ final class RecordingEligibilityTests: XCTestCase {
             reasons,
             [
                 .microphonePermissionMissing,
-                .disclosureNotAccepted,
-                .headphonesNotConfirmed
+                .disclosureNotAccepted
             ]
         )
     }
 
     func testBlockingReasonsEmptyWhenAllRequirementsMet() {
         let privacySatisfied = PrivacyGuardrails.State(
-            hasAcceptedDisclosure: true,
-            hasConfirmedHeadphones: true
+            hasAcceptedDisclosure: true
         )
 
         let reasons = RecordingEligibility.blockingReasons(

@@ -8,7 +8,6 @@
 struct PrivacyGuardrails {
     struct State: Equatable {
         var hasAcceptedDisclosure: Bool
-        var hasConfirmedHeadphones: Bool
     }
 
     static let disclosureTitle = "Privacy Guardrails"
@@ -20,6 +19,6 @@ struct PrivacyGuardrails {
     ]
 
     static func canStartRecording(state: State) -> Bool {
-        state.hasAcceptedDisclosure && state.hasConfirmedHeadphones
+        state.hasAcceptedDisclosure
     }
 }

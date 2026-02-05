@@ -14,12 +14,10 @@ struct ContentView: View {
     @StateObject private var feedbackViewModel = LiveFeedbackViewModel()
     @StateObject private var microphonePermission = MicrophonePermissionManager()
     @State private var hasAcceptedDisclosure = false
-    @State private var hasConfirmedHeadphones = false
 
     var body: some View {
         let privacyState = PrivacyGuardrails.State(
-            hasAcceptedDisclosure: hasAcceptedDisclosure,
-            hasConfirmedHeadphones: hasConfirmedHeadphones
+            hasAcceptedDisclosure: hasAcceptedDisclosure
         )
         let blockingReasons = RecordingEligibility.blockingReasons(
             privacyState: privacyState,
@@ -76,7 +74,6 @@ struct ContentView: View {
                     .font(.footnote)
                     .foregroundColor(.secondary)
                 Toggle("I understand Calliope only analyzes my mic input", isOn: $hasAcceptedDisclosure)
-                Toggle("I am using headphones or a headset", isOn: $hasConfirmedHeadphones)
                 if !blockingReasons.isEmpty {
                     Text(blockingReasonsText(blockingReasons))
                         .font(.footnote)
@@ -112,8 +109,7 @@ struct ContentView: View {
             audioCapture.stopRecording()
         } else {
             let privacyState = PrivacyGuardrails.State(
-                hasAcceptedDisclosure: hasAcceptedDisclosure,
-                hasConfirmedHeadphones: hasConfirmedHeadphones
+                hasAcceptedDisclosure: hasAcceptedDisclosure
             )
             audioCapture.startRecording(
                 privacyState: privacyState,

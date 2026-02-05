@@ -14,8 +14,7 @@ final class AudioCaptureTests: XCTestCase {
         )
 
         let privacyState = PrivacyGuardrails.State(
-            hasAcceptedDisclosure: true,
-            hasConfirmedHeadphones: true
+            hasAcceptedDisclosure: true
         )
 
         capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
@@ -42,8 +41,7 @@ final class AudioCaptureTests: XCTestCase {
         )
 
         let privacyState = PrivacyGuardrails.State(
-            hasAcceptedDisclosure: true,
-            hasConfirmedHeadphones: true
+            hasAcceptedDisclosure: true
         )
 
         capture.startRecording(privacyState: privacyState, microphonePermission: .denied)
@@ -63,8 +61,7 @@ final class AudioCaptureTests: XCTestCase {
         )
 
         let privacyState = PrivacyGuardrails.State(
-            hasAcceptedDisclosure: true,
-            hasConfirmedHeadphones: true
+            hasAcceptedDisclosure: true
         )
 
         capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
@@ -84,8 +81,7 @@ final class AudioCaptureTests: XCTestCase {
         )
 
         let privacyState = PrivacyGuardrails.State(
-            hasAcceptedDisclosure: true,
-            hasConfirmedHeadphones: true
+            hasAcceptedDisclosure: true
         )
 
         capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
@@ -104,8 +100,7 @@ final class AudioCaptureTests: XCTestCase {
         )
 
         let privacyState = PrivacyGuardrails.State(
-            hasAcceptedDisclosure: true,
-            hasConfirmedHeadphones: true
+            hasAcceptedDisclosure: true
         )
 
         capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
