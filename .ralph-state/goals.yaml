@@ -1,5 +1,5 @@
 current_phase: "MVP Foundation"
-last_updated: "2026-02-04"
+last_updated: "2026-02-05"
 
 objectives:
   - id: "build_succeeds"
@@ -13,17 +13,27 @@ objectives:
     current: true
     status: "AT_TARGET"
   - id: "mic_capture_pipeline"
-    description: "Microphone capture pipeline runs without errors"
+    description: "Microphone capture pipeline runs without errors and records user speech when Start is pressed"
     target: true
-    current: true
-    status: "AT_TARGET"
+    current: false
+    status: "BEHIND"
   - id: "realtime_feedback"
-    description: "UI updates pace/crutch/pause from live audio"
+    description: "UI updates pace/crutch/pause from live audio with glanceable live feedback"
     target: true
-    current: true
-    status: "AT_TARGET"
+    current: false
+    status: "BEHIND"
   - id: "privacy_guardrails"
-    description: "Privacy safeguards documented and enforced"
+    description: "Privacy safeguards documented and enforced; disclosure acknowledged once and persists"
     target: true
-    current: true
-    status: "AT_TARGET"
+    current: false
+    status: "BEHIND"
+  - id: "stop_without_errors"
+    description: "Stop action completes without speech recognition errors when no speech is detected"
+    target: true
+    current: false
+    status: "BEHIND"
+  - id: "input_device_flexibility"
+    description: "Works with built-in mic or headset without requiring a headset confirmation gate"
+    target: true
+    current: false
+    status: "BEHIND"
