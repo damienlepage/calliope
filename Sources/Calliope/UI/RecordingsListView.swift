@@ -27,6 +27,9 @@ struct RecordingsListView: View {
                     .foregroundColor(.secondary)
             } else {
                 ForEach(viewModel.recordings) { item in
+                    let isActive = viewModel.activePlaybackURL == item.url
+                    let isPaused = isActive && viewModel.isPlaybackPaused
+                    let isPlaying = isActive && !viewModel.isPlaybackPaused
                     HStack(spacing: 12) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(item.displayName)
@@ -39,8 +42,26 @@ struct RecordingsListView: View {
                                     .font(.footnote)
                                     .foregroundColor(.secondary)
                             }
+                            if isPlaying {
+                                Text("Playing")
+                                    .font(.footnote)
+                                    .foregroundColor(.secondary)
+                            } else if isPaused {
+                                Text("Paused")
+                                    .font(.footnote)
+                                    .foregroundColor(.secondary)
+                            }
                         }
                         Spacer()
+                        Button(isPlaying ? "Pause" : "Play") {
+                            viewModel.togglePlayPause(item)
+                        }
+                        .buttonStyle(.bordered)
+                        Button("Stop") {
+                            viewModel.stopPlayback()
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(!isActive)
                         Button("Reveal") {
                             viewModel.reveal(item)
                         }

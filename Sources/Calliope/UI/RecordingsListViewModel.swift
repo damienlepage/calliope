@@ -24,6 +24,47 @@ protocol WorkspaceOpening {
 
 extension NSWorkspace: WorkspaceOpening {}
 
+protocol AudioPlaying: AnyObject {
+    var isPlaying: Bool { get }
+    var onPlaybackEnded: (() -> Void)? { get set }
+    func play() -> Bool
+    func pause()
+    func stop()
+}
+
+final class SystemAudioPlayer: NSObject, AudioPlaying, AVAudioPlayerDelegate {
+    private let player: AVAudioPlayer
+    var onPlaybackEnded: (() -> Void)?
+
+    init(url: URL) throws {
+        player = try AVAudioPlayer(contentsOf: url)
+        super.init()
+        player.delegate = self
+        player.prepareToPlay()
+    }
+
+    var isPlaying: Bool {
+        player.isPlaying
+    }
+
+    func play() -> Bool {
+        player.play()
+    }
+
+    func pause() {
+        player.pause()
+    }
+
+    func stop() {
+        player.stop()
+        player.currentTime = 0
+    }
+
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        onPlaybackEnded?()
+    }
+}
+
 struct RecordingItem: Identifiable, Equatable {
     let url: URL
     let modifiedAt: Date
@@ -89,6 +130,8 @@ final class RecordingListViewModel: ObservableObject {
     @Published private(set) var recordings: [RecordingItem] = []
     @Published var pendingDelete: RecordingItem?
     @Published var deleteErrorMessage: String?
+    @Published private(set) var activePlaybackURL: URL?
+    @Published private(set) var isPlaybackPaused = false
 
     private let manager: RecordingManaging
     private let workspace: WorkspaceOpening
@@ -96,6 +139,8 @@ final class RecordingListViewModel: ObservableObject {
     private let durationProvider: (URL) -> TimeInterval?
     private let fileSizeProvider: (URL) -> Int?
     private let summaryProvider: (URL) -> AnalysisSummary?
+    private let audioPlayerFactory: (URL) throws -> AudioPlaying
+    private var audioPlayer: AudioPlaying?
     private var cancellables = Set<AnyCancellable>()
 
     init(
@@ -104,7 +149,10 @@ final class RecordingListViewModel: ObservableObject {
         modificationDateProvider: @escaping (URL) -> Date = RecordingListViewModel.defaultModificationDate,
         durationProvider: @escaping (URL) -> TimeInterval? = RecordingListViewModel.defaultDuration,
         fileSizeProvider: @escaping (URL) -> Int? = RecordingListViewModel.defaultFileSize,
-        summaryProvider: @escaping (URL) -> AnalysisSummary? = RecordingListViewModel.defaultSummary
+        summaryProvider: @escaping (URL) -> AnalysisSummary? = RecordingListViewModel.defaultSummary,
+        audioPlayerFactory: @escaping (URL) throws -> AudioPlaying = { url in
+            try SystemAudioPlayer(url: url)
+        }
     ) {
         self.manager = manager
         self.workspace = workspace
@@ -112,6 +160,7 @@ final class RecordingListViewModel: ObservableObject {
         self.durationProvider = durationProvider
         self.fileSizeProvider = fileSizeProvider
         self.summaryProvider = summaryProvider
+        self.audioPlayerFactory = audioPlayerFactory
     }
 
     func loadRecordings() {
@@ -153,6 +202,9 @@ final class RecordingListViewModel: ObservableObject {
     func confirmDelete(_ item: RecordingItem) {
         pendingDelete = nil
         deleteErrorMessage = nil
+        if item.url == activePlaybackURL {
+            stopPlayback()
+        }
         do {
             try manager.deleteRecording(at: item.url)
         } catch {
@@ -164,6 +216,49 @@ final class RecordingListViewModel: ObservableObject {
 
     func cancelDelete() {
         pendingDelete = nil
+    }
+
+    func togglePlayPause(_ item: RecordingItem) {
+        if activePlaybackURL == item.url, let audioPlayer {
+            if audioPlayer.isPlaying {
+                audioPlayer.pause()
+                isPlaybackPaused = true
+                return
+            }
+            if audioPlayer.play() {
+                isPlaybackPaused = false
+                return
+            }
+        }
+        startPlayback(item)
+    }
+
+    func stopPlayback() {
+        audioPlayer?.stop()
+        audioPlayer = nil
+        activePlaybackURL = nil
+        isPlaybackPaused = false
+    }
+
+    private func startPlayback(_ item: RecordingItem) {
+        if activePlaybackURL != nil {
+            stopPlayback()
+        }
+        do {
+            let player = try audioPlayerFactory(item.url)
+            player.onPlaybackEnded = { [weak self] in
+                self?.stopPlayback()
+            }
+            audioPlayer = player
+            activePlaybackURL = item.url
+            if player.play() {
+                isPlaybackPaused = false
+            } else {
+                stopPlayback()
+            }
+        } catch {
+            stopPlayback()
+        }
     }
 
     private static func defaultModificationDate(_ url: URL) -> Date {

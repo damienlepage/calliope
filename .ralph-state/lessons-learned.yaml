@@ -11,3 +11,4 @@ lessons:
   - "swift build still reports ModuleCache permission errors under ~/.cache/clang and warns that ~/Library/org.swift.swiftpm cache directories are not writable."
   - "swift build continues to fail with ModuleCache permission errors under ~/.cache/clang; manifests cannot load the arm64-apple-macosx14.0 standard library while using the MacOSX26.2 SDK."
   - "swift build still fails with ModuleCache permission errors under ~/.cache/clang and cannot load the arm64-apple-macosx14.0 standard library while using the MacOSX26.2 SDK."
+  - "swift build still fails due to ~/.cache/clang/ModuleCache permission errors and SwiftPM cache directories not being writable."

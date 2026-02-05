@@ -49,6 +49,60 @@ final class RecordingListViewModelTests: XCTestCase {
         }
     }
 
+    private final class MockAudioPlayer: AudioPlaying {
+        let url: URL
+        var isPlaying: Bool { isPlayingFlag }
+        var onPlaybackEnded: (() -> Void)?
+        private(set) var playCount = 0
+        private(set) var pauseCount = 0
+        private(set) var stopCount = 0
+        private var isPlayingFlag = false
+
+        init(url: URL) {
+            self.url = url
+        }
+
+        func play() -> Bool {
+            playCount += 1
+            isPlayingFlag = true
+            return true
+        }
+
+        func pause() {
+            pauseCount += 1
+            isPlayingFlag = false
+        }
+
+        func stop() {
+            stopCount += 1
+            isPlayingFlag = false
+        }
+    }
+
+    private final class PlayerStore {
+        var players: [URL: MockAudioPlayer] = [:]
+    }
+
+    private func makeViewModelWithPlayback(
+        recordings: [URL]
+    ) -> (RecordingListViewModel, MockRecordingManager, PlayerStore) {
+        let manager = MockRecordingManager(recordings: recordings)
+        let store = PlayerStore()
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) },
+            durationProvider: { _ in nil },
+            fileSizeProvider: { _ in nil },
+            audioPlayerFactory: { url in
+                let player = MockAudioPlayer(url: url)
+                store.players[url] = player
+                return player
+            }
+        )
+        return (viewModel, manager, store)
+    }
+
     func testLoadRecordingsPreservesManagerOrder() {
         let urlA = URL(fileURLWithPath: "/tmp/a.m4a")
         let urlB = URL(fileURLWithPath: "/tmp/b.wav")
@@ -230,5 +284,96 @@ final class RecordingListViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.recordings.map(\.url), [url])
         XCTAssertNotNil(viewModel.deleteErrorMessage)
         XCTAssertTrue(manager.deleted.isEmpty)
+    }
+
+    func testPlayStartsPlaybackAndSetsActiveItem() {
+        let url = URL(fileURLWithPath: "/tmp/play.m4a")
+        let (viewModel, _, store) = makeViewModelWithPlayback(recordings: [url])
+
+        viewModel.loadRecordings()
+        let item = viewModel.recordings[0]
+        viewModel.togglePlayPause(item)
+
+        XCTAssertEqual(viewModel.activePlaybackURL, url)
+        XCTAssertFalse(viewModel.isPlaybackPaused)
+        XCTAssertEqual(store.players[url]?.playCount, 1)
+    }
+
+    func testPlayPauseResumeMaintainsActiveItem() {
+        let url = URL(fileURLWithPath: "/tmp/pause.m4a")
+        let (viewModel, _, store) = makeViewModelWithPlayback(recordings: [url])
+
+        viewModel.loadRecordings()
+        let item = viewModel.recordings[0]
+        viewModel.togglePlayPause(item)
+        viewModel.togglePlayPause(item)
+
+        XCTAssertTrue(viewModel.isPlaybackPaused)
+        XCTAssertEqual(store.players[url]?.pauseCount, 1)
+        XCTAssertEqual(viewModel.activePlaybackURL, url)
+
+        viewModel.togglePlayPause(item)
+
+        XCTAssertFalse(viewModel.isPlaybackPaused)
+        XCTAssertEqual(store.players[url]?.playCount, 2)
+    }
+
+    func testStopClearsPlaybackState() {
+        let url = URL(fileURLWithPath: "/tmp/stop.m4a")
+        let (viewModel, _, store) = makeViewModelWithPlayback(recordings: [url])
+
+        viewModel.loadRecordings()
+        let item = viewModel.recordings[0]
+        viewModel.togglePlayPause(item)
+        viewModel.stopPlayback()
+
+        XCTAssertNil(viewModel.activePlaybackURL)
+        XCTAssertFalse(viewModel.isPlaybackPaused)
+        XCTAssertEqual(store.players[url]?.stopCount, 1)
+    }
+
+    func testStartingNewPlaybackStopsPrevious() {
+        let urlA = URL(fileURLWithPath: "/tmp/one.m4a")
+        let urlB = URL(fileURLWithPath: "/tmp/two.m4a")
+        let (viewModel, _, store) = makeViewModelWithPlayback(recordings: [urlA, urlB])
+
+        viewModel.loadRecordings()
+        let first = viewModel.recordings[0]
+        let second = viewModel.recordings[1]
+
+        viewModel.togglePlayPause(first)
+        viewModel.togglePlayPause(second)
+
+        XCTAssertEqual(viewModel.activePlaybackURL, urlB)
+        XCTAssertEqual(store.players[urlA]?.stopCount, 1)
+        XCTAssertEqual(store.players[urlB]?.playCount, 1)
+    }
+
+    func testPlaybackEndClearsIndicator() {
+        let url = URL(fileURLWithPath: "/tmp/end.m4a")
+        let (viewModel, _, store) = makeViewModelWithPlayback(recordings: [url])
+
+        viewModel.loadRecordings()
+        let item = viewModel.recordings[0]
+        viewModel.togglePlayPause(item)
+
+        store.players[url]?.onPlaybackEnded?()
+
+        XCTAssertNil(viewModel.activePlaybackURL)
+        XCTAssertFalse(viewModel.isPlaybackPaused)
+    }
+
+    func testConfirmDeleteStopsActivePlayback() {
+        let url = URL(fileURLWithPath: "/tmp/delete.m4a")
+        let (viewModel, manager, store) = makeViewModelWithPlayback(recordings: [url])
+
+        viewModel.loadRecordings()
+        let item = viewModel.recordings[0]
+        viewModel.togglePlayPause(item)
+        viewModel.confirmDelete(item)
+
+        XCTAssertNil(viewModel.activePlaybackURL)
+        XCTAssertEqual(store.players[url]?.stopCount, 1)
+        XCTAssertTrue(manager.deleted.contains(url))
     }
 }
