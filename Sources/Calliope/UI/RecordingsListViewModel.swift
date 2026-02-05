@@ -29,6 +29,7 @@ struct RecordingItem: Identifiable, Equatable {
     let modifiedAt: Date
     let duration: TimeInterval?
     let fileSizeBytes: Int?
+    let summary: AnalysisSummary?
 
     var id: URL { url }
     var displayName: String { url.lastPathComponent }
@@ -42,6 +43,16 @@ struct RecordingItem: Identifiable, Equatable {
             return dateText
         }
         return ([dateText] + details).joined(separator: " • ")
+    }
+    var summaryText: String? {
+        guard let summary else { return nil }
+        let pace = Int(summary.pace.averageWPM.rounded())
+        let pieces = [
+            "Avg \(pace) WPM",
+            "Pauses \(summary.pauses.count)",
+            "Crutch \(summary.crutchWords.totalCount)"
+        ]
+        return pieces.joined(separator: " • ")
     }
 
     private static let durationFormatter: DateComponentsFormatter = {
@@ -82,6 +93,7 @@ final class RecordingListViewModel: ObservableObject {
     private let modificationDateProvider: (URL) -> Date
     private let durationProvider: (URL) -> TimeInterval?
     private let fileSizeProvider: (URL) -> Int?
+    private let summaryProvider: (URL) -> AnalysisSummary?
     private var cancellables = Set<AnyCancellable>()
 
     init(
@@ -89,13 +101,15 @@ final class RecordingListViewModel: ObservableObject {
         workspace: WorkspaceOpening = NSWorkspace.shared,
         modificationDateProvider: @escaping (URL) -> Date = RecordingListViewModel.defaultModificationDate,
         durationProvider: @escaping (URL) -> TimeInterval? = RecordingListViewModel.defaultDuration,
-        fileSizeProvider: @escaping (URL) -> Int? = RecordingListViewModel.defaultFileSize
+        fileSizeProvider: @escaping (URL) -> Int? = RecordingListViewModel.defaultFileSize,
+        summaryProvider: @escaping (URL) -> AnalysisSummary? = RecordingListViewModel.defaultSummary
     ) {
         self.manager = manager
         self.workspace = workspace
         self.modificationDateProvider = modificationDateProvider
         self.durationProvider = durationProvider
         self.fileSizeProvider = fileSizeProvider
+        self.summaryProvider = summaryProvider
     }
 
     func loadRecordings() {
@@ -105,7 +119,8 @@ final class RecordingListViewModel: ObservableObject {
                 url: url,
                 modifiedAt: modificationDateProvider(url),
                 duration: durationProvider(url),
-                fileSizeBytes: fileSizeProvider(url)
+                fileSizeBytes: fileSizeProvider(url),
+                summary: summaryProvider(url)
             )
         }
     }
@@ -155,5 +170,15 @@ final class RecordingListViewModel: ObservableObject {
     private static func defaultFileSize(_ url: URL) -> Int? {
         let values = try? url.resourceValues(forKeys: [.fileSizeKey])
         return values?.fileSize
+    }
+
+    private static func defaultSummary(_ url: URL) -> AnalysisSummary? {
+        let summaryURL = url
+            .deletingPathExtension()
+            .appendingPathExtension("summary.json")
+        guard let data = try? Data(contentsOf: summaryURL) else {
+            return nil
+        }
+        return try? JSONDecoder().decode(AnalysisSummary.self, from: data)
     }
 }

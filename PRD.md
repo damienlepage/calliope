@@ -122,3 +122,5 @@ Acceptance Criteria: Recordings section includes an "Open Folder" action that re
 Acceptance Criteria: Add a voice isolation capture backend using the platform voice processing/voice isolation path; expose a user-facing preference to enable/disable and persist it locally; enable by default when supported with a clear fallback status when not supported; keep capture microphone-only and local; unit tests cover backend selection, preference persistence, and fallback behavior.
 24. [DONE][P2] Add reset action for sensitivity preferences
 Acceptance Criteria: A "Reset to Defaults" action restores pace, pause, and crutch word settings to default values; defaults persist across launches; unit tests cover reset behavior and persistence.
+25. [DONE][P2] Show analysis summary stats in recordings list
+Acceptance Criteria: Recording list items surface locally stored analysis summary stats (average pace, pause count, crutch word total) when a summary JSON exists; loading remains local-only with no network usage; unit tests cover summary loading and display text formatting.

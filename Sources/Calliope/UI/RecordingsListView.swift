@@ -34,6 +34,11 @@ struct RecordingsListView: View {
                             Text(item.detailText)
                                 .font(.footnote)
                                 .foregroundColor(.secondary)
+                            if let summaryText = item.summaryText {
+                                Text(summaryText)
+                                    .font(.footnote)
+                                    .foregroundColor(.secondary)
+                            }
                         }
                         Spacer()
                         Button("Reveal") {

@@ -138,4 +138,44 @@ final class RecordingListViewModelTests: XCTestCase {
 
         XCTAssertEqual(workspace.selections, [[manager.recordingsDirectory]])
     }
+
+    func testLoadRecordingsIncludesSummary() {
+        let url = URL(fileURLWithPath: "/tmp/summary.m4a")
+        let manager = MockRecordingManager(recordings: [url])
+        let summary = AnalysisSummary(
+            version: 1,
+            createdAt: Date(timeIntervalSince1970: 1),
+            durationSeconds: 42,
+            pace: AnalysisSummary.PaceStats(
+                averageWPM: 120,
+                minWPM: 100,
+                maxWPM: 140,
+                totalWords: 80
+            ),
+            pauses: AnalysisSummary.PauseStats(
+                count: 2,
+                thresholdSeconds: 1.0
+            ),
+            crutchWords: AnalysisSummary.CrutchWordStats(
+                totalCount: 3,
+                counts: ["um": 2, "uh": 1]
+            )
+        )
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) },
+            durationProvider: { _ in 12 },
+            fileSizeProvider: { _ in 2048 },
+            summaryProvider: { _ in summary }
+        )
+
+        viewModel.loadRecordings()
+
+        XCTAssertEqual(viewModel.recordings.first?.summary, summary)
+        XCTAssertEqual(
+            viewModel.recordings.first?.summaryText,
+            "Avg 120 WPM • Pauses 2 • Crutch 3"
+        )
+    }
 }
