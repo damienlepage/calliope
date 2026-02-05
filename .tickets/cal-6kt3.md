@@ -1,6 +1,6 @@
 ---
 id: cal-6kt3
-status: ready
+status: closed
 deps: []
 links: []
 created: 2026-02-05T07:06:01Z
@@ -24,3 +24,8 @@ Introduce a voice-isolated microphone capture path so Calliope better filters ou
 
 - Keep CPU usage low; avoid additional dependencies.
 - Ensure no network usage is introduced.
+
+## Outcome
+- Implemented voice isolation backend selection with a persisted preference and fallback to standard mic capture.
+- UI exposes the voice isolation toggle with clear status messaging when unsupported.
+- Tests cover backend selection, preference persistence, and fallback behavior.
