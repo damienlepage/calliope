@@ -16,6 +16,10 @@ enum MicrophonePermissionState: Equatable {
     case denied
     case restricted
     case authorized
+
+    var shouldShowGrantAccess: Bool {
+        self == .notDetermined
+    }
 }
 
 protocol MicrophonePermissionProviding {

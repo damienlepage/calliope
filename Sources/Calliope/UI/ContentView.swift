@@ -98,11 +98,12 @@ struct ContentView: View {
                         Text(microphonePermissionDescription(for: microphonePermission.state))
                             .font(.subheadline)
                             .foregroundColor(.secondary)
-                        Button("Grant Microphone Access") {
-                            microphonePermission.requestAccess()
+                        if microphonePermission.state.shouldShowGrantAccess {
+                            Button("Grant Microphone Access") {
+                                microphonePermission.requestAccess()
+                            }
+                            .buttonStyle(.bordered)
                         }
-                        .buttonStyle(.bordered)
-                        .disabled(microphonePermission.state == .authorized)
                         if showOpenSettingsAction {
                             Button("Open System Settings") {
                                 settingsActionModel.openSystemSettings()
