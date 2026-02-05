@@ -16,6 +16,7 @@ final class RecordingListViewModelTests: XCTestCase {
         var recordings: [URL]
         var deleted: [URL] = []
         var loadCount = 0
+        var recordingsDirectory = URL(fileURLWithPath: "/tmp/CalliopeRecordings")
 
         init(recordings: [URL]) {
             self.recordings = recordings
@@ -30,10 +31,18 @@ final class RecordingListViewModelTests: XCTestCase {
             deleted.append(url)
             recordings.removeAll { $0 == url }
         }
+
+        func recordingsDirectoryURL() -> URL {
+            recordingsDirectory
+        }
     }
 
-    private final class NoopWorkspace: WorkspaceOpening {
-        func activateFileViewerSelecting(_ fileURLs: [URL]) {}
+    private final class SpyWorkspace: WorkspaceOpening {
+        private(set) var selections: [[URL]] = []
+
+        func activateFileViewerSelecting(_ fileURLs: [URL]) {
+            selections.append(fileURLs)
+        }
     }
 
     func testLoadRecordingsPreservesManagerOrder() {
@@ -54,7 +63,7 @@ final class RecordingListViewModelTests: XCTestCase {
         ]
         let viewModel = RecordingListViewModel(
             manager: manager,
-            workspace: NoopWorkspace(),
+            workspace: SpyWorkspace(),
             modificationDateProvider: { dates[$0] ?? .distantPast },
             durationProvider: { durations[$0] },
             fileSizeProvider: { sizes[$0] }
@@ -74,7 +83,7 @@ final class RecordingListViewModelTests: XCTestCase {
         let manager = MockRecordingManager(recordings: [urlA, urlB])
         let viewModel = RecordingListViewModel(
             manager: manager,
-            workspace: NoopWorkspace(),
+            workspace: SpyWorkspace(),
             modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) },
             durationProvider: { _ in nil },
             fileSizeProvider: { _ in nil }
@@ -94,7 +103,7 @@ final class RecordingListViewModelTests: XCTestCase {
         let manager = MockRecordingManager(recordings: [urlA])
         let viewModel = RecordingListViewModel(
             manager: manager,
-            workspace: NoopWorkspace(),
+            workspace: SpyWorkspace(),
             modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) },
             durationProvider: { _ in nil },
             fileSizeProvider: { _ in nil }
@@ -111,5 +120,22 @@ final class RecordingListViewModelTests: XCTestCase {
         subject.send(false)
         XCTAssertEqual(manager.loadCount, 1)
         XCTAssertEqual(viewModel.recordings.map(\.url), [urlA])
+    }
+
+    func testOpenRecordingsFolderSelectsDirectory() {
+        let manager = MockRecordingManager(recordings: [])
+        manager.recordingsDirectory = URL(fileURLWithPath: "/tmp/CalliopeRecordings")
+        let workspace = SpyWorkspace()
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: workspace,
+            modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) },
+            durationProvider: { _ in nil },
+            fileSizeProvider: { _ in nil }
+        )
+
+        viewModel.openRecordingsFolder()
+
+        XCTAssertEqual(workspace.selections, [[manager.recordingsDirectory]])
     }
 }

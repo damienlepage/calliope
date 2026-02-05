@@ -13,6 +13,7 @@ import Foundation
 protocol RecordingManaging {
     func getAllRecordings() -> [URL]
     func deleteRecording(at url: URL) throws
+    func recordingsDirectoryURL() -> URL
 }
 
 extension RecordingManager: RecordingManaging {}
@@ -121,6 +122,10 @@ final class RecordingListViewModel: ObservableObject {
 
     func reveal(_ item: RecordingItem) {
         workspace.activateFileViewerSelecting([item.url])
+    }
+
+    func openRecordingsFolder() {
+        workspace.activateFileViewerSelecting([manager.recordingsDirectoryURL()])
     }
 
     func delete(_ item: RecordingItem) {

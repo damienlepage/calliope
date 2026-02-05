@@ -12,8 +12,15 @@ struct RecordingsListView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Recordings")
-                .font(.headline)
+            HStack {
+                Text("Recordings")
+                    .font(.headline)
+                Spacer()
+                Button("Open Folder") {
+                    viewModel.openRecordingsFolder()
+                }
+                .buttonStyle(.bordered)
+            }
             if viewModel.recordings.isEmpty {
                 Text("No recordings yet.")
                     .font(.subheadline)
