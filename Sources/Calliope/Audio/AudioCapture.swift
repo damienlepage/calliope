@@ -166,7 +166,7 @@ class AudioCapture: NSObject, ObservableObject {
             audioFile = try audioFileFactory(url, recordingFormat.settings)
         } catch {
             updateStatus(.error(.audioFileCreationFailed))
-            backend = nil
+            self.backend = nil
             return
         }
 
