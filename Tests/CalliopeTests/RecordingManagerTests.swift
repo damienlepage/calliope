@@ -54,8 +54,8 @@ final class RecordingManagerTests: XCTestCase {
         let wavURL = recordingsDirectory.appendingPathComponent("sample.wav")
         let txtURL = recordingsDirectory.appendingPathComponent("sample.txt")
 
-        FileManager.default.createFile(atPath: m4aURL.path, contents: Data())
-        FileManager.default.createFile(atPath: wavURL.path, contents: Data())
+        FileManager.default.createFile(atPath: m4aURL.path, contents: Data([0x1]))
+        FileManager.default.createFile(atPath: wavURL.path, contents: Data([0x1]))
         FileManager.default.createFile(atPath: txtURL.path, contents: Data())
 
         let recordings = manager.getAllRecordings()
@@ -136,8 +136,8 @@ final class RecordingManagerTests: XCTestCase {
         let newerURL = recordingsDirectory.appendingPathComponent("newer.wav")
         let directoryURL = recordingsDirectory.appendingPathComponent("archive.m4a", isDirectory: true)
 
-        FileManager.default.createFile(atPath: olderURL.path, contents: Data())
-        FileManager.default.createFile(atPath: newerURL.path, contents: Data())
+        FileManager.default.createFile(atPath: olderURL.path, contents: Data([0x1]))
+        FileManager.default.createFile(atPath: newerURL.path, contents: Data([0x1]))
         try FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: false)
 
         let now = Date()
@@ -156,5 +156,24 @@ final class RecordingManagerTests: XCTestCase {
         XCTAssertEqual(recordings.first?.standardizedFileURL, newerURL.standardizedFileURL)
         XCTAssertEqual(recordings.last?.standardizedFileURL, olderURL.standardizedFileURL)
         XCTAssertFalse(recordings.contains { $0.standardizedFileURL == directoryURL.standardizedFileURL })
+    }
+
+    func testGetAllRecordingsIgnoresZeroByteFiles() {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let recordingsDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
+
+        let emptyURL = recordingsDirectory.appendingPathComponent("empty.m4a")
+        let validURL = recordingsDirectory.appendingPathComponent("valid.m4a")
+
+        FileManager.default.createFile(atPath: emptyURL.path, contents: Data())
+        FileManager.default.createFile(atPath: validURL.path, contents: Data([0x1]))
+
+        let recordings = manager.getAllRecordings()
+        let normalized = Set(recordings.map { $0.standardizedFileURL })
+
+        XCTAssertFalse(normalized.contains(emptyURL.standardizedFileURL))
+        XCTAssertTrue(normalized.contains(validURL.standardizedFileURL))
     }
 }

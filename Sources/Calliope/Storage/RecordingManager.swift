@@ -42,7 +42,8 @@ class RecordingManager {
         ensureDirectoryExists()
         let keys: [URLResourceKey] = [
             .isRegularFileKey,
-            .contentModificationDateKey
+            .contentModificationDateKey,
+            .fileSizeKey
         ]
         guard let files = try? fileManager.contentsOfDirectory(
             at: recordingsDirectory,
@@ -58,6 +59,9 @@ class RecordingManager {
             }
             let ext = url.pathExtension.lowercased()
             guard ext == "m4a" || ext == "wav" else {
+                return nil
+            }
+            guard let fileSize = values?.fileSize, fileSize > 0 else {
                 return nil
             }
             let modified = values?.contentModificationDate ?? .distantPast

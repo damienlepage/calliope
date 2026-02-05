@@ -112,3 +112,5 @@ Acceptance Criteria: While capture is running, compute a lightweight input level
 Acceptance Criteria: When a recording stops, write a local JSON summary (pace stats, pause stats, crutch word counts) alongside the audio file; summaries are stored only on-device with no network usage; recording deletion also removes its summary; unit tests cover summary creation and deletion wiring.
 19. [DONE][P1] Show active microphone device name and handle changes
 Acceptance Criteria: The UI displays the current microphone input device name while recording; if the device changes during an active session, the capture stops with a clear message instructing the user to press Start again; the device name updates after the change; unit tests cover device name exposure and change handling.
+20. [DONE][P2] Ignore zero-byte recordings in list
+Acceptance Criteria: Recording listing ignores `.m4a`/`.wav` files with zero byte size; unit tests cover filtering out zero-byte files while keeping valid recordings.
