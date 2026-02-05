@@ -36,7 +36,8 @@ struct ContentView: View {
             microphonePermission: microphonePermission.state
         )
         let canStartRecording = blockingReasons.isEmpty
-        VStack(spacing: 20) {
+        ScrollView {
+            VStack(spacing: 20) {
             Text("Calliope")
                 .font(.largeTitle)
                 .fontWeight(.bold)
@@ -163,9 +164,10 @@ struct ContentView: View {
                 .buttonStyle(.borderedProminent)
                 .disabled(!audioCapture.isRecording && !canStartRecording)
             }
+            }
+            .padding()
         }
-        .padding()
-        .frame(width: 400, height: 620)
+        .frame(width: 420, height: 760)
         .onAppear {
             audioAnalyzer.setup(audioCapture: audioCapture, preferencesStore: preferencesStore)
             feedbackViewModel.bind(
