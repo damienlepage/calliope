@@ -8,6 +8,13 @@
 import Speech
 import AVFoundation
 
+protocol SpeechTranscribing: AnyObject {
+    var onTranscription: ((String) -> Void)? { get set }
+    func startTranscription()
+    func appendAudioBuffer(_ buffer: AVAudioPCMBuffer)
+    func stopTranscription()
+}
+
 enum SpeechTranscriberState: Equatable {
     case idle
     case listening
@@ -15,7 +22,7 @@ enum SpeechTranscriberState: Equatable {
     case error
 }
 
-class SpeechTranscriber {
+class SpeechTranscriber: SpeechTranscribing {
     private let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?

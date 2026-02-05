@@ -30,7 +30,7 @@ class AudioAnalyzer: ObservableObject {
             .eraseToAnyPublisher()
     }
 
-    private var speechTranscriber: SpeechTranscriber?
+    private var speechTranscriber: SpeechTranscribing?
     private(set) var crutchWordDetector: CrutchWordDetector?
     private var paceAnalyzer: PaceAnalyzer?
     private(set) var pauseDetector: PauseDetector?
@@ -38,22 +38,32 @@ class AudioAnalyzer: ObservableObject {
     private let silenceMonitor = SilenceMonitor()
     private var silenceTimer: DispatchSourceTimer?
     private var isRecording = false
+    private let summaryWriter: AnalysisSummaryWriting
+    private let now: () -> Date
+    private let speechTranscriberFactory: () -> SpeechTranscribing
+    private var recordingURLForSession: URL?
+    private var recordingStart: Date?
+    private var paceStats = PaceStatsTracker()
+    private var latestCrutchWordCounts: [String: Int] = [:]
+    private var latestWordCount: Int = 0
+
+    init(
+        summaryWriter: AnalysisSummaryWriting = RecordingManager.shared,
+        now: @escaping () -> Date = Date.init,
+        speechTranscriberFactory: @escaping () -> SpeechTranscribing = { SpeechTranscriber() }
+    ) {
+        self.summaryWriter = summaryWriter
+        self.now = now
+        self.speechTranscriberFactory = speechTranscriberFactory
+    }
 
     func setup(audioCapture: AudioCapture, preferencesStore: AnalysisPreferencesStore) {
-        speechTranscriber = SpeechTranscriber()
-        paceAnalyzer = PaceAnalyzer()
+        speechTranscriber = speechTranscriberFactory()
+        paceAnalyzer = PaceAnalyzer(now: now)
         applyPreferences(preferencesStore.current)
 
         speechTranscriber?.onTranscription = { [weak self] transcript in
-            guard let self = self else { return }
-            let totalWords = self.wordCount(in: transcript)
-            self.paceAnalyzer?.updateWordCount(totalWords)
-            let pace = self.paceAnalyzer?.calculatePace() ?? 0.0
-            let crutchCount = self.crutchWordDetector?.analyze(transcript) ?? 0
-            DispatchQueue.main.async {
-                self.currentPace = pace
-                self.crutchWordCount = crutchCount
-            }
+            self?.handleTranscription(transcript)
         }
 
         preferencesStore.preferencesPublisher
@@ -75,9 +85,15 @@ class AudioAnalyzer: ObservableObject {
                     self.inputLevel = 0.0
                     self.silenceWarning = false
                     self.silenceMonitor.reset()
+                    self.paceStats.reset()
+                    self.latestCrutchWordCounts = [:]
+                    self.latestWordCount = 0
+                    self.recordingStart = self.now()
+                    self.recordingURLForSession = audioCapture.currentRecordingURL
                     self.startSilenceTimer()
                     self.speechTranscriber?.startTranscription()
                 } else {
+                    self.writeSummaryIfNeeded()
                     self.stopSilenceTimer()
                     self.speechTranscriber?.stopTranscription()
                     self.paceAnalyzer?.reset()
@@ -88,6 +104,10 @@ class AudioAnalyzer: ObservableObject {
                     self.pauseCount = 0
                     self.inputLevel = 0.0
                     self.silenceWarning = false
+                    self.recordingStart = nil
+                    self.recordingURLForSession = nil
+                    self.latestCrutchWordCounts = [:]
+                    self.latestWordCount = 0
                 }
             }
             .store(in: &cancellables)
@@ -103,6 +123,21 @@ class AudioAnalyzer: ObservableObject {
     func applyPreferences(_ preferences: AnalysisPreferences) {
         crutchWordDetector = CrutchWordDetector(crutchWords: preferences.crutchWords)
         pauseDetector = PauseDetector(pauseThreshold: preferences.pauseThreshold)
+    }
+
+    func handleTranscription(_ transcript: String) {
+        let totalWords = wordCount(in: transcript)
+        latestWordCount = totalWords
+        paceAnalyzer?.updateWordCount(totalWords)
+        let pace = paceAnalyzer?.calculatePace() ?? 0.0
+        let counts = crutchWordDetector?.analyzeCounts(transcript) ?? [:]
+        let crutchCount = counts.values.reduce(0, +)
+        paceStats.record(pace)
+        latestCrutchWordCounts = counts
+        DispatchQueue.main.async { [weak self] in
+            self?.currentPace = pace
+            self?.crutchWordCount = crutchCount
+        }
     }
 
     func processAudioBuffer(_ buffer: AVAudioPCMBuffer) {
@@ -202,5 +237,72 @@ class AudioAnalyzer: ObservableObject {
     private func stopSilenceTimer() {
         silenceTimer?.cancel()
         silenceTimer = nil
+    }
+
+    private func writeSummaryIfNeeded() {
+        guard let recordingURL = recordingURLForSession, let recordingStart else { return }
+        let pauseTotal = pauseDetector?.getPauseCount() ?? pauseCount
+        let pauseThreshold = pauseDetector?.pauseThreshold ?? Constants.pauseThreshold
+        let paceSummary = paceStats.summary(totalWords: latestWordCount)
+        let crutchCounts = latestCrutchWordCounts
+        let crutchTotal = crutchCounts.values.reduce(0, +)
+        let summary = AnalysisSummary(
+            version: 1,
+            createdAt: now(),
+            durationSeconds: max(0, now().timeIntervalSince(recordingStart)),
+            pace: paceSummary,
+            pauses: AnalysisSummary.PauseStats(
+                count: pauseTotal,
+                thresholdSeconds: pauseThreshold
+            ),
+            crutchWords: AnalysisSummary.CrutchWordStats(
+                totalCount: crutchTotal,
+                counts: crutchCounts
+            )
+        )
+        do {
+            try summaryWriter.writeSummary(summary, for: recordingURL)
+        } catch {
+            print("Failed to write analysis summary: \(error)")
+        }
+    }
+}
+
+private struct PaceStatsTracker {
+    private var minValue: Double = .greatestFiniteMagnitude
+    private var maxValue: Double = 0
+    private var totalValue: Double = 0
+    private var count: Int = 0
+
+    mutating func record(_ value: Double) {
+        guard value > 0 else { return }
+        minValue = min(minValue, value)
+        maxValue = max(maxValue, value)
+        totalValue += value
+        count += 1
+    }
+
+    mutating func reset() {
+        minValue = .greatestFiniteMagnitude
+        maxValue = 0
+        totalValue = 0
+        count = 0
+    }
+
+    func summary(totalWords: Int) -> AnalysisSummary.PaceStats {
+        guard count > 0 else {
+            return AnalysisSummary.PaceStats(
+                averageWPM: 0,
+                minWPM: 0,
+                maxWPM: 0,
+                totalWords: totalWords
+            )
+        }
+        return AnalysisSummary.PaceStats(
+            averageWPM: totalValue / Double(count),
+            minWPM: minValue,
+            maxWPM: maxValue,
+            totalWords: totalWords
+        )
     }
 }

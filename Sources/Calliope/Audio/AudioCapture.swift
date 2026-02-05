@@ -134,6 +134,7 @@ final class SystemAudioCaptureBackend: AudioCaptureBackend {
 class AudioCapture: NSObject, ObservableObject {
     @Published var isRecording = false
     @Published private(set) var status: AudioCaptureStatus = .idle
+    @Published private(set) var currentRecordingURL: URL?
 
     private let bufferSubject = PassthroughSubject<AVAudioPCMBuffer, Never>()
     var audioBufferPublisher: AnyPublisher<AVAudioPCMBuffer, Never> {
@@ -211,6 +212,7 @@ class AudioCapture: NSObject, ObservableObject {
         let url = recordingManager.getNewRecordingURL()
         do {
             audioFile = try audioFileFactory(url, recordingFormat.settings)
+            currentRecordingURL = url
         } catch {
             updateStatus(.error(.audioFileCreationFailed))
             self.backend = nil
@@ -311,5 +313,9 @@ class AudioCapture: NSObject, ObservableObject {
         case .authorized:
             return .microphonePermissionNotDetermined
         }
+    }
+
+    func setRecordingURLForTesting(_ url: URL?) {
+        currentRecordingURL = url
     }
 }

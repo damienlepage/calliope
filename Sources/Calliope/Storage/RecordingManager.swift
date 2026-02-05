@@ -70,6 +70,7 @@ class RecordingManager {
     
     func deleteRecording(at url: URL) throws {
         try fileManager.removeItem(at: url)
+        try? deleteSummary(for: url)
     }
 
     func recordingsDirectoryURL() -> URL {
@@ -80,6 +81,29 @@ class RecordingManager {
     private func ensureDirectoryExists() {
         if !fileManager.fileExists(atPath: recordingsDirectory.path) {
             try? fileManager.createDirectory(at: recordingsDirectory, withIntermediateDirectories: true)
+        }
+    }
+}
+
+extension RecordingManager: AnalysisSummaryWriting {
+    func summaryURL(for recordingURL: URL) -> URL {
+        recordingURL
+            .deletingPathExtension()
+            .appendingPathExtension("summary.json")
+    }
+
+    func writeSummary(_ summary: AnalysisSummary, for recordingURL: URL) throws {
+        let url = summaryURL(for: recordingURL)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        let data = try encoder.encode(summary)
+        try data.write(to: url, options: [.atomic])
+    }
+
+    func deleteSummary(for recordingURL: URL) throws {
+        let url = summaryURL(for: recordingURL)
+        if fileManager.fileExists(atPath: url.path) {
+            try fileManager.removeItem(at: url)
         }
     }
 }

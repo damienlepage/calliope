@@ -33,24 +33,30 @@ class CrutchWordDetector {
     }
     
     func analyze(_ text: String) -> Int {
+        let counts = analyzeCounts(text)
+        return counts.values.reduce(0, +)
+    }
+
+    func analyzeCounts(_ text: String) -> [String: Int] {
         let tokens = tokenize(text)
 
-        var count = 0
+        var counts: [String: Int] = [:]
         var index = 0
         while index < tokens.count {
-            if let phraseLength = matchPhrase(tokens, at: index) {
-                count += 1
-                index += phraseLength
+            if let match = matchPhrase(tokens, at: index) {
+                counts[match.phrase, default: 0] += 1
+                index += match.length
                 continue
             }
 
-            if singleWordCrutches.contains(tokens[index]) {
-                count += 1
+            let token = tokens[index]
+            if singleWordCrutches.contains(token) {
+                counts[token, default: 0] += 1
             }
             index += 1
         }
 
-        return count
+        return counts
     }
     
     func reset() {
@@ -63,12 +69,12 @@ class CrutchWordDetector {
             .filter { !$0.isEmpty }
     }
 
-    private func matchPhrase(_ tokens: [String], at index: Int) -> Int? {
+    private func matchPhrase(_ tokens: [String], at index: Int) -> (phrase: String, length: Int)? {
         for phrase in multiWordCrutches {
             guard index + phrase.count <= tokens.count else { continue }
             let slice = tokens[index..<(index + phrase.count)]
             if Array(slice) == phrase {
-                return phrase.count
+                return (phrase.joined(separator: " "), phrase.count)
             }
         }
         return nil
