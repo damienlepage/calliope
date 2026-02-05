@@ -140,3 +140,5 @@ Acceptance Criteria: When Start is disabled due to microphone permission, the bl
 Acceptance Criteria: If deleting a recording fails, the recordings section shows a clear local-only error message; successful deletes clear the error; unit tests cover the failure path.
 32. [DONE][P2] Clear mic test status when recording starts
 Acceptance Criteria: Starting a recording clears any prior mic test success/failure status so stale messages are not shown; unit tests cover the reset behavior.
+33. [DONE][P1] Enforce on-device speech recognition only
+Acceptance Criteria: `SpeechTranscriber` refuses to start when on-device recognition is unsupported; authorization is not requested when on-device recognition is unsupported; unit tests cover the on-device support gate.
