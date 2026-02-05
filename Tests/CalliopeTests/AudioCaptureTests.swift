@@ -133,6 +133,37 @@ final class AudioCaptureTests: XCTestCase {
 
         XCTAssertEqual(capture.status, .idle)
     }
+
+    func testConfigurationChangeStopsRecordingWithError() {
+        let backend = FakeAudioCaptureBackend()
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let capture = AudioCapture(
+            recordingManager: manager,
+            backendFactory: { backend },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() }
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+
+        XCTAssertTrue(capture.isRecording)
+        XCTAssertEqual(capture.status, .recording)
+
+        backend.simulateConfigurationChange()
+
+        let configurationHandled = expectation(description: "configuration change handled")
+        DispatchQueue.main.async {
+            configurationHandled.fulfill()
+        }
+        wait(for: [configurationHandled], timeout: 1.0)
+
+        XCTAssertFalse(capture.isRecording)
+        XCTAssertEqual(capture.status, .error(.engineConfigurationChanged))
+        XCTAssertTrue(backend.removeTapCalled)
+    }
 }
 
 private enum TestError: Error {
@@ -147,6 +178,7 @@ private final class FakeAudioCaptureBackend: AudioCaptureBackend {
     var installTapCalled = false
     var removeTapCalled = false
     var startError: Error?
+    private var configurationChangeHandler: (() -> Void)?
 
     init(inputSource: AudioInputSource = .microphone) {
         self.inputSource = inputSource
@@ -161,6 +193,14 @@ private final class FakeAudioCaptureBackend: AudioCaptureBackend {
         removeTapCalled = true
     }
 
+    func setConfigurationChangeHandler(_ handler: @escaping () -> Void) {
+        configurationChangeHandler = handler
+    }
+
+    func clearConfigurationChangeHandler() {
+        configurationChangeHandler = nil
+    }
+
     func start() throws {
         if let startError {
             throw startError
@@ -170,6 +210,10 @@ private final class FakeAudioCaptureBackend: AudioCaptureBackend {
 
     func stop() {
         isStarted = false
+    }
+
+    func simulateConfigurationChange() {
+        configurationChangeHandler?()
     }
 }
 

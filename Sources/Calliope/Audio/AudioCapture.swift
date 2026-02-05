@@ -15,6 +15,7 @@ enum AudioCaptureError: Equatable {
     case audioFileCreationFailed
     case engineStartFailed
     case bufferWriteFailed
+    case engineConfigurationChanged
 
     var message: String {
         switch self {
@@ -30,6 +31,8 @@ enum AudioCaptureError: Equatable {
             return "Failed to start the audio engine."
         case .bufferWriteFailed:
             return "Failed to write an audio buffer."
+        case .engineConfigurationChanged:
+            return "Input device changed. Press Start again."
         }
     }
 }
@@ -50,6 +53,8 @@ protocol AudioCaptureBackend {
     var inputFormat: AVAudioFormat { get }
     func installTap(bufferSize: AVAudioFrameCount, handler: @escaping (AVAudioPCMBuffer) -> Void)
     func removeTap()
+    func setConfigurationChangeHandler(_ handler: @escaping () -> Void)
+    func clearConfigurationChangeHandler()
     func start() throws
     func stop()
 }
@@ -73,6 +78,7 @@ final class SystemAudioFileWriter: AudioFileWritable {
 final class SystemAudioCaptureBackend: AudioCaptureBackend {
     private let engine: AVAudioEngine
     private let inputNode: AVAudioInputNode
+    private var configurationObserver: NSObjectProtocol?
     let inputFormat: AVAudioFormat
     let inputSource: AudioInputSource = .microphone
 
@@ -90,6 +96,24 @@ final class SystemAudioCaptureBackend: AudioCaptureBackend {
 
     func removeTap() {
         inputNode.removeTap(onBus: 0)
+    }
+
+    func setConfigurationChangeHandler(_ handler: @escaping () -> Void) {
+        clearConfigurationChangeHandler()
+        configurationObserver = NotificationCenter.default.addObserver(
+            forName: .AVAudioEngineConfigurationChange,
+            object: engine,
+            queue: .main
+        ) { _ in
+            handler()
+        }
+    }
+
+    func clearConfigurationChangeHandler() {
+        if let configurationObserver {
+            NotificationCenter.default.removeObserver(configurationObserver)
+            self.configurationObserver = nil
+        }
     }
 
     func start() throws {
@@ -172,6 +196,9 @@ class AudioCapture: NSObject, ObservableObject {
         }
         self.backend = backend
         let recordingFormat = backend.inputFormat
+        backend.setConfigurationChangeHandler { [weak self] in
+            self?.handleConfigurationChange()
+        }
 
         // Recordings are written locally only; no network transmission.
         // Create audio file
@@ -226,6 +253,7 @@ class AudioCapture: NSObject, ObservableObject {
     }
 
     private func stopRecordingInternal(statusOverride: AudioCaptureStatus) {
+        backend?.clearConfigurationChangeHandler()
         backend?.removeTap()
         backend?.stop()
         audioFile = nil
@@ -238,6 +266,13 @@ class AudioCapture: NSObject, ObservableObject {
     private func handleCaptureError(_ error: AudioCaptureError) {
         DispatchQueue.main.async { [weak self] in
             self?.stopRecordingInternal(statusOverride: .error(error))
+        }
+    }
+
+    private func handleConfigurationChange() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.isRecording else { return }
+            self.stopRecordingInternal(statusOverride: .error(.engineConfigurationChanged))
         }
     }
 
