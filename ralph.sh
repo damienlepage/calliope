@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+NTFY_TOPIC=ralph-dlepage-calliope
 STATE_DIR=".ralph-state"
 LOG_DIR="$STATE_DIR/logs"
 SESS_DIR="$STATE_DIR/sessions"
 STOP_FILE="$STATE_DIR/STOP"
 PID_FILE="$STATE_DIR/ralph.pid"
 
-ITERATION_DELAY="${ITERATION_DELAY:-300}"
+ITERATION_DELAY="${ITERATION_DELAY:-60}"
 AGENT_CMD="${AGENT_CMD:-codex exec --full-auto}"
-MAX_ITERATIONS="${MAX_ITERATIONS:-20}"
+MAX_ITERATIONS="${MAX_ITERATIONS:-50}"
 
 mkdir -p "$LOG_DIR" "$SESS_DIR"
 
