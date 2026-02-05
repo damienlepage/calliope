@@ -47,4 +47,26 @@ final class AnalysisPreferencesStoreTests: XCTestCase {
 
         XCTAssertEqual(parsed, ["uh", "um", "you know", "so"])
     }
+
+    func testStoreNormalizesPersistedValuesOnLoad() {
+        let suiteName = "AnalysisPreferencesStoreTests.normalizeOnLoad"
+        guard let defaults = UserDefaults(suiteName: suiteName) else {
+            XCTFail("Expected test defaults suite")
+            return
+        }
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        defaults.set(200.0, forKey: "analysisPreferences.paceMin")
+        defaults.set(120.0, forKey: "analysisPreferences.paceMax")
+        defaults.set(-2.0, forKey: "analysisPreferences.pauseThreshold")
+        defaults.set([" Uh ", "um", "UM", ""], forKey: "analysisPreferences.crutchWords")
+
+        let store = AnalysisPreferencesStore(defaults: defaults)
+
+        XCTAssertEqual(store.paceMin, 120.0)
+        XCTAssertEqual(store.paceMax, 200.0)
+        XCTAssertEqual(store.pauseThreshold, Constants.pauseThreshold)
+        XCTAssertEqual(store.crutchWords, ["uh", "um"])
+    }
 }

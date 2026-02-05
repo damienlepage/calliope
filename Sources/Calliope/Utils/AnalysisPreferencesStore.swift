@@ -43,19 +43,55 @@ final class AnalysisPreferencesStore: ObservableObject {
         let storedPauseThreshold = defaults.object(forKey: pauseThresholdKey) as? Double ?? defaultsPreferences.pauseThreshold
         let storedCrutchWords = defaults.array(forKey: crutchWordsKey) as? [String] ?? defaultsPreferences.crutchWords
 
-        paceMin = storedPaceMin
-        paceMax = storedPaceMax
-        pauseThreshold = storedPauseThreshold
-        crutchWords = storedCrutchWords
+        let normalized = Self.normalize(
+            paceMin: storedPaceMin,
+            paceMax: storedPaceMax,
+            pauseThreshold: storedPauseThreshold,
+            crutchWords: storedCrutchWords
+        )
+
+        paceMin = normalized.paceMin
+        paceMax = normalized.paceMax
+        pauseThreshold = normalized.pauseThreshold
+        crutchWords = normalized.crutchWords
+
+        if normalized.paceMin != storedPaceMin
+            || normalized.paceMax != storedPaceMax
+            || normalized.pauseThreshold != storedPauseThreshold
+            || normalized.crutchWords != storedCrutchWords {
+            persist(
+                paceMin: normalized.paceMin,
+                paceMax: normalized.paceMax,
+                pauseThreshold: normalized.pauseThreshold,
+                crutchWords: normalized.crutchWords
+            )
+        }
 
         Publishers.CombineLatest4($paceMin, $paceMax, $pauseThreshold, $crutchWords)
             .dropFirst()
             .sink { [weak self] paceMin, paceMax, pauseThreshold, crutchWords in
-                self?.persist(
+                guard let self = self else { return }
+                let normalized = Self.normalize(
                     paceMin: paceMin,
                     paceMax: paceMax,
                     pauseThreshold: pauseThreshold,
                     crutchWords: crutchWords
+                )
+                if normalized.paceMin != paceMin
+                    || normalized.paceMax != paceMax
+                    || normalized.pauseThreshold != pauseThreshold
+                    || normalized.crutchWords != crutchWords {
+                    self.paceMin = normalized.paceMin
+                    self.paceMax = normalized.paceMax
+                    self.pauseThreshold = normalized.pauseThreshold
+                    self.crutchWords = normalized.crutchWords
+                    return
+                }
+                self.persist(
+                    paceMin: normalized.paceMin,
+                    paceMax: normalized.paceMax,
+                    pauseThreshold: normalized.pauseThreshold,
+                    crutchWords: normalized.crutchWords
                 )
             }
             .store(in: &cancellables)
@@ -99,6 +135,40 @@ final class AnalysisPreferencesStore: ObservableObject {
 
     static func formatCrutchWords(_ words: [String]) -> String {
         words.joined(separator: ", ")
+    }
+
+    private static func normalize(
+        paceMin: Double,
+        paceMax: Double,
+        pauseThreshold: TimeInterval,
+        crutchWords: [String]
+    ) -> AnalysisPreferences {
+        var normalizedMin = paceMin
+        var normalizedMax = paceMax
+        if normalizedMin > normalizedMax {
+            swap(&normalizedMin, &normalizedMax)
+        }
+
+        let normalizedPauseThreshold = pauseThreshold > 0 ? pauseThreshold : Constants.pauseThreshold
+
+        var seen = Set<String>()
+        let normalizedCrutchWords = crutchWords
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+            .filter { !$0.isEmpty }
+            .filter { word in
+                if seen.contains(word) {
+                    return false
+                }
+                seen.insert(word)
+                return true
+            }
+
+        return AnalysisPreferences(
+            paceMin: normalizedMin,
+            paceMax: normalizedMax,
+            pauseThreshold: normalizedPauseThreshold,
+            crutchWords: normalizedCrutchWords
+        )
     }
 
     private func persist(
