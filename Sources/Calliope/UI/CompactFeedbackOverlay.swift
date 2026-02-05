@@ -15,9 +15,15 @@ struct CompactFeedbackOverlay: View {
     let showSilenceWarning: Bool
     let paceMin: Double
     let paceMax: Double
+    let sessionDurationText: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
+            if let sessionDurationText {
+                Text(sessionDurationText)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
             HStack(spacing: 12) {
                 metric(
                     title: "Pace",
@@ -87,7 +93,8 @@ struct CompactFeedbackOverlay_Previews: PreviewProvider {
             inputLevel: 0.6,
             showSilenceWarning: false,
             paceMin: Constants.targetPaceMin,
-            paceMax: Constants.targetPaceMax
+            paceMax: Constants.targetPaceMax,
+            sessionDurationText: "00:42"
         )
         .padding()
     }

@@ -43,6 +43,8 @@ struct ContentView: View {
         let privacyState = PrivacyGuardrails.State(
             hasAcceptedDisclosure: hasAcceptedDisclosure
         )
+        let sessionDurationText = feedbackViewModel.sessionDurationSeconds
+            .map(SessionDurationFormatter.format)
         let blockingReasons = RecordingEligibility.blockingReasons(
             privacyState: privacyState,
             microphonePermission: microphonePermission.state
@@ -80,7 +82,8 @@ struct ContentView: View {
                         inputLevel: feedbackViewModel.state.inputLevel,
                         showSilenceWarning: feedbackViewModel.state.showSilenceWarning,
                         paceMin: preferencesStore.paceMin,
-                        paceMax: preferencesStore.paceMax
+                        paceMax: preferencesStore.paceMax,
+                        sessionDurationText: sessionDurationText
                     )
 
                     VStack(alignment: .leading, spacing: 8) {
@@ -230,7 +233,8 @@ struct ContentView: View {
                     inputLevel: feedbackViewModel.state.inputLevel,
                     showSilenceWarning: feedbackViewModel.state.showSilenceWarning,
                     paceMin: preferencesStore.paceMin,
-                    paceMax: preferencesStore.paceMax
+                    paceMax: preferencesStore.paceMax,
+                    sessionDurationText: sessionDurationText
                 )
                 .padding(.top, 12)
                 .padding(.trailing, 12)

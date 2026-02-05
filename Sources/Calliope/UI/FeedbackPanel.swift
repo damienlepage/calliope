@@ -15,12 +15,21 @@ struct FeedbackPanel: View {
     let showSilenceWarning: Bool
     let paceMin: Double
     let paceMax: Double
+    let sessionDurationText: String?
     
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
-            Text("Real-time Feedback")
-                .font(.headline)
-                .padding(.bottom, 5)
+            HStack {
+                Text("Real-time Feedback")
+                    .font(.headline)
+                Spacer()
+                if let sessionDurationText {
+                    Text(sessionDurationText)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .padding(.bottom, 5)
             
             // Pace indicator
             HStack {
@@ -89,7 +98,8 @@ struct FeedbackPanel_Previews: PreviewProvider {
             inputLevel: 0.4,
             showSilenceWarning: false,
             paceMin: Constants.targetPaceMin,
-            paceMax: Constants.targetPaceMax
+            paceMax: Constants.targetPaceMax,
+            sessionDurationText: "02:15"
         )
             .padding()
     }

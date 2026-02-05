@@ -130,3 +130,7 @@ Acceptance Criteria: Recording list items surface locally stored analysis summar
 Acceptance Criteria: Deleting a recording requires an explicit confirmation; canceling the prompt leaves recordings untouched; unit tests cover pending delete, confirm, and cancel behaviors.
 27. [DONE][P1] Add in-app mic capture diagnostics
 Acceptance Criteria: A "Test Mic" control runs a short (<=3s) local-only capture using the existing microphone pipeline without saving audio; the UI reports success/failure with a clear status message; the test auto-stops and returns the app to idle; unit tests cover success, failure, and auto-stop states with mocked capture behavior.
+28. [DONE][P1] Show live session duration while recording
+Acceptance Criteria: While recording, the main view and compact overlay show an elapsed time label in mm:ss; the timer updates once per second without adding noticeable CPU usage; stopping recording resets the timer and hides the label; unit tests cover formatting and timer start/stop with a controllable clock.
+29. [READY][P2] Surface pace guidance text alongside WPM
+Acceptance Criteria: The feedback panel and compact overlay display a short text label ("Slow", "On Target", "Fast") derived from `PaceFeedback.level` next to the pace value; labels update with live feedback; unit tests cover mapping from pace values to label text.

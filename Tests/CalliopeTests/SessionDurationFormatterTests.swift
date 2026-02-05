@@ -1,0 +1,22 @@
+//
+//  SessionDurationFormatterTests.swift
+//  CalliopeTests
+//
+//  Created on [Date]
+//
+
+import XCTest
+@testable import Calliope
+
+final class SessionDurationFormatterTests: XCTestCase {
+    func testFormatsSecondsAsMinutesAndSeconds() {
+        XCTAssertEqual(SessionDurationFormatter.format(seconds: 0), "00:00")
+        XCTAssertEqual(SessionDurationFormatter.format(seconds: 5), "00:05")
+        XCTAssertEqual(SessionDurationFormatter.format(seconds: 65), "01:05")
+        XCTAssertEqual(SessionDurationFormatter.format(seconds: 600), "10:00")
+    }
+
+    func testClampsNegativeSecondsToZero() {
+        XCTAssertEqual(SessionDurationFormatter.format(seconds: -3), "00:00")
+    }
+}
