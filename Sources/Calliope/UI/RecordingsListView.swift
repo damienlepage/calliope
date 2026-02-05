@@ -53,6 +53,11 @@ struct RecordingsListView: View {
                     .padding(.vertical, 4)
                 }
             }
+            if let deleteErrorMessage = viewModel.deleteErrorMessage {
+                Text(deleteErrorMessage)
+                    .font(.footnote)
+                    .foregroundColor(.orange)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .onAppear {

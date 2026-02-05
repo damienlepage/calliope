@@ -17,6 +17,7 @@ final class RecordingListViewModelTests: XCTestCase {
         var deleted: [URL] = []
         var loadCount = 0
         var recordingsDirectory = URL(fileURLWithPath: "/tmp/CalliopeRecordings")
+        var deleteError: Error?
 
         init(recordings: [URL]) {
             self.recordings = recordings
@@ -28,6 +29,9 @@ final class RecordingListViewModelTests: XCTestCase {
         }
 
         func deleteRecording(at url: URL) throws {
+            if let deleteError {
+                throw deleteError
+            }
             deleted.append(url)
             recordings.removeAll { $0 == url }
         }
@@ -203,5 +207,28 @@ final class RecordingListViewModelTests: XCTestCase {
             viewModel.recordings.first?.summaryText,
             "Avg 120 WPM • Pauses 2 • Crutch 3"
         )
+    }
+
+    func testConfirmDeleteFailureKeepsListAndSetsErrorMessage() {
+        struct DeleteFailure: Error {}
+        let url = URL(fileURLWithPath: "/tmp/fail.m4a")
+        let manager = MockRecordingManager(recordings: [url])
+        manager.deleteError = DeleteFailure()
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) },
+            durationProvider: { _ in nil },
+            fileSizeProvider: { _ in nil }
+        )
+
+        viewModel.loadRecordings()
+        let target = viewModel.recordings[0]
+        viewModel.requestDelete(target)
+        viewModel.confirmDelete(target)
+
+        XCTAssertEqual(viewModel.recordings.map(\.url), [url])
+        XCTAssertNotNil(viewModel.deleteErrorMessage)
+        XCTAssertTrue(manager.deleted.isEmpty)
     }
 }

@@ -88,6 +88,7 @@ struct RecordingItem: Identifiable, Equatable {
 final class RecordingListViewModel: ObservableObject {
     @Published private(set) var recordings: [RecordingItem] = []
     @Published var pendingDelete: RecordingItem?
+    @Published var deleteErrorMessage: String?
 
     private let manager: RecordingManaging
     private let workspace: WorkspaceOpening
@@ -114,6 +115,7 @@ final class RecordingListViewModel: ObservableObject {
     }
 
     func loadRecordings() {
+        deleteErrorMessage = nil
         let urls = manager.getAllRecordings()
         recordings = urls.map { url in
             RecordingItem(
@@ -150,9 +152,11 @@ final class RecordingListViewModel: ObservableObject {
 
     func confirmDelete(_ item: RecordingItem) {
         pendingDelete = nil
+        deleteErrorMessage = nil
         do {
             try manager.deleteRecording(at: item.url)
         } catch {
+            deleteErrorMessage = "Unable to delete recording. Please try again."
             return
         }
         loadRecordings()
