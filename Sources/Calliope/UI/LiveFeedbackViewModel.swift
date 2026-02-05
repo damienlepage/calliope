@@ -34,22 +34,17 @@ final class LiveFeedbackViewModel: ObservableObject {
 
         let recordingState = recordingPublisher
             .removeDuplicates()
-            .share()
 
         recordingState
             .filter { $0 }
             .receive(on: queue)
             .sink { [weak self] _ in
-                self?.state = .zero
-                self?.sessionDurationSeconds = 0
+                guard let self, self.state != .zero else { return }
+                self.state = .zero
             }
             .store(in: &cancellables)
 
-        recordingState
-            .map { isRecording in
-                isRecording ? feedbackPublisher : Empty().eraseToAnyPublisher()
-            }
-            .switchToLatest()
+        feedbackPublisher
             .throttle(for: throttleInterval, scheduler: queue, latest: true)
             .receive(on: queue)
             .sink { [weak self] state in
@@ -61,8 +56,9 @@ final class LiveFeedbackViewModel: ObservableObject {
             .filter { !$0 }
             .receive(on: queue)
             .sink { [weak self] _ in
-                self?.state = .zero
-                self?.sessionDurationSeconds = nil
+                guard let self else { return }
+                self.state = .zero
+                self.sessionDurationSeconds = nil
             }
             .store(in: &cancellables)
 

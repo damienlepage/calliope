@@ -74,46 +74,51 @@ class AudioAnalyzer: ObservableObject {
             .store(in: &cancellables)
 
         audioCapture.$isRecording
-            .receive(on: DispatchQueue.main)
             .sink { [weak self] isRecording in
                 guard let self = self else { return }
-                self.isRecording = isRecording
-                if isRecording {
-                    self.paceAnalyzer?.start()
-                    self.pauseDetector?.reset()
-                    self.pauseCount = 0
-                    self.inputLevel = 0.0
-                    self.silenceWarning = false
-                    self.silenceMonitor.reset()
-                    self.paceStats.reset()
-                    self.latestCrutchWordCounts = [:]
-                    self.latestWordCount = 0
-                    self.recordingStart = self.now()
-                    self.recordingURLForSession = audioCapture.currentRecordingURL
-                    self.startSilenceTimer()
-                    self.speechTranscriber?.startTranscription()
+                let update = {
+                    self.isRecording = isRecording
+                    if isRecording {
+                        self.paceAnalyzer?.start()
+                        self.pauseDetector?.reset()
+                        self.pauseCount = 0
+                        self.inputLevel = 0.0
+                        self.silenceWarning = false
+                        self.silenceMonitor.reset()
+                        self.paceStats.reset()
+                        self.latestCrutchWordCounts = [:]
+                        self.latestWordCount = 0
+                        self.recordingStart = self.now()
+                        self.recordingURLForSession = audioCapture.currentRecordingURL
+                        self.startSilenceTimer()
+                        self.speechTranscriber?.startTranscription()
+                    } else {
+                        self.writeSummaryIfNeeded()
+                        self.stopSilenceTimer()
+                        self.speechTranscriber?.stopTranscription()
+                        self.paceAnalyzer?.reset()
+                        self.crutchWordDetector?.reset()
+                        self.pauseDetector?.reset()
+                        self.currentPace = 0.0
+                        self.crutchWordCount = 0
+                        self.pauseCount = 0
+                        self.inputLevel = 0.0
+                        self.silenceWarning = false
+                        self.recordingStart = nil
+                        self.recordingURLForSession = nil
+                        self.latestCrutchWordCounts = [:]
+                        self.latestWordCount = 0
+                    }
+                }
+                if Thread.isMainThread {
+                    update()
                 } else {
-                    self.writeSummaryIfNeeded()
-                    self.stopSilenceTimer()
-                    self.speechTranscriber?.stopTranscription()
-                    self.paceAnalyzer?.reset()
-                    self.crutchWordDetector?.reset()
-                    self.pauseDetector?.reset()
-                    self.currentPace = 0.0
-                    self.crutchWordCount = 0
-                    self.pauseCount = 0
-                    self.inputLevel = 0.0
-                    self.silenceWarning = false
-                    self.recordingStart = nil
-                    self.recordingURLForSession = nil
-                    self.latestCrutchWordCounts = [:]
-                    self.latestWordCount = 0
+                    DispatchQueue.main.async(execute: update)
                 }
             }
             .store(in: &cancellables)
 
         audioCapture.audioBufferPublisher
-            .receive(on: DispatchQueue.global(qos: .userInitiated))
             .sink { [weak self] buffer in
                 self?.processAudioBuffer(buffer)
             }

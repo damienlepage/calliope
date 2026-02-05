@@ -90,7 +90,7 @@ private final class FakeSpeechRecognizer: SpeechRecognizing {
 
     func recognitionTask(
         with request: SFSpeechAudioBufferRecognitionRequest,
-        resultHandler: @escaping SFSpeechRecognitionTaskHandler
+        resultHandler: @escaping (SFSpeechRecognitionResult?, Error?) -> Void
     ) -> SFSpeechRecognitionTask {
         fatalError("recognitionTask should not be called in this test.")
     }

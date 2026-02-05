@@ -15,9 +15,9 @@ final class LiveAnalysisSmokeTests: XCTestCase {
         let recordingManager = RecordingManager(baseDirectory: tempDirectory)
         let backend = TestAnalysisAudioFileInputBackend(fileURL: resourceURL, silenceDuration: 0.06)
         let suiteName = "LiveAnalysisSmokeTests.AudioCapture.\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: suiteName)!
-        defaults.removePersistentDomain(forName: suiteName)
-        let capturePreferencesStore = AudioCapturePreferencesStore(defaults: defaults)
+        let captureDefaults = UserDefaults(suiteName: suiteName)!
+        captureDefaults.removePersistentDomain(forName: suiteName)
+        let capturePreferencesStore = AudioCapturePreferencesStore(defaults: captureDefaults)
 
         XCTAssertEqual(backend.inputSource, .microphone)
 
@@ -32,9 +32,9 @@ final class LiveAnalysisSmokeTests: XCTestCase {
             }
         )
 
-        let defaults = UserDefaults(suiteName: "LiveAnalysisSmokeTests")!
-        defaults.removePersistentDomain(forName: "LiveAnalysisSmokeTests")
-        let preferences = AnalysisPreferencesStore(defaults: defaults)
+        let analysisDefaults = UserDefaults(suiteName: "LiveAnalysisSmokeTests")!
+        analysisDefaults.removePersistentDomain(forName: "LiveAnalysisSmokeTests")
+        let preferences = AnalysisPreferencesStore(defaults: analysisDefaults)
         preferences.pauseThreshold = 0.05
         preferences.crutchWords = ["um"]
 
@@ -51,6 +51,7 @@ final class LiveAnalysisSmokeTests: XCTestCase {
         )
 
         var updateCount = 0
+        var feedbackUpdateCount = 0
         var observedState: FeedbackState?
         let updateExpectation = expectation(description: "Receives throttled feedback update")
 
@@ -60,6 +61,7 @@ final class LiveAnalysisSmokeTests: XCTestCase {
                 updateCount += 1
                 observedState = state
                 if state.pace > 0, state.crutchWords > 0, state.pauseCount > 0 {
+                    feedbackUpdateCount += 1
                     updateExpectation.fulfill()
                 }
             }
@@ -78,7 +80,7 @@ final class LiveAnalysisSmokeTests: XCTestCase {
 
         capture.stopRecording()
 
-        XCTAssertEqual(updateCount, 1)
+        XCTAssertEqual(feedbackUpdateCount, 1)
         XCTAssertGreaterThan(transcriber.transcriptionCount, 1)
 
         let state = try XCTUnwrap(observedState)

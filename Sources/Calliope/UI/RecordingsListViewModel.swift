@@ -135,10 +135,10 @@ final class RecordingListViewModel: ObservableObject {
 
     private let manager: RecordingManaging
     private let workspace: WorkspaceOpening
-    private let modificationDateProvider: (URL) -> Date
-    private let durationProvider: (URL) -> TimeInterval?
-    private let fileSizeProvider: (URL) -> Int?
-    private let summaryProvider: (URL) -> AnalysisSummary?
+    private let modificationDateProvider: @MainActor (URL) -> Date
+    private let durationProvider: @MainActor (URL) -> TimeInterval?
+    private let fileSizeProvider: @MainActor (URL) -> Int?
+    private let summaryProvider: @MainActor (URL) -> AnalysisSummary?
     private let audioPlayerFactory: (URL) throws -> AudioPlaying
     private var audioPlayer: AudioPlaying?
     private var cancellables = Set<AnyCancellable>()
@@ -146,10 +146,10 @@ final class RecordingListViewModel: ObservableObject {
     init(
         manager: RecordingManaging = RecordingManager.shared,
         workspace: WorkspaceOpening = NSWorkspace.shared,
-        modificationDateProvider: @escaping (URL) -> Date = RecordingListViewModel.defaultModificationDate,
-        durationProvider: @escaping (URL) -> TimeInterval? = RecordingListViewModel.defaultDuration,
-        fileSizeProvider: @escaping (URL) -> Int? = RecordingListViewModel.defaultFileSize,
-        summaryProvider: @escaping (URL) -> AnalysisSummary? = RecordingListViewModel.defaultSummary,
+        modificationDateProvider: @escaping @MainActor (URL) -> Date = RecordingListViewModel.defaultModificationDate,
+        durationProvider: @escaping @MainActor (URL) -> TimeInterval? = RecordingListViewModel.defaultDuration,
+        fileSizeProvider: @escaping @MainActor (URL) -> Int? = RecordingListViewModel.defaultFileSize,
+        summaryProvider: @escaping @MainActor (URL) -> AnalysisSummary? = RecordingListViewModel.defaultSummary,
         audioPlayerFactory: @escaping (URL) throws -> AudioPlaying = { url in
             try SystemAudioPlayer(url: url)
         }

@@ -6,6 +6,7 @@
 //
 
 import AVFoundation
+import AudioToolbox
 import Combine
 
 enum AudioCaptureError: Equatable {
@@ -118,6 +119,19 @@ protocol AudioFileWritable {
     func write(from buffer: AVAudioPCMBuffer) throws
 }
 
+private func audioUnitDisplayName(for audioUnit: AUAudioUnit) -> String {
+    var description = audioUnit.componentDescription
+    if let component = AudioComponentFindNext(nil, &description) {
+        var name: Unmanaged<CFString>?
+        if AudioComponentCopyName(component, &name) == noErr,
+           let cfName = name?.takeRetainedValue() {
+            return cfName as String
+        }
+    }
+
+    return "Audio Input"
+}
+
 final class SystemAudioFileWriter: AudioFileWritable {
     private let file: AVAudioFile
 
@@ -137,7 +151,7 @@ final class SystemAudioCaptureBackend: AudioCaptureBackend {
     let inputFormat: AVAudioFormat
     let inputSource: AudioInputSource = .microphone
     var inputDeviceName: String {
-        inputNode.auAudioUnit.deviceName
+        audioUnitDisplayName(for: inputNode.auAudioUnit)
     }
 
     init() {
@@ -194,7 +208,7 @@ final class VoiceIsolationAudioCaptureBackend: AudioCaptureBackend {
     let inputFormat: AVAudioFormat
     let inputSource: AudioInputSource = .microphone
     var inputDeviceName: String {
-        inputNode.auAudioUnit.deviceName
+        audioUnitDisplayName(for: inputNode.auAudioUnit)
     }
 
     init() throws {
@@ -420,13 +434,15 @@ class AudioCapture: NSObject, ObservableObject {
 
         scheduleRecordingStartTimeout()
 
+        if recordingStartConfirmation() {
+            markRecordingStarted()
+        }
+
         do {
             try backend.start()
-            if recordingStartConfirmation() {
-                markRecordingStarted()
-            }
         } catch {
             cancelRecordingStartTimeout()
+            isRecording = false
             stopRecordingInternal(statusOverride: .error(.engineStartFailed))
         }
     }

@@ -10,9 +10,9 @@ final class AnalysisSummaryTests: XCTestCase {
         )
         let manager = RecordingManager(baseDirectory: tempDir)
         let suiteName = "AnalysisSummaryTests.AudioCapture.\(UUID().uuidString)"
-        let defaults = UserDefaults(suiteName: suiteName)!
-        defaults.removePersistentDomain(forName: suiteName)
-        let preferencesStore = AudioCapturePreferencesStore(defaults: defaults)
+        let captureDefaults = UserDefaults(suiteName: suiteName)!
+        captureDefaults.removePersistentDomain(forName: suiteName)
+        let preferencesStore = AudioCapturePreferencesStore(defaults: captureDefaults)
         let audioCapture = AudioCapture(
             recordingManager: manager,
             capturePreferencesStore: preferencesStore,
@@ -35,9 +35,9 @@ final class AnalysisSummaryTests: XCTestCase {
             now: clock.now,
             speechTranscriberFactory: { FakeSpeechTranscriber() }
         )
-        let defaults = UserDefaults(suiteName: "AnalysisSummaryTests")!
-        defaults.removePersistentDomain(forName: "AnalysisSummaryTests")
-        let preferences = AnalysisPreferencesStore(defaults: defaults)
+        let analysisDefaults = UserDefaults(suiteName: "AnalysisSummaryTests")!
+        analysisDefaults.removePersistentDomain(forName: "AnalysisSummaryTests")
+        let preferences = AnalysisPreferencesStore(defaults: analysisDefaults)
 
         analyzer.setup(audioCapture: audioCapture, preferencesStore: preferences)
 

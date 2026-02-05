@@ -13,7 +13,7 @@ protocol SpeechRecognizing {
     var supportsOnDeviceRecognition: Bool { get }
     func recognitionTask(
         with request: SFSpeechAudioBufferRecognitionRequest,
-        resultHandler: @escaping SFSpeechRecognitionTaskHandler
+        resultHandler: @escaping (SFSpeechRecognitionResult?, Error?) -> Void
     ) -> SFSpeechRecognitionTask
 }
 
@@ -38,7 +38,7 @@ final class SystemSpeechRecognizer: SpeechRecognizing {
 
     func recognitionTask(
         with request: SFSpeechAudioBufferRecognitionRequest,
-        resultHandler: @escaping SFSpeechRecognitionTaskHandler
+        resultHandler: @escaping (SFSpeechRecognitionResult?, Error?) -> Void
     ) -> SFSpeechRecognitionTask {
         guard let recognizer = recognizer else {
             fatalError("Speech recognizer unavailable.")
@@ -104,12 +104,12 @@ class SpeechTranscriber: SpeechTranscribing {
                     return
                 }
 
-                self.beginRecognition(with: speechRecognizer)
+                self.beginRecognition(with: self.speechRecognizer)
             }
         }
     }
 
-    private func beginRecognition(with speechRecognizer: SFSpeechRecognizer) {
+    private func beginRecognition(with speechRecognizer: SpeechRecognizing) {
         recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
         guard let recognitionRequest = recognitionRequest else { return }
 

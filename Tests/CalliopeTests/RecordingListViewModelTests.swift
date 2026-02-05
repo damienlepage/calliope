@@ -25,7 +25,7 @@ final class RecordingListViewModelTests: XCTestCase {
 
         func getAllRecordings() -> [URL] {
             loadCount += 1
-            recordings
+            return recordings
         }
 
         func deleteRecording(at url: URL) throws {
