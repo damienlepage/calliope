@@ -14,6 +14,8 @@ final class LiveFeedbackViewModel: ObservableObject {
     @Published private(set) var showWaitingForSpeech: Bool = false
 
     private var cancellables = Set<AnyCancellable>()
+    private var staleFeedbackWorkItem: DispatchWorkItem?
+    private var isRecording = false
 
     init(initialState: FeedbackState = .zero) {
         self.state = initialState
@@ -33,6 +35,11 @@ final class LiveFeedbackViewModel: ObservableObject {
         }
     ) {
         cancellables.removeAll()
+        staleFeedbackWorkItem?.cancel()
+        staleFeedbackWorkItem = nil
+        isRecording = false
+        let queueKey = DispatchSpecificKey<Void>()
+        queue.setSpecific(key: queueKey, value: ())
 
         let recordingState = recordingPublisher
             .removeDuplicates()
@@ -56,28 +63,49 @@ final class LiveFeedbackViewModel: ObservableObject {
 
         let feedbackEvents = feedbackPublisher
             .map { _ in () }
-            .receive(on: queue)
+
+        let performOnQueue: (@escaping () -> Void) -> Void = { block in
+            if DispatchQueue.getSpecific(key: queueKey) != nil {
+                block()
+            } else {
+                queue.async(execute: block)
+            }
+        }
+
+        let resetWaitingForSpeechTimer = { [weak self] in
+            guard let self, self.isRecording else { return }
+            performOnQueue {
+                self.showWaitingForSpeech = false
+                self.staleFeedbackWorkItem?.cancel()
+
+                let workItem = DispatchWorkItem { [weak self] in
+                    self?.showWaitingForSpeech = true
+                }
+                self.staleFeedbackWorkItem = workItem
+                queue.asyncAfter(deadline: .now() + staleFeedbackDelay.timeInterval, execute: workItem)
+            }
+        }
 
         recordingState
-            .map { isRecording -> AnyPublisher<Bool, Never> in
-                guard isRecording else {
-                    return Just(false).eraseToAnyPublisher()
-                }
-                let trigger = feedbackEvents.prepend(())
-                return trigger
-                    .map { _ in
-                        Just(false)
-                            .append(Just(true).delay(for: staleFeedbackDelay, scheduler: queue))
-                            .eraseToAnyPublisher()
+            .sink { [weak self] isRecording in
+                guard let self else { return }
+                self.isRecording = isRecording
+
+                performOnQueue {
+                    if isRecording {
+                        resetWaitingForSpeechTimer()
+                    } else {
+                        self.staleFeedbackWorkItem?.cancel()
+                        self.staleFeedbackWorkItem = nil
+                        self.showWaitingForSpeech = false
                     }
-                    .switchToLatest()
-                    .eraseToAnyPublisher()
+                }
             }
-            .switchToLatest()
-            .removeDuplicates()
-            .receive(on: queue)
-            .sink { [weak self] shouldShow in
-                self?.showWaitingForSpeech = shouldShow
+            .store(in: &cancellables)
+
+        feedbackEvents
+            .sink { _ in
+                resetWaitingForSpeechTimer()
             }
             .store(in: &cancellables)
 
@@ -88,7 +116,6 @@ final class LiveFeedbackViewModel: ObservableObject {
                 guard let self else { return }
                 self.state = .zero
                 self.sessionDurationSeconds = nil
-                self.showWaitingForSpeech = false
             }
             .store(in: &cancellables)
 
