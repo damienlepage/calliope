@@ -84,9 +84,17 @@ final class AnalysisPreferencesStore: ObservableObject {
     }
 
     static func parseCrutchWords(from text: String) -> [String] {
-        text.split(whereSeparator: { $0 == "," || $0 == "\n" })
+        var seen = Set<String>()
+        return text.split(whereSeparator: { $0 == "," || $0 == "\n" })
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
             .filter { !$0.isEmpty }
+            .filter { word in
+                if seen.contains(word) {
+                    return false
+                }
+                seen.insert(word)
+                return true
+            }
     }
 
     static func formatCrutchWords(_ words: [String]) -> String {

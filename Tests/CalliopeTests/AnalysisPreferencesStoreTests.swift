@@ -40,4 +40,11 @@ final class AnalysisPreferencesStoreTests: XCTestCase {
         XCTAssertEqual(reloaded.pauseThreshold, 2.5)
         XCTAssertEqual(reloaded.crutchWords, ["alpha", "beta", "you know"])
     }
+
+    func testParseCrutchWordsDeduplicatesAndNormalizes() {
+        let input = "Uh, um, uh, You know\nUM\n  so  ,"
+        let parsed = AnalysisPreferencesStore.parseCrutchWords(from: input)
+
+        XCTAssertEqual(parsed, ["uh", "um", "you know", "so"])
+    }
 }

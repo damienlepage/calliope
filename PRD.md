@@ -86,3 +86,5 @@ Acceptance Criteria: Recording eligibility no longer blocks on headset confirmat
 Acceptance Criteria: Preferences model persists pace min/max, pause threshold, and crutch word list locally; UI provides simple controls to edit these values; analysis uses stored preferences for pace, pause, and crutch word detection; defaults match current Constants values; unit tests cover defaults, persistence, and analyzer wiring.
 6. [DONE][P2] Add always-on-top overlay toggle
 Acceptance Criteria: User-facing toggle enables/disables always-on-top behavior; window level switches between floating and normal; toggle persists across launches; unit tests cover default and persistence.
+7. [DONE][P2] Normalize crutch word input
+Acceptance Criteria: Crutch word parsing trims whitespace, lowercases entries, deduplicates while preserving order; unit tests cover normalization behavior.
