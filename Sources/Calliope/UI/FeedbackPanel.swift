@@ -36,9 +36,14 @@ struct FeedbackPanel: View {
                 Text("Pace:")
                     .font(.subheadline)
                 Spacer()
-                Text("\(Int(pace)) WPM")
-                    .font(.subheadline)
-                    .foregroundColor(paceColor(pace))
+                HStack(spacing: 6) {
+                    Text("\(Int(pace)) WPM")
+                        .font(.subheadline)
+                        .foregroundColor(paceColor(pace))
+                    Text(PaceFeedback.label(for: pace, minPace: paceMin, maxPace: paceMax))
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
             }
             
             // Crutch words indicator

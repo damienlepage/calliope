@@ -27,4 +27,19 @@ enum PaceFeedback {
         }
         return .target
     }
+
+    static func label(
+        for pace: Double,
+        minPace: Double = Constants.targetPaceMin,
+        maxPace: Double = Constants.targetPaceMax
+    ) -> String {
+        switch level(for: pace, minPace: minPace, maxPace: maxPace) {
+        case .slow:
+            return "Slow"
+        case .target:
+            return "On Target"
+        case .fast:
+            return "Fast"
+        }
+    }
 }

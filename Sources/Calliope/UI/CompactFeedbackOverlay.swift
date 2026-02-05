@@ -28,7 +28,8 @@ struct CompactFeedbackOverlay: View {
                 metric(
                     title: "Pace",
                     value: "\(Int(pace))",
-                    color: paceColor(pace)
+                    color: paceColor(pace),
+                    subtitle: PaceFeedback.label(for: pace, minPace: paceMin, maxPace: paceMax)
                 )
                 metric(
                     title: "Crutch",
@@ -59,7 +60,7 @@ struct CompactFeedbackOverlay: View {
         .shadow(radius: 4)
     }
 
-    private func metric(title: String, value: String, color: Color) -> some View {
+    private func metric(title: String, value: String, color: Color, subtitle: String? = nil) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(title)
                 .font(.caption)
@@ -67,6 +68,11 @@ struct CompactFeedbackOverlay: View {
             Text(value)
                 .font(.headline)
                 .foregroundColor(color)
+            if let subtitle {
+                Text(subtitle)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
         }
         .frame(minWidth: 52, alignment: .leading)
     }
