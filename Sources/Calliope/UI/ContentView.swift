@@ -14,6 +14,7 @@ struct ContentView: View {
     @StateObject private var feedbackViewModel = LiveFeedbackViewModel()
     @StateObject private var microphonePermission = MicrophonePermissionManager()
     @StateObject private var preferencesStore = AnalysisPreferencesStore()
+    @StateObject private var recordingsViewModel = RecordingListViewModel()
     @StateObject private var overlayPreferencesStore: OverlayPreferencesStore
     @State private var privacyDisclosureStore: PrivacyDisclosureStore
     @State private var hasAcceptedDisclosure: Bool
@@ -174,6 +175,8 @@ struct ContentView: View {
                         Toggle("Always on top", isOn: $overlayPreferencesStore.alwaysOnTop)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
+
+                    RecordingsListView(viewModel: recordingsViewModel)
 
                     // Control buttons
                     HStack(spacing: 20) {

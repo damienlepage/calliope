@@ -100,5 +100,5 @@ Acceptance Criteria: A compact overlay view shows pace/crutch/pause; visibility 
 Acceptance Criteria: Starting capture checks microphone permission status before starting the audio engine; if denied or restricted, the status UI shows a clear, actionable message and capture does not start; unit tests cover granted, denied, and restricted permission states with mocked authorization responses.
 13. [DONE][P1] Add capture pipeline smoke test with local input audio
 Acceptance Criteria: A test-only input path can inject a bundled mono WAV into `AudioCapture` without using the system audio graph; starting and stopping capture produces a local recording file with non-zero size; tests verify file creation and that the input path remains microphone-only in production builds.
-14. [READY][P2] Add recording management actions in recordings list
+14. [DONE][P2] Add recording management actions in recordings list
 Acceptance Criteria: The recordings list supports reveal-in-Finder and delete actions for `.m4a`/`.wav` items; deletion removes the file locally and updates the list; unit tests cover delete behavior and list refresh.
