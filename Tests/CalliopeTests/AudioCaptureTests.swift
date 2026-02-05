@@ -283,6 +283,69 @@ final class AudioCaptureTests: XCTestCase {
         XCTAssertFalse(backend.installTapCalled)
     }
 
+    func testStartRecordingTimeoutStopsCaptureAndShowsError() {
+        let backend = FakeAudioCaptureBackend()
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let capture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() },
+            recordingStartTimeout: 0.05,
+            recordingStartConfirmation: { false }
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+
+        let timeoutHandled = expectation(description: "start timeout handled")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            timeoutHandled.fulfill()
+        }
+        wait(for: [timeoutHandled], timeout: 1.0)
+
+        XCTAssertFalse(capture.isRecording)
+        XCTAssertEqual(capture.status, .error(.captureStartTimedOut))
+        XCTAssertTrue(backend.removeTapCalled)
+        XCTAssertFalse(backend.isStarted)
+    }
+
+    func testStartRecordingTimeoutDoesNotFireOnSuccess() {
+        let backend = FakeAudioCaptureBackend()
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let capture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() },
+            recordingStartTimeout: 0.05
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+
+        let timeoutHandled = expectation(description: "start timeout not fired")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            timeoutHandled.fulfill()
+        }
+        wait(for: [timeoutHandled], timeout: 1.0)
+
+        XCTAssertTrue(capture.isRecording)
+        XCTAssertEqual(capture.status, .recording)
+        XCTAssertTrue(backend.isStarted)
+        XCTAssertFalse(backend.removeTapCalled)
+    }
+
     func testStopRecordingClearsErrorWhenNotRecording() {
         let backend = FakeAudioCaptureBackend()
         let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)

@@ -18,6 +18,7 @@ enum AudioCaptureError: Equatable {
     case engineStartFailed
     case bufferWriteFailed
     case engineConfigurationChanged
+    case captureStartTimedOut
 
     var message: String {
         switch self {
@@ -39,6 +40,8 @@ enum AudioCaptureError: Equatable {
             return "Failed to write an audio buffer."
         case .engineConfigurationChanged:
             return "Input device changed. Press Start again."
+        case .captureStartTimedOut:
+            return "Capture did not start in time. Press Start again."
         }
     }
 }
@@ -271,6 +274,10 @@ class AudioCapture: NSObject, ObservableObject {
     private let capturePreferencesStore: AudioCapturePreferencesStore
     private let backendSelector: AudioCaptureBackendSelector
     private let audioFileFactory: (URL, [String: Any]) throws -> AudioFileWritable
+    private let recordingStartTimeout: TimeInterval
+    private let recordingStartTimeoutQueue: DispatchQueue
+    private let recordingStartConfirmation: () -> Bool
+    private var recordingStartWorkItem: DispatchWorkItem?
 
     var statusText: String {
         switch status {
@@ -289,12 +296,18 @@ class AudioCapture: NSObject, ObservableObject {
         backendSelector: @escaping AudioCaptureBackendSelector = AudioCapture.defaultBackendSelector,
         audioFileFactory: @escaping (URL, [String: Any]) throws -> AudioFileWritable = { url, settings in
             try SystemAudioFileWriter(url: url, settings: settings)
-        }
+        },
+        recordingStartTimeout: TimeInterval = 1.0,
+        recordingStartTimeoutQueue: DispatchQueue = .main,
+        recordingStartConfirmation: @escaping () -> Bool = { true }
     ) {
         self.recordingManager = recordingManager
         self.capturePreferencesStore = capturePreferencesStore
         self.backendSelector = backendSelector
         self.audioFileFactory = audioFileFactory
+        self.recordingStartTimeout = recordingStartTimeout
+        self.recordingStartTimeoutQueue = recordingStartTimeoutQueue
+        self.recordingStartConfirmation = recordingStartConfirmation
         super.init()
         // macOS doesn't use AVAudioSession - AVAudioEngine handles this directly
     }
@@ -399,11 +412,15 @@ class AudioCapture: NSObject, ObservableObject {
             }
         }
 
+        scheduleRecordingStartTimeout()
+
         do {
             try backend.start()
-            isRecording = true
-            updateStatus(.recording)
+            if recordingStartConfirmation() {
+                markRecordingStarted()
+            }
         } catch {
+            cancelRecordingStartTimeout()
             stopRecordingInternal(statusOverride: .error(.engineStartFailed))
         }
     }
@@ -485,6 +502,7 @@ class AudioCapture: NSObject, ObservableObject {
     }
 
     private func stopRecordingInternal(statusOverride: AudioCaptureStatus) {
+        cancelRecordingStartTimeout()
         backend?.clearConfigurationChangeHandler()
         backend?.removeTap()
         backend?.stop()
@@ -536,6 +554,12 @@ class AudioCapture: NSObject, ObservableObject {
     }
 
     private func updateStatus(_ newStatus: AudioCaptureStatus) {
+        if case .recording = newStatus {
+            cancelRecordingStartTimeout()
+        }
+        if case .error = newStatus {
+            cancelRecordingStartTimeout()
+        }
         if Thread.isMainThread {
             status = newStatus
         } else {
@@ -582,5 +606,34 @@ class AudioCapture: NSObject, ObservableObject {
 
     func setRecordingURLForTesting(_ url: URL?) {
         currentRecordingURL = url
+    }
+
+    private func markRecordingStarted() {
+        isRecording = true
+        updateStatus(.recording)
+    }
+
+    private func scheduleRecordingStartTimeout() {
+        cancelRecordingStartTimeout()
+        let workItem = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            if self.isRecording {
+                return
+            }
+            if case .error = self.status {
+                return
+            }
+            self.stopRecordingInternal(statusOverride: .error(.captureStartTimedOut))
+        }
+        recordingStartWorkItem = workItem
+        recordingStartTimeoutQueue.asyncAfter(
+            deadline: .now() + recordingStartTimeout,
+            execute: workItem
+        )
+    }
+
+    private func cancelRecordingStartTimeout() {
+        recordingStartWorkItem?.cancel()
+        recordingStartWorkItem = nil
     }
 }
