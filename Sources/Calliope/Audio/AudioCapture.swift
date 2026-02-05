@@ -11,6 +11,7 @@ import Combine
 enum AudioCaptureError: Equatable {
     case microphonePermissionMissing
     case privacyGuardrailsNotSatisfied
+    case systemAudioCaptureNotAllowed
     case audioFileCreationFailed
     case engineStartFailed
     case bufferWriteFailed
@@ -21,6 +22,8 @@ enum AudioCaptureError: Equatable {
             return "Microphone permission is required."
         case .privacyGuardrailsNotSatisfied:
             return "Privacy guardrails must be accepted to start."
+        case .systemAudioCaptureNotAllowed:
+            return "System audio capture is not allowed."
         case .audioFileCreationFailed:
             return "Failed to create local recording file."
         case .engineStartFailed:
@@ -37,7 +40,13 @@ enum AudioCaptureStatus: Equatable {
     case error(AudioCaptureError)
 }
 
+enum AudioInputSource: Equatable {
+    case microphone
+    case systemAudio
+}
+
 protocol AudioCaptureBackend {
+    var inputSource: AudioInputSource { get }
     var inputFormat: AVAudioFormat { get }
     func installTap(bufferSize: AVAudioFrameCount, handler: @escaping (AVAudioPCMBuffer) -> Void)
     func removeTap()
@@ -65,6 +74,7 @@ final class SystemAudioCaptureBackend: AudioCaptureBackend {
     private let engine: AVAudioEngine
     private let inputNode: AVAudioInputNode
     let inputFormat: AVAudioFormat
+    let inputSource: AudioInputSource = .microphone
 
     init() {
         engine = AVAudioEngine()
@@ -156,6 +166,10 @@ class AudioCapture: NSObject, ObservableObject {
         }
 
         let backend = backendFactory()
+        guard backend.inputSource == .microphone else {
+            updateStatus(.error(.systemAudioCaptureNotAllowed))
+            return
+        }
         self.backend = backend
         let recordingFormat = backend.inputFormat
 

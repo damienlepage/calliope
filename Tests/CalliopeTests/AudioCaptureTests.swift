@@ -93,6 +93,28 @@ final class AudioCaptureTests: XCTestCase {
         XCTAssertFalse(capture.isRecording)
         XCTAssertEqual(capture.status, .error(.audioFileCreationFailed))
     }
+
+    func testStartRecordingRejectsSystemAudioBackend() {
+        let backend = FakeAudioCaptureBackend(inputSource: .systemAudio)
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let capture = AudioCapture(
+            recordingManager: manager,
+            backendFactory: { backend },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() }
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true,
+            hasConfirmedHeadphones: true
+        )
+
+        capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+
+        XCTAssertFalse(capture.isRecording)
+        XCTAssertEqual(capture.status, .error(.systemAudioCaptureNotAllowed))
+        XCTAssertFalse(backend.isStarted)
+        XCTAssertFalse(backend.installTapCalled)
+    }
 }
 
 private enum TestError: Error {
@@ -102,12 +124,14 @@ private enum TestError: Error {
 
 private final class FakeAudioCaptureBackend: AudioCaptureBackend {
     let inputFormat: AVAudioFormat
+    let inputSource: AudioInputSource
     var isStarted = false
     var installTapCalled = false
     var removeTapCalled = false
     var startError: Error?
 
-    init() {
+    init(inputSource: AudioInputSource = .microphone) {
+        self.inputSource = inputSource
         self.inputFormat = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 1)!
     }
 

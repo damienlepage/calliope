@@ -67,6 +67,11 @@ struct ContentView: View {
                 Text(PrivacyGuardrails.disclosureBody)
                     .font(.subheadline)
                     .foregroundColor(.secondary)
+                ForEach(PrivacyGuardrails.settingsStatements, id: \.self) { statement in
+                    Text(statement)
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                }
                 Text("Recordings are stored locally at \(RecordingManager.shared.recordingsDirectoryURL().path)")
                     .font(.footnote)
                     .foregroundColor(.secondary)

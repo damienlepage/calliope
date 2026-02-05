@@ -27,4 +27,15 @@ final class PrivacyGuardrailsTests: XCTestCase {
         )
         XCTAssertTrue(PrivacyGuardrails.canStartRecording(state: satisfied))
     }
+
+    func testSettingsStatementsHighlightLocalOnlyMicCapture() {
+        XCTAssertEqual(
+            PrivacyGuardrails.settingsStatements,
+            [
+                "All audio processing stays on this Mac.",
+                "Only your microphone input is analyzed.",
+                "System audio and other participants are never recorded."
+            ]
+        )
+    }
 }

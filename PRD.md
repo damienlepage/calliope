@@ -78,5 +78,5 @@ Calliope is a macOS app that acts as a real-time communication coach during conf
 Acceptance Criteria: App can start and stop a local-only microphone capture session; capture errors are surfaced in the UI status; unit tests cover start/stop and error propagation.
 2. [DONE][P1] Wire live analysis outputs to UI feedback indicators
 Acceptance Criteria: Pace, crutch word, and pause indicators update from live analysis stream; updates are throttled to avoid UI jank; unit tests validate mapping from analysis events to UI state.
-3. [READY][P2] Document and enforce privacy guardrails in capture settings
+3. [DONE][P2] Document and enforce privacy guardrails in capture settings
 Acceptance Criteria: App settings UI clearly states local-only processing and user-only capture; code enforces microphone-only input path with no system audio capture; tests assert settings copy and enforcement.
