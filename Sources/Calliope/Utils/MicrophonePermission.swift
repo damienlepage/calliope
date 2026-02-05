@@ -7,6 +7,9 @@
 
 import AVFoundation
 import Combine
+#if canImport(AppKit)
+import AppKit
+#endif
 
 enum MicrophonePermissionState: Equatable {
     case notDetermined
@@ -51,10 +54,25 @@ final class MicrophonePermissionManager: ObservableObject {
     @Published private(set) var state: MicrophonePermissionState
 
     private let provider: MicrophonePermissionProviding
+    private let notificationCenter: NotificationCenter
+    private let appActivationNotification: Notification.Name
+    private var observers: [NSObjectProtocol] = []
 
-    init(provider: MicrophonePermissionProviding = SystemMicrophonePermissionProvider()) {
+    init(
+        provider: MicrophonePermissionProviding = SystemMicrophonePermissionProvider(),
+        notificationCenter: NotificationCenter = .default,
+        appActivationNotification: Notification.Name = MicrophonePermissionManager.defaultAppActivationNotification
+    ) {
         self.provider = provider
+        self.notificationCenter = notificationCenter
+        self.appActivationNotification = appActivationNotification
         self.state = provider.authorizationState()
+        startMonitoring()
+    }
+
+    deinit {
+        observers.forEach(notificationCenter.removeObserver)
+        observers.removeAll()
     }
 
     func refresh() {
@@ -67,5 +85,26 @@ final class MicrophonePermissionManager: ObservableObject {
                 self?.state = newState
             }
         }
+    }
+
+    private func startMonitoring() {
+        let handler: (Notification) -> Void = { [weak self] _ in
+            self?.refresh()
+        }
+        let observer = notificationCenter.addObserver(
+            forName: appActivationNotification,
+            object: nil,
+            queue: .main,
+            using: handler
+        )
+        observers = [observer]
+    }
+
+    private static var defaultAppActivationNotification: Notification.Name {
+#if canImport(AppKit)
+        return NSApplication.didBecomeActiveNotification
+#else
+        return Notification.Name("CalliopeAppDidBecomeActive")
+#endif
     }
 }

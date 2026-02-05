@@ -22,13 +22,21 @@ final class MicrophonePermissionManagerTests: XCTestCase {
 
     func testManagerInitializesFromProvider() {
         let provider = TestProvider(state: .denied, requestedState: .authorized)
-        let manager = MicrophonePermissionManager(provider: provider)
+        let manager = MicrophonePermissionManager(
+            provider: provider,
+            notificationCenter: NotificationCenter(),
+            appActivationNotification: Notification.Name("TestAppActive")
+        )
         XCTAssertEqual(manager.state, .denied)
     }
 
     func testRefreshUpdatesState() {
         let provider = TestProvider(state: .denied, requestedState: .authorized)
-        let manager = MicrophonePermissionManager(provider: provider)
+        let manager = MicrophonePermissionManager(
+            provider: provider,
+            notificationCenter: NotificationCenter(),
+            appActivationNotification: Notification.Name("TestAppActive")
+        )
 
         provider.state = .authorized
         manager.refresh()
@@ -38,11 +46,36 @@ final class MicrophonePermissionManagerTests: XCTestCase {
 
     func testRequestAccessUpdatesState() {
         let provider = TestProvider(state: .notDetermined, requestedState: .authorized)
-        let manager = MicrophonePermissionManager(provider: provider)
+        let manager = MicrophonePermissionManager(
+            provider: provider,
+            notificationCenter: NotificationCenter(),
+            appActivationNotification: Notification.Name("TestAppActive")
+        )
         let expectation = expectation(description: "Updates state on request")
 
         manager.requestAccess()
 
+        DispatchQueue.main.async {
+            XCTAssertEqual(manager.state, .authorized)
+            expectation.fulfill()
+        }
+
+        wait(for: [expectation], timeout: 1.0)
+    }
+
+    func testRefreshesOnAppActivationNotification() {
+        let notificationCenter = NotificationCenter()
+        let provider = TestProvider(state: .denied, requestedState: .authorized)
+        let manager = MicrophonePermissionManager(
+            provider: provider,
+            notificationCenter: notificationCenter,
+            appActivationNotification: Notification.Name("TestAppActive")
+        )
+
+        provider.state = .authorized
+        let expectation = expectation(description: "Refreshes when app becomes active")
+
+        notificationCenter.post(name: Notification.Name("TestAppActive"), object: nil)
         DispatchQueue.main.async {
             XCTAssertEqual(manager.state, .authorized)
             expectation.fulfill()

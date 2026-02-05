@@ -74,6 +74,8 @@ Calliope is a macOS app that acts as a real-time communication coach during conf
 - How will we visualize pace and pauses to be effective yet unobtrusive?
 
 ## Ready Tickets
+1. [DONE][P2] Refresh microphone permission when app becomes active
+Acceptance Criteria: Microphone permission state refreshes when the app becomes active (e.g., after returning from System Settings); Start button availability updates accordingly; unit tests cover the refresh-on-activation path.
 1. [DONE][P1] Add capture start timeout and user guidance
 Acceptance Criteria: When the user taps Start, if the capture pipeline does not reach a running/recording state within 1 second, capture stops and the status UI shows a clear message to retry; timeout does not fire when capture starts successfully; unit tests cover timeout and success paths.
 1. [DONE][P1] Define microphone capture pipeline baseline
