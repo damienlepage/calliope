@@ -14,6 +14,7 @@ final class OverlayPreferencesStoreTests: XCTestCase {
         let store = OverlayPreferencesStore(defaults: defaults)
 
         XCTAssertFalse(store.alwaysOnTop)
+        XCTAssertFalse(store.showCompactOverlay)
     }
 
     func testAlwaysOnTopPersistsAcrossInstances() {
@@ -30,5 +31,21 @@ final class OverlayPreferencesStoreTests: XCTestCase {
 
         let reloaded = OverlayPreferencesStore(defaults: defaults)
         XCTAssertTrue(reloaded.alwaysOnTop)
+    }
+
+    func testShowCompactOverlayPersistsAcrossInstances() {
+        let suiteName = "OverlayPreferencesStoreTests.compactOverlayPersistence"
+        guard let defaults = UserDefaults(suiteName: suiteName) else {
+            XCTFail("Expected test defaults suite")
+            return
+        }
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let store = OverlayPreferencesStore(defaults: defaults)
+        store.showCompactOverlay = true
+
+        let reloaded = OverlayPreferencesStore(defaults: defaults)
+        XCTAssertTrue(reloaded.showCompactOverlay)
     }
 }

@@ -41,149 +41,165 @@ struct ContentView: View {
             microphonePermission: microphonePermission.state
         )
         let canStartRecording = blockingReasons.isEmpty
-        ScrollView {
-            VStack(spacing: 20) {
-            Text("Calliope")
-                .font(.largeTitle)
-                .fontWeight(.bold)
+        ZStack(alignment: .topTrailing) {
+            ScrollView {
+                VStack(spacing: 20) {
+                    Text("Calliope")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
 
-            // Recording status
-            HStack {
-                Circle()
-                    .fill(statusColor(for: audioCapture.status))
-                    .frame(width: 12, height: 12)
-                Text(audioCapture.statusText)
-                    .font(.headline)
-            }
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Input Level")
-                    .font(.subheadline)
-                ProgressView(value: audioAnalyzer.inputLevel)
-                    .progressViewStyle(.linear)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+                    // Recording status
+                    HStack {
+                        Circle()
+                            .fill(statusColor(for: audioCapture.status))
+                            .frame(width: 12, height: 12)
+                        Text(audioCapture.statusText)
+                            .font(.headline)
+                    }
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Input Level")
+                            .font(.subheadline)
+                        ProgressView(value: audioAnalyzer.inputLevel)
+                            .progressViewStyle(.linear)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-            // Real-time feedback panel (placeholder values)
-            FeedbackPanel(
-                pace: feedbackViewModel.state.pace,
-                crutchWords: feedbackViewModel.state.crutchWords,
-                pauseCount: feedbackViewModel.state.pauseCount,
-                paceMin: preferencesStore.paceMin,
-                paceMax: preferencesStore.paceMax
-            )
+                    // Real-time feedback panel (placeholder values)
+                    FeedbackPanel(
+                        pace: feedbackViewModel.state.pace,
+                        crutchWords: feedbackViewModel.state.crutchWords,
+                        pauseCount: feedbackViewModel.state.pauseCount,
+                        paceMin: preferencesStore.paceMin,
+                        paceMax: preferencesStore.paceMax
+                    )
 
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Microphone Access")
-                    .font(.headline)
-                Text(microphonePermissionDescription(for: microphonePermission.state))
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                Button("Grant Microphone Access") {
-                    microphonePermission.requestAccess()
-                }
-                .buttonStyle(.bordered)
-                .disabled(microphonePermission.state == .authorized)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Microphone Access")
+                            .font(.headline)
+                        Text(microphonePermissionDescription(for: microphonePermission.state))
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        Button("Grant Microphone Access") {
+                            microphonePermission.requestAccess()
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(microphonePermission.state == .authorized)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-            VStack(alignment: .leading, spacing: 8) {
-                Text(PrivacyGuardrails.disclosureTitle)
-                    .font(.headline)
-                Text(PrivacyGuardrails.disclosureBody)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                ForEach(PrivacyGuardrails.settingsStatements, id: \.self) { statement in
-                    Text(statement)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(PrivacyGuardrails.disclosureTitle)
+                            .font(.headline)
+                        Text(PrivacyGuardrails.disclosureBody)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        ForEach(PrivacyGuardrails.settingsStatements, id: \.self) { statement in
+                            Text(statement)
+                                .font(.footnote)
+                                .foregroundColor(.secondary)
+                        }
+                        Text("Recordings are stored locally at \(RecordingManager.shared.recordingsDirectoryURL().path)")
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                        Text(
+                            hasAcceptedDisclosure
+                                ? "Disclosure accepted."
+                                : "Disclosure required before starting a session."
+                        )
                         .font(.footnote)
                         .foregroundColor(.secondary)
+                        if !blockingReasons.isEmpty {
+                            Text(blockingReasonsText(blockingReasons))
+                                .font(.footnote)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Sensitivity Preferences")
+                            .font(.headline)
+                        HStack {
+                            Text("Pace Min")
+                                .font(.subheadline)
+                            Spacer()
+                            Stepper(
+                                value: $preferencesStore.paceMin,
+                                in: 60...220,
+                                step: 5
+                            ) {
+                                Text("\(Int(preferencesStore.paceMin)) WPM")
+                                    .font(.subheadline)
+                            }
+                        }
+                        HStack {
+                            Text("Pace Max")
+                                .font(.subheadline)
+                            Spacer()
+                            Stepper(
+                                value: $preferencesStore.paceMax,
+                                in: 80...260,
+                                step: 5
+                            ) {
+                                Text("\(Int(preferencesStore.paceMax)) WPM")
+                                    .font(.subheadline)
+                            }
+                        }
+                        HStack {
+                            Text("Pause Threshold")
+                                .font(.subheadline)
+                            Spacer()
+                            Stepper(
+                                value: $preferencesStore.pauseThreshold,
+                                in: 0.5...5.0,
+                                step: 0.1
+                            ) {
+                                Text(String(format: "%.1f s", preferencesStore.pauseThreshold))
+                                    .font(.subheadline)
+                            }
+                        }
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Crutch Words (comma or newline separated)")
+                                .font(.subheadline)
+                            TextField("uh, um, you know", text: crutchWordsBinding())
+                                .textFieldStyle(.roundedBorder)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Overlay")
+                            .font(.headline)
+                        Toggle("Show compact overlay", isOn: $overlayPreferencesStore.showCompactOverlay)
+                        Toggle("Always on top", isOn: $overlayPreferencesStore.alwaysOnTop)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    // Control buttons
+                    HStack(spacing: 20) {
+                        Button(action: toggleRecording) {
+                            Text(audioCapture.isRecording ? "Stop" : "Start")
+                                .frame(width: 100, height: 40)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(!audioCapture.isRecording && !canStartRecording)
+                    }
                 }
-                Text("Recordings are stored locally at \(RecordingManager.shared.recordingsDirectoryURL().path)")
-                    .font(.footnote)
-                    .foregroundColor(.secondary)
-                Text(
-                    hasAcceptedDisclosure
-                        ? "Disclosure accepted."
-                        : "Disclosure required before starting a session."
+                .padding()
+            }
+            if OverlayVisibility.shouldShowCompactOverlay(
+                isEnabled: overlayPreferencesStore.showCompactOverlay
+            ) {
+                CompactFeedbackOverlay(
+                    pace: feedbackViewModel.state.pace,
+                    crutchWords: feedbackViewModel.state.crutchWords,
+                    pauseCount: feedbackViewModel.state.pauseCount,
+                    paceMin: preferencesStore.paceMin,
+                    paceMax: preferencesStore.paceMax
                 )
-                .font(.footnote)
-                .foregroundColor(.secondary)
-                if !blockingReasons.isEmpty {
-                    Text(blockingReasonsText(blockingReasons))
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
-                }
+                .padding(.top, 12)
+                .padding(.trailing, 12)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Sensitivity Preferences")
-                    .font(.headline)
-                HStack {
-                    Text("Pace Min")
-                        .font(.subheadline)
-                    Spacer()
-                    Stepper(
-                        value: $preferencesStore.paceMin,
-                        in: 60...220,
-                        step: 5
-                    ) {
-                        Text("\(Int(preferencesStore.paceMin)) WPM")
-                            .font(.subheadline)
-                    }
-                }
-                HStack {
-                    Text("Pace Max")
-                        .font(.subheadline)
-                    Spacer()
-                    Stepper(
-                        value: $preferencesStore.paceMax,
-                        in: 80...260,
-                        step: 5
-                    ) {
-                        Text("\(Int(preferencesStore.paceMax)) WPM")
-                            .font(.subheadline)
-                    }
-                }
-                HStack {
-                    Text("Pause Threshold")
-                        .font(.subheadline)
-                    Spacer()
-                    Stepper(
-                        value: $preferencesStore.pauseThreshold,
-                        in: 0.5...5.0,
-                        step: 0.1
-                    ) {
-                        Text(String(format: "%.1f s", preferencesStore.pauseThreshold))
-                            .font(.subheadline)
-                    }
-                }
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Crutch Words (comma or newline separated)")
-                        .font(.subheadline)
-                    TextField("uh, um, you know", text: crutchWordsBinding())
-                        .textFieldStyle(.roundedBorder)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Overlay")
-                    .font(.headline)
-                Toggle("Always on top", isOn: $overlayPreferencesStore.alwaysOnTop)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            // Control buttons
-            HStack(spacing: 20) {
-                Button(action: toggleRecording) {
-                    Text(audioCapture.isRecording ? "Stop" : "Start")
-                        .frame(width: 100, height: 40)
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(!audioCapture.isRecording && !canStartRecording)
-            }
-            }
-            .padding()
         }
         .frame(width: 420, height: 760)
         .onAppear {

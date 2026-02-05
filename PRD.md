@@ -94,5 +94,5 @@ Acceptance Criteria: Recording listing returns only `.m4a`/`.wav` files (no dire
 Acceptance Criteria: `AudioCapture` observes audio engine configuration changes; on change during recording it stops and surfaces a clear error instructing the user to press Start again; taps are removed and the app returns to a stable idle state; unit tests cover the configuration-change path.
 10. [DONE][P2] First-launch privacy disclosure sheet
 Acceptance Criteria: A non-dismissible modal sheet appears on first launch until the user accepts the disclosure; acceptance is persisted; the sheet does not reappear after acceptance; unit tests cover persistence and gating logic.
-11. [READY][P2] Add compact live feedback overlay
+11. [DONE][P2] Add compact live feedback overlay
 Acceptance Criteria: A compact overlay view shows pace/crutch/pause; visibility is controlled by a user-facing toggle and persists across launches; overlay respects the always-on-top preference; unit tests cover overlay preference persistence and show/hide behavior.
