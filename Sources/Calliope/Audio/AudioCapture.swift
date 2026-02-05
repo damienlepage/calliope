@@ -9,7 +9,9 @@ import AVFoundation
 import Combine
 
 enum AudioCaptureError: Equatable {
-    case microphonePermissionMissing
+    case microphonePermissionNotDetermined
+    case microphonePermissionDenied
+    case microphonePermissionRestricted
     case privacyGuardrailsNotSatisfied
     case systemAudioCaptureNotAllowed
     case audioFileCreationFailed
@@ -19,8 +21,12 @@ enum AudioCaptureError: Equatable {
 
     var message: String {
         switch self {
-        case .microphonePermissionMissing:
-            return "Microphone permission is required."
+        case .microphonePermissionNotDetermined:
+            return "Microphone access is required. Click Grant Microphone Access."
+        case .microphonePermissionDenied:
+            return "Microphone access is denied. Enable it in System Settings > Privacy & Security > Microphone."
+        case .microphonePermissionRestricted:
+            return "Microphone access is restricted by system policy."
         case .privacyGuardrailsNotSatisfied:
             return "Privacy guardrails must be accepted to start."
         case .systemAudioCaptureNotAllowed:
@@ -183,7 +189,7 @@ class AudioCapture: NSObject, ObservableObject {
             microphonePermission: microphonePermission
         ) else {
             let error: AudioCaptureError = microphonePermission != .authorized
-                ? .microphonePermissionMissing
+                ? permissionError(for: microphonePermission)
                 : .privacyGuardrailsNotSatisfied
             updateStatus(.error(error))
             return
@@ -242,6 +248,14 @@ class AudioCapture: NSObject, ObservableObject {
         }
     }
 
+    func startRecording(
+        privacyState: PrivacyGuardrails.State,
+        microphonePermissionProvider: MicrophonePermissionProviding
+    ) {
+        let state = microphonePermissionProvider.authorizationState()
+        startRecording(privacyState: privacyState, microphonePermission: state)
+    }
+
     func stopRecording() {
         if isRecording {
             stopRecordingInternal(statusOverride: .idle)
@@ -283,6 +297,19 @@ class AudioCapture: NSObject, ObservableObject {
             DispatchQueue.main.async { [weak self] in
                 self?.status = newStatus
             }
+        }
+    }
+
+    private func permissionError(for state: MicrophonePermissionState) -> AudioCaptureError {
+        switch state {
+        case .notDetermined:
+            return .microphonePermissionNotDetermined
+        case .denied:
+            return .microphonePermissionDenied
+        case .restricted:
+            return .microphonePermissionRestricted
+        case .authorized:
+            return .microphonePermissionNotDetermined
         }
     }
 }

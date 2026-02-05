@@ -244,6 +244,7 @@ struct ContentView: View {
         if audioCapture.isRecording {
             audioCapture.stopRecording()
         } else {
+            microphonePermission.refresh()
             let privacyState = PrivacyGuardrails.State(
                 hasAcceptedDisclosure: hasAcceptedDisclosure
             )

@@ -47,7 +47,81 @@ final class AudioCaptureTests: XCTestCase {
         capture.startRecording(privacyState: privacyState, microphonePermission: .denied)
 
         XCTAssertFalse(capture.isRecording)
-        XCTAssertEqual(capture.status, .error(.microphonePermissionMissing))
+        XCTAssertEqual(capture.status, .error(.microphonePermissionDenied))
+    }
+
+    func testStartRecordingWithRestrictedPermissionSetsError() {
+        let backend = FakeAudioCaptureBackend()
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let capture = AudioCapture(
+            recordingManager: manager,
+            backendFactory: { backend },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() }
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startRecording(privacyState: privacyState, microphonePermission: .restricted)
+
+        XCTAssertFalse(capture.isRecording)
+        XCTAssertEqual(capture.status, .error(.microphonePermissionRestricted))
+    }
+
+    func testStartRecordingUsesPermissionProviderAuthorizationState() {
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+
+        do {
+            let backend = FakeAudioCaptureBackend()
+            let capture = AudioCapture(
+                recordingManager: manager,
+                backendFactory: { backend },
+                audioFileFactory: { _, _ in FakeAudioFileWriter() }
+            )
+            let provider = TestPermissionProvider(state: .authorized)
+            capture.startRecording(
+                privacyState: privacyState,
+                microphonePermissionProvider: provider
+            )
+            XCTAssertTrue(capture.isRecording)
+            XCTAssertEqual(capture.status, .recording)
+        }
+
+        do {
+            let backend = FakeAudioCaptureBackend()
+            let capture = AudioCapture(
+                recordingManager: manager,
+                backendFactory: { backend },
+                audioFileFactory: { _, _ in FakeAudioFileWriter() }
+            )
+            let provider = TestPermissionProvider(state: .denied)
+            capture.startRecording(
+                privacyState: privacyState,
+                microphonePermissionProvider: provider
+            )
+            XCTAssertFalse(capture.isRecording)
+            XCTAssertEqual(capture.status, .error(.microphonePermissionDenied))
+        }
+
+        do {
+            let backend = FakeAudioCaptureBackend()
+            let capture = AudioCapture(
+                recordingManager: manager,
+                backendFactory: { backend },
+                audioFileFactory: { _, _ in FakeAudioFileWriter() }
+            )
+            let provider = TestPermissionProvider(state: .restricted)
+            capture.startRecording(
+                privacyState: privacyState,
+                microphonePermissionProvider: provider
+            )
+            XCTAssertFalse(capture.isRecording)
+            XCTAssertEqual(capture.status, .error(.microphonePermissionRestricted))
+        }
     }
 
     func testStartRecordingEngineFailureSetsError() {
@@ -127,7 +201,7 @@ final class AudioCaptureTests: XCTestCase {
         capture.startRecording(privacyState: privacyState, microphonePermission: .denied)
 
         XCTAssertFalse(capture.isRecording)
-        XCTAssertEqual(capture.status, .error(.microphonePermissionMissing))
+        XCTAssertEqual(capture.status, .error(.microphonePermissionDenied))
 
         capture.stopRecording()
 
@@ -169,6 +243,18 @@ final class AudioCaptureTests: XCTestCase {
 private enum TestError: Error {
     case engineStart
     case audioFileCreation
+}
+
+private struct TestPermissionProvider: MicrophonePermissionProviding {
+    let state: MicrophonePermissionState
+
+    func authorizationState() -> MicrophonePermissionState {
+        state
+    }
+
+    func requestAccess(_ completion: @escaping (MicrophonePermissionState) -> Void) {
+        completion(state)
+    }
 }
 
 private final class FakeAudioCaptureBackend: AudioCaptureBackend {
