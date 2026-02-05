@@ -14,12 +14,19 @@ final class LiveAnalysisSmokeTests: XCTestCase {
         let recordingURL = tempDirectory.appendingPathComponent("analysis_smoke_recording.wav")
         let recordingManager = RecordingManager(baseDirectory: tempDirectory)
         let backend = TestAnalysisAudioFileInputBackend(fileURL: resourceURL, silenceDuration: 0.06)
+        let suiteName = "LiveAnalysisSmokeTests.AudioCapture.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        let capturePreferencesStore = AudioCapturePreferencesStore(defaults: defaults)
 
         XCTAssertEqual(backend.inputSource, .microphone)
 
         let capture = AudioCapture(
             recordingManager: recordingManager,
-            backendFactory: { backend },
+            capturePreferencesStore: capturePreferencesStore,
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
             audioFileFactory: { _, settings in
                 try SystemAudioFileWriter(url: recordingURL, settings: settings)
             }

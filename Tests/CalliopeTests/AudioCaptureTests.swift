@@ -9,7 +9,10 @@ final class AudioCaptureTests: XCTestCase {
         let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
         let capture = AudioCapture(
             recordingManager: manager,
-            backendFactory: { backend },
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
             audioFileFactory: { _, _ in fileWriter }
         )
 
@@ -31,12 +34,65 @@ final class AudioCaptureTests: XCTestCase {
         XCTAssertTrue(backend.removeTapCalled)
     }
 
+    func testStartRecordingUpdatesBackendStatusFromSelector() {
+        let backend = FakeAudioCaptureBackend()
+        let fileWriter = FakeAudioFileWriter()
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let preferencesStore = makePreferencesStore()
+        preferencesStore.voiceIsolationEnabled = true
+        let capture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: preferencesStore,
+            backendSelector: { preferences in
+                XCTAssertTrue(preferences.voiceIsolationEnabled)
+                return AudioCaptureBackendSelection(backend: backend, status: .voiceIsolation)
+            },
+            audioFileFactory: { _, _ in fileWriter }
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+
+        XCTAssertEqual(capture.backendStatus, .voiceIsolation)
+    }
+
+    func testVoiceIsolationUnavailableFallsBackToStandardStatus() {
+        let backend = FakeAudioCaptureBackend()
+        let fileWriter = FakeAudioFileWriter()
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let preferencesStore = makePreferencesStore()
+        preferencesStore.voiceIsolationEnabled = true
+        let capture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: preferencesStore,
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .voiceIsolationUnavailable)
+            },
+            audioFileFactory: { _, _ in fileWriter }
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+
+        XCTAssertTrue(capture.isRecording)
+        XCTAssertEqual(capture.backendStatus, .voiceIsolationUnavailable)
+    }
+
     func testStartRecordingUpdatesInputDeviceName() {
         let backend = FakeAudioCaptureBackend(inputDeviceName: "Test Microphone")
         let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
         let capture = AudioCapture(
             recordingManager: manager,
-            backendFactory: { backend },
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
             audioFileFactory: { _, _ in FakeAudioFileWriter() }
         )
 
@@ -54,7 +110,10 @@ final class AudioCaptureTests: XCTestCase {
         let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
         let capture = AudioCapture(
             recordingManager: manager,
-            backendFactory: { backend },
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
             audioFileFactory: { _, _ in FakeAudioFileWriter() }
         )
 
@@ -73,7 +132,10 @@ final class AudioCaptureTests: XCTestCase {
         let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
         let capture = AudioCapture(
             recordingManager: manager,
-            backendFactory: { backend },
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
             audioFileFactory: { _, _ in FakeAudioFileWriter() }
         )
 
@@ -97,7 +159,10 @@ final class AudioCaptureTests: XCTestCase {
             let backend = FakeAudioCaptureBackend()
             let capture = AudioCapture(
                 recordingManager: manager,
-                backendFactory: { backend },
+                capturePreferencesStore: makePreferencesStore(),
+                backendSelector: { _ in
+                    AudioCaptureBackendSelection(backend: backend, status: .standard)
+                },
                 audioFileFactory: { _, _ in FakeAudioFileWriter() }
             )
             let provider = TestPermissionProvider(state: .authorized)
@@ -113,7 +178,10 @@ final class AudioCaptureTests: XCTestCase {
             let backend = FakeAudioCaptureBackend()
             let capture = AudioCapture(
                 recordingManager: manager,
-                backendFactory: { backend },
+                capturePreferencesStore: makePreferencesStore(),
+                backendSelector: { _ in
+                    AudioCaptureBackendSelection(backend: backend, status: .standard)
+                },
                 audioFileFactory: { _, _ in FakeAudioFileWriter() }
             )
             let provider = TestPermissionProvider(state: .denied)
@@ -129,7 +197,10 @@ final class AudioCaptureTests: XCTestCase {
             let backend = FakeAudioCaptureBackend()
             let capture = AudioCapture(
                 recordingManager: manager,
-                backendFactory: { backend },
+                capturePreferencesStore: makePreferencesStore(),
+                backendSelector: { _ in
+                    AudioCaptureBackendSelection(backend: backend, status: .standard)
+                },
                 audioFileFactory: { _, _ in FakeAudioFileWriter() }
             )
             let provider = TestPermissionProvider(state: .restricted)
@@ -148,7 +219,10 @@ final class AudioCaptureTests: XCTestCase {
         let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
         let capture = AudioCapture(
             recordingManager: manager,
-            backendFactory: { backend },
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
             audioFileFactory: { _, _ in FakeAudioFileWriter() }
         )
 
@@ -168,7 +242,10 @@ final class AudioCaptureTests: XCTestCase {
         let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
         let capture = AudioCapture(
             recordingManager: manager,
-            backendFactory: { backend },
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
             audioFileFactory: { _, _ in throw TestError.audioFileCreation }
         )
 
@@ -187,7 +264,10 @@ final class AudioCaptureTests: XCTestCase {
         let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
         let capture = AudioCapture(
             recordingManager: manager,
-            backendFactory: { backend },
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
             audioFileFactory: { _, _ in FakeAudioFileWriter() }
         )
 
@@ -208,7 +288,10 @@ final class AudioCaptureTests: XCTestCase {
         let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
         let capture = AudioCapture(
             recordingManager: manager,
-            backendFactory: { backend },
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
             audioFileFactory: { _, _ in FakeAudioFileWriter() }
         )
 
@@ -231,7 +314,10 @@ final class AudioCaptureTests: XCTestCase {
         let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
         let capture = AudioCapture(
             recordingManager: manager,
-            backendFactory: { backend },
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
             audioFileFactory: { _, _ in FakeAudioFileWriter() }
         )
 
@@ -262,7 +348,10 @@ final class AudioCaptureTests: XCTestCase {
         let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
         let capture = AudioCapture(
             recordingManager: manager,
-            backendFactory: { backend },
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
             audioFileFactory: { _, _ in FakeAudioFileWriter() }
         )
 
@@ -300,6 +389,13 @@ private struct TestPermissionProvider: MicrophonePermissionProviding {
     func requestAccess(_ completion: @escaping (MicrophonePermissionState) -> Void) {
         completion(state)
     }
+}
+
+private func makePreferencesStore() -> AudioCapturePreferencesStore {
+    let suiteName = "AudioCaptureTests.\(UUID().uuidString)"
+    let defaults = UserDefaults(suiteName: suiteName)!
+    defaults.removePersistentDomain(forName: suiteName)
+    return AudioCapturePreferencesStore(defaults: defaults)
 }
 
 private final class FakeAudioCaptureBackend: AudioCaptureBackend {

@@ -49,9 +49,31 @@ enum AudioCaptureStatus: Equatable {
     case error(AudioCaptureError)
 }
 
+enum AudioCaptureBackendStatus: Equatable {
+    case standard
+    case voiceIsolation
+    case voiceIsolationUnavailable
+
+    var message: String {
+        switch self {
+        case .standard:
+            return "Capture: Standard mic"
+        case .voiceIsolation:
+            return "Capture: Voice Isolation enabled"
+        case .voiceIsolationUnavailable:
+            return "Capture: Voice Isolation unavailable, using standard mic"
+        }
+    }
+}
+
 enum AudioInputSource: Equatable {
     case microphone
     case systemAudio
+}
+
+struct AudioCaptureBackendSelection {
+    let backend: AudioCaptureBackend
+    let status: AudioCaptureBackendStatus
 }
 
 protocol AudioCaptureBackend {
@@ -135,11 +157,83 @@ final class SystemAudioCaptureBackend: AudioCaptureBackend {
     }
 }
 
+enum VoiceIsolationBackendError: Error {
+    case notSupported
+}
+
+final class VoiceIsolationAudioCaptureBackend: AudioCaptureBackend {
+    private let engine: AVAudioEngine
+    private let inputNode: AVAudioInputNode
+    private var configurationObserver: NSObjectProtocol?
+    let inputFormat: AVAudioFormat
+    let inputSource: AudioInputSource = .microphone
+    var inputDeviceName: String {
+        inputNode.auAudioUnit.deviceName
+    }
+
+    init() throws {
+        engine = AVAudioEngine()
+        inputNode = engine.inputNode
+        try Self.enableVoiceIsolation(on: inputNode)
+        inputFormat = inputNode.outputFormat(forBus: 0)
+    }
+
+    func installTap(bufferSize: AVAudioFrameCount, handler: @escaping (AVAudioPCMBuffer) -> Void) {
+        inputNode.installTap(onBus: 0, bufferSize: bufferSize, format: inputFormat) { buffer, _ in
+            handler(buffer)
+        }
+    }
+
+    func removeTap() {
+        inputNode.removeTap(onBus: 0)
+    }
+
+    func setConfigurationChangeHandler(_ handler: @escaping () -> Void) {
+        clearConfigurationChangeHandler()
+        configurationObserver = NotificationCenter.default.addObserver(
+            forName: .AVAudioEngineConfigurationChange,
+            object: engine,
+            queue: .main
+        ) { _ in
+            handler()
+        }
+    }
+
+    func clearConfigurationChangeHandler() {
+        if let configurationObserver {
+            NotificationCenter.default.removeObserver(configurationObserver)
+            self.configurationObserver = nil
+        }
+    }
+
+    func start() throws {
+        try engine.start()
+    }
+
+    func stop() {
+        engine.stop()
+    }
+
+    private static func enableVoiceIsolation(on inputNode: AVAudioInputNode) throws {
+        if #available(macOS 14.0, *) {
+            try inputNode.setVoiceProcessingEnabled(true)
+            guard inputNode.isVoiceProcessingEnabled else {
+                throw VoiceIsolationBackendError.notSupported
+            }
+        } else {
+            throw VoiceIsolationBackendError.notSupported
+        }
+    }
+}
+
 class AudioCapture: NSObject, ObservableObject {
+    typealias AudioCaptureBackendSelector = (AudioCapturePreferences) -> AudioCaptureBackendSelection
+
     @Published var isRecording = false
     @Published private(set) var status: AudioCaptureStatus = .idle
     @Published private(set) var currentRecordingURL: URL?
     @Published private(set) var inputDeviceName: String = "Unknown Microphone"
+    @Published private(set) var backendStatus: AudioCaptureBackendStatus = .standard
 
     private let bufferSubject = PassthroughSubject<AVAudioPCMBuffer, Never>()
     var audioBufferPublisher: AnyPublisher<AVAudioPCMBuffer, Never> {
@@ -150,7 +244,8 @@ class AudioCapture: NSObject, ObservableObject {
     private var audioFile: AudioFileWritable?
     private var tapFrameCounter: UInt = 0
     private let recordingManager: RecordingManager
-    private let backendFactory: () -> AudioCaptureBackend
+    private let capturePreferencesStore: AudioCapturePreferencesStore
+    private let backendSelector: AudioCaptureBackendSelector
     private let audioFileFactory: (URL, [String: Any]) throws -> AudioFileWritable
 
     var statusText: String {
@@ -164,25 +259,43 @@ class AudioCapture: NSObject, ObservableObject {
         }
     }
 
-    override init() {
-        self.recordingManager = RecordingManager.shared
-        self.backendFactory = { SystemAudioCaptureBackend() }
-        self.audioFileFactory = { url, settings in
+    init(
+        recordingManager: RecordingManager = .shared,
+        capturePreferencesStore: AudioCapturePreferencesStore = AudioCapturePreferencesStore(),
+        backendSelector: @escaping AudioCaptureBackendSelector = AudioCapture.defaultBackendSelector,
+        audioFileFactory: @escaping (URL, [String: Any]) throws -> AudioFileWritable = { url, settings in
             try SystemAudioFileWriter(url: url, settings: settings)
         }
+    ) {
+        self.recordingManager = recordingManager
+        self.capturePreferencesStore = capturePreferencesStore
+        self.backendSelector = backendSelector
+        self.audioFileFactory = audioFileFactory
         super.init()
         // macOS doesn't use AVAudioSession - AVAudioEngine handles this directly
     }
 
-    init(
-        recordingManager: RecordingManager = .shared,
-        backendFactory: @escaping () -> AudioCaptureBackend,
-        audioFileFactory: @escaping (URL, [String: Any]) throws -> AudioFileWritable
-    ) {
-        self.recordingManager = recordingManager
-        self.backendFactory = backendFactory
-        self.audioFileFactory = audioFileFactory
-        super.init()
+    static let defaultBackendSelector: AudioCaptureBackendSelector = { preferences in
+        if preferences.voiceIsolationEnabled {
+            if let backend = try? VoiceIsolationAudioCaptureBackend() {
+                return AudioCaptureBackendSelection(
+                    backend: backend,
+                    status: .voiceIsolation
+                )
+            }
+            return AudioCaptureBackendSelection(
+                backend: SystemAudioCaptureBackend(),
+                status: .voiceIsolationUnavailable
+            )
+        }
+        return AudioCaptureBackendSelection(
+            backend: SystemAudioCaptureBackend(),
+            status: .standard
+        )
+    }
+
+    var backendStatusText: String {
+        backendStatus.message
     }
 
     func startRecording(
@@ -201,7 +314,10 @@ class AudioCapture: NSObject, ObservableObject {
             return
         }
 
-        let backend = backendFactory()
+        let preferences = capturePreferencesStore.current
+        let selection = backendSelector(preferences)
+        let backend = selection.backend
+        backendStatus = selection.status
         guard backend.inputSource == .microphone else {
             updateStatus(.error(.systemAudioCaptureNotAllowed))
             return

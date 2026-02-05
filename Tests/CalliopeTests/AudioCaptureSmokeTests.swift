@@ -16,10 +16,17 @@ final class AudioCaptureSmokeTests: XCTestCase {
         let recordingURL = tempDirectory.appendingPathComponent("smoke_recording.wav")
         let manager = RecordingManager(baseDirectory: tempDirectory)
         let backend = TestAudioFileInputBackend(fileURL: resourceURL)
+        let suiteName = "AudioCaptureSmokeTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        let preferencesStore = AudioCapturePreferencesStore(defaults: defaults)
 
         let capture = AudioCapture(
             recordingManager: manager,
-            backendFactory: { backend },
+            capturePreferencesStore: preferencesStore,
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
             audioFileFactory: { _, settings in
                 try SystemAudioFileWriter(url: recordingURL, settings: settings)
             }

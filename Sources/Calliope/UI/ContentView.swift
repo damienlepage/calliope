@@ -9,10 +9,11 @@ import Combine
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var audioCapture = AudioCapture()
+    @StateObject private var audioCapture: AudioCapture
     @StateObject private var audioAnalyzer = AudioAnalyzer()
     @StateObject private var feedbackViewModel = LiveFeedbackViewModel()
     @StateObject private var microphonePermission = MicrophonePermissionManager()
+    @StateObject private var audioCapturePreferencesStore: AudioCapturePreferencesStore
     @StateObject private var preferencesStore = AnalysisPreferencesStore()
     @StateObject private var recordingsViewModel = RecordingListViewModel()
     @StateObject private var overlayPreferencesStore: OverlayPreferencesStore
@@ -21,11 +22,16 @@ struct ContentView: View {
     @State private var isDisclosureSheetPresented: Bool
 
     init(
+        audioCapturePreferencesStore: AudioCapturePreferencesStore = AudioCapturePreferencesStore(),
         overlayPreferencesStore: OverlayPreferencesStore = OverlayPreferencesStore(),
         privacyDisclosureStore: PrivacyDisclosureStore = PrivacyDisclosureStore()
     ) {
         _privacyDisclosureStore = State(initialValue: privacyDisclosureStore)
         _overlayPreferencesStore = StateObject(wrappedValue: overlayPreferencesStore)
+        _audioCapturePreferencesStore = StateObject(wrappedValue: audioCapturePreferencesStore)
+        _audioCapture = StateObject(wrappedValue: AudioCapture(
+            capturePreferencesStore: audioCapturePreferencesStore
+        ))
         let accepted = privacyDisclosureStore.hasAcceptedDisclosure
         _hasAcceptedDisclosure = State(initialValue: accepted)
         _isDisclosureSheetPresented = State(
@@ -62,6 +68,9 @@ struct ContentView: View {
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
+                    Text(audioCapture.backendStatusText)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
 
                     // Real-time feedback panel (placeholder values)
                     FeedbackPanel(
@@ -173,6 +182,13 @@ struct ContentView: View {
                             .font(.headline)
                         Toggle("Show compact overlay", isOn: $overlayPreferencesStore.showCompactOverlay)
                         Toggle("Always on top", isOn: $overlayPreferencesStore.alwaysOnTop)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Capture")
+                            .font(.headline)
+                        Toggle("Enable voice isolation (if supported)", isOn: $audioCapturePreferencesStore.voiceIsolationEnabled)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
 

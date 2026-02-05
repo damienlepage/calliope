@@ -118,5 +118,5 @@ Acceptance Criteria: Recording listing ignores `.m4a`/`.wav` files with zero byt
 Acceptance Criteria: Test-only analysis input path can inject a bundled mono WAV into the live analysis pipeline without using the system audio graph; the live feedback view model receives paced/crutch/pause updates that differ from defaults; tests assert updates are throttled and remain local-only with no network usage.
 22. [DONE][P2] Add recordings folder shortcut
 Acceptance Criteria: Recordings section includes an "Open Folder" action that reveals the local recordings directory; unit tests verify the recordings list view model requests the workspace to open the recordings directory; no network usage is introduced.
-23. [READY][P1] Add voice isolation capture backend
+23. [DONE][P1] Add voice isolation capture backend
 Acceptance Criteria: Add a voice isolation capture backend using the platform voice processing/voice isolation path; expose a user-facing preference to enable/disable and persist it locally; enable by default when supported with a clear fallback status when not supported; keep capture microphone-only and local; unit tests cover backend selection, preference persistence, and fallback behavior.

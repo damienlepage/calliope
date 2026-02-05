@@ -9,9 +9,16 @@ final class AnalysisSummaryTests: XCTestCase {
             isDirectory: true
         )
         let manager = RecordingManager(baseDirectory: tempDir)
+        let suiteName = "AnalysisSummaryTests.AudioCapture.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        let preferencesStore = AudioCapturePreferencesStore(defaults: defaults)
         let audioCapture = AudioCapture(
             recordingManager: manager,
-            backendFactory: { FakeAudioCaptureBackend() },
+            capturePreferencesStore: preferencesStore,
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: FakeAudioCaptureBackend(), status: .standard)
+            },
             audioFileFactory: { _, _ in FakeAudioFileWriter() }
         )
         let writer = MockSummaryWriter()
