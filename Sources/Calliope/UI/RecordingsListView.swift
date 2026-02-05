@@ -24,7 +24,7 @@ struct RecordingsListView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(item.displayName)
                                 .font(.subheadline)
-                            Text(item.modifiedAt.formatted(date: .abbreviated, time: .shortened))
+                            Text(item.detailText)
                                 .font(.footnote)
                                 .foregroundColor(.secondary)
                         }

@@ -104,3 +104,5 @@ Acceptance Criteria: A test-only input path can inject a bundled mono WAV into `
 Acceptance Criteria: The recordings list supports reveal-in-Finder and delete actions for `.m4a`/`.wav` items; deletion removes the file locally and updates the list; unit tests cover delete behavior and list refresh.
 15. [DONE][P2] Refresh recordings list after recording stops
 Acceptance Criteria: When a recording session stops, the recordings list reloads so new files appear without relaunching; unit tests cover the reload trigger on recording stop.
+16. [DONE][P2] Show recording duration and size in recordings list
+Acceptance Criteria: The recordings list shows each file's duration and size alongside the modified date; metadata is loaded from local file data only; unit tests cover mapping of duration and size into recording items.

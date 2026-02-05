@@ -44,16 +44,28 @@ final class RecordingListViewModelTests: XCTestCase {
             urlA: Date(timeIntervalSince1970: 10),
             urlB: Date(timeIntervalSince1970: 20)
         ]
+        let durations: [URL: TimeInterval] = [
+            urlA: 12.5,
+            urlB: 42.0
+        ]
+        let sizes: [URL: Int] = [
+            urlA: 1024,
+            urlB: 2048
+        ]
         let viewModel = RecordingListViewModel(
             manager: manager,
             workspace: NoopWorkspace(),
-            modificationDateProvider: { dates[$0] ?? .distantPast }
+            modificationDateProvider: { dates[$0] ?? .distantPast },
+            durationProvider: { durations[$0] },
+            fileSizeProvider: { sizes[$0] }
         )
 
         viewModel.loadRecordings()
 
         XCTAssertEqual(viewModel.recordings.map(\.url), [urlA, urlB])
         XCTAssertEqual(viewModel.recordings.map(\.modifiedAt), [dates[urlA]!, dates[urlB]!])
+        XCTAssertEqual(viewModel.recordings.map(\.duration), [durations[urlA]!, durations[urlB]!])
+        XCTAssertEqual(viewModel.recordings.map(\.fileSizeBytes), [sizes[urlA]!, sizes[urlB]!])
     }
 
     func testDeleteRecordingReloadsList() {
@@ -63,7 +75,9 @@ final class RecordingListViewModelTests: XCTestCase {
         let viewModel = RecordingListViewModel(
             manager: manager,
             workspace: NoopWorkspace(),
-            modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) }
+            modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) },
+            durationProvider: { _ in nil },
+            fileSizeProvider: { _ in nil }
         )
 
         viewModel.loadRecordings()
@@ -81,7 +95,9 @@ final class RecordingListViewModelTests: XCTestCase {
         let viewModel = RecordingListViewModel(
             manager: manager,
             workspace: NoopWorkspace(),
-            modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) }
+            modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) },
+            durationProvider: { _ in nil },
+            fileSizeProvider: { _ in nil }
         )
         let subject = PassthroughSubject<Bool, Never>()
 
