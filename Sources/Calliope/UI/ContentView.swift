@@ -22,12 +22,14 @@ struct ContentView: View {
     @State private var hasAcceptedDisclosure: Bool
     @State private var isDisclosureSheetPresented: Bool
     private let settingsActionModel: MicrophoneSettingsActionModel
+    private let soundSettingsActionModel: SoundSettingsActionModel
 
     init(
         audioCapturePreferencesStore: AudioCapturePreferencesStore = AudioCapturePreferencesStore(),
         overlayPreferencesStore: OverlayPreferencesStore = OverlayPreferencesStore(),
         privacyDisclosureStore: PrivacyDisclosureStore = PrivacyDisclosureStore(),
-        settingsActionModel: MicrophoneSettingsActionModel = MicrophoneSettingsActionModel()
+        settingsActionModel: MicrophoneSettingsActionModel = MicrophoneSettingsActionModel(),
+        soundSettingsActionModel: SoundSettingsActionModel = SoundSettingsActionModel()
     ) {
         _privacyDisclosureStore = State(initialValue: privacyDisclosureStore)
         _overlayPreferencesStore = StateObject(wrappedValue: overlayPreferencesStore)
@@ -41,6 +43,7 @@ struct ContentView: View {
             initialValue: PrivacyDisclosureGate.requiresDisclosure(hasAcceptedDisclosure: accepted)
         )
         self.settingsActionModel = settingsActionModel
+        self.soundSettingsActionModel = soundSettingsActionModel
     }
 
     var body: some View {
@@ -56,6 +59,7 @@ struct ContentView: View {
         )
         let canStartRecording = blockingReasons.isEmpty
         let showOpenSettingsAction = settingsActionModel.shouldShow(for: blockingReasons)
+        let showOpenSoundSettingsAction = soundSettingsActionModel.shouldShow(for: blockingReasons)
         ZStack(alignment: .topTrailing) {
             ScrollView {
                 VStack(spacing: 20) {
@@ -107,6 +111,12 @@ struct ContentView: View {
                         if showOpenSettingsAction {
                             Button("Open System Settings") {
                                 settingsActionModel.openSystemSettings()
+                            }
+                            .buttonStyle(.bordered)
+                        }
+                        if showOpenSoundSettingsAction {
+                            Button("Open Sound Settings") {
+                                soundSettingsActionModel.openSoundSettings()
                             }
                             .buttonStyle(.bordered)
                         }

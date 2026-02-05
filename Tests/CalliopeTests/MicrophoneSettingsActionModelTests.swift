@@ -8,6 +8,8 @@ final class MicrophoneSettingsActionModelTests: XCTestCase {
         func openMicrophonePrivacy() {
             openCount += 1
         }
+
+        func openSoundInput() { }
     }
 
     func testShouldShowActionForDeniedOrRestricted() {
