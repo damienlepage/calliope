@@ -1,6 +1,6 @@
 ---
 id: cal-5n1q
-status: ready
+status: closed
 deps: []
 links: []
 created: 2026-02-05T00:42:00Z
