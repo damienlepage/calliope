@@ -179,6 +179,7 @@ private final class MockSummaryWriter: AnalysisSummaryWriting {
 private final class FakeAudioCaptureBackend: AudioCaptureBackend {
     let inputFormat: AVAudioFormat
     let inputSource: AudioInputSource = .microphone
+    let inputDeviceName: String = "Test Microphone"
 
     init() {
         self.inputFormat = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 1)!

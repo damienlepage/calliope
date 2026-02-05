@@ -57,6 +57,11 @@ struct ContentView: View {
                         Text(audioCapture.statusText)
                             .font(.headline)
                     }
+                    if audioCapture.isRecording {
+                        Text("Microphone: \(audioCapture.inputDeviceName)")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
 
                     // Real-time feedback panel (placeholder values)
                     FeedbackPanel(

@@ -39,6 +39,7 @@ final class AudioCaptureSmokeTests: XCTestCase {
 private final class TestAudioFileInputBackend: AudioCaptureBackend {
     let inputSource: AudioInputSource = .microphone
     let inputFormat: AVAudioFormat
+    let inputDeviceName: String = "Test Microphone"
 
     private let fileURL: URL
     private var tapHandler: ((AVAudioPCMBuffer) -> Void)?

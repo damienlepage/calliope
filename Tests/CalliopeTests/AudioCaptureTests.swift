@@ -31,6 +31,24 @@ final class AudioCaptureTests: XCTestCase {
         XCTAssertTrue(backend.removeTapCalled)
     }
 
+    func testStartRecordingUpdatesInputDeviceName() {
+        let backend = FakeAudioCaptureBackend(inputDeviceName: "Test Microphone")
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let capture = AudioCapture(
+            recordingManager: manager,
+            backendFactory: { backend },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() }
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+
+        XCTAssertEqual(capture.inputDeviceName, "Test Microphone")
+    }
+
     func testStartRecordingWithoutPermissionSetsError() {
         let backend = FakeAudioCaptureBackend()
         let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
@@ -238,6 +256,33 @@ final class AudioCaptureTests: XCTestCase {
         XCTAssertEqual(capture.status, .error(.engineConfigurationChanged))
         XCTAssertTrue(backend.removeTapCalled)
     }
+
+    func testConfigurationChangeUpdatesInputDeviceName() {
+        let backend = FakeAudioCaptureBackend(inputDeviceName: "Primary Mic")
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let capture = AudioCapture(
+            recordingManager: manager,
+            backendFactory: { backend },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() }
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+        backend.inputDeviceName = "Secondary Mic"
+        backend.simulateConfigurationChange()
+
+        let configurationHandled = expectation(description: "configuration change handled")
+        DispatchQueue.main.async {
+            configurationHandled.fulfill()
+        }
+        wait(for: [configurationHandled], timeout: 1.0)
+
+        XCTAssertEqual(capture.inputDeviceName, "Secondary Mic")
+        XCTAssertEqual(capture.status, .error(.engineConfigurationChanged))
+    }
 }
 
 private enum TestError: Error {
@@ -260,14 +305,19 @@ private struct TestPermissionProvider: MicrophonePermissionProviding {
 private final class FakeAudioCaptureBackend: AudioCaptureBackend {
     let inputFormat: AVAudioFormat
     let inputSource: AudioInputSource
+    var inputDeviceName: String
     var isStarted = false
     var installTapCalled = false
     var removeTapCalled = false
     var startError: Error?
     private var configurationChangeHandler: (() -> Void)?
 
-    init(inputSource: AudioInputSource = .microphone) {
+    init(
+        inputSource: AudioInputSource = .microphone,
+        inputDeviceName: String = "Test Microphone"
+    ) {
         self.inputSource = inputSource
+        self.inputDeviceName = inputDeviceName
         self.inputFormat = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 1)!
     }
 

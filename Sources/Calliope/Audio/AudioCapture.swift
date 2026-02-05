@@ -57,6 +57,7 @@ enum AudioInputSource: Equatable {
 protocol AudioCaptureBackend {
     var inputSource: AudioInputSource { get }
     var inputFormat: AVAudioFormat { get }
+    var inputDeviceName: String { get }
     func installTap(bufferSize: AVAudioFrameCount, handler: @escaping (AVAudioPCMBuffer) -> Void)
     func removeTap()
     func setConfigurationChangeHandler(_ handler: @escaping () -> Void)
@@ -87,6 +88,9 @@ final class SystemAudioCaptureBackend: AudioCaptureBackend {
     private var configurationObserver: NSObjectProtocol?
     let inputFormat: AVAudioFormat
     let inputSource: AudioInputSource = .microphone
+    var inputDeviceName: String {
+        inputNode.auAudioUnit.deviceName
+    }
 
     init() {
         engine = AVAudioEngine()
@@ -135,6 +139,7 @@ class AudioCapture: NSObject, ObservableObject {
     @Published var isRecording = false
     @Published private(set) var status: AudioCaptureStatus = .idle
     @Published private(set) var currentRecordingURL: URL?
+    @Published private(set) var inputDeviceName: String = "Unknown Microphone"
 
     private let bufferSubject = PassthroughSubject<AVAudioPCMBuffer, Never>()
     var audioBufferPublisher: AnyPublisher<AVAudioPCMBuffer, Never> {
@@ -202,6 +207,7 @@ class AudioCapture: NSObject, ObservableObject {
             return
         }
         self.backend = backend
+        refreshInputDeviceName(from: backend)
         let recordingFormat = backend.inputFormat
         backend.setConfigurationChangeHandler { [weak self] in
             self?.handleConfigurationChange()
@@ -288,6 +294,7 @@ class AudioCapture: NSObject, ObservableObject {
     private func handleConfigurationChange() {
         DispatchQueue.main.async { [weak self] in
             guard let self, self.isRecording else { return }
+            self.refreshInputDeviceName(from: self.backend)
             self.stopRecordingInternal(statusOverride: .error(.engineConfigurationChanged))
         }
     }
@@ -298,6 +305,18 @@ class AudioCapture: NSObject, ObservableObject {
         } else {
             DispatchQueue.main.async { [weak self] in
                 self?.status = newStatus
+            }
+        }
+    }
+
+    private func refreshInputDeviceName(from backend: AudioCaptureBackend?) {
+        guard let backend else { return }
+        let deviceName = backend.inputDeviceName
+        if Thread.isMainThread {
+            inputDeviceName = deviceName
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                self?.inputDeviceName = deviceName
             }
         }
     }
