@@ -1,6 +1,6 @@
 ---
 id: cal-8v2m
-status: ready
+status: closed
 deps: []
 links: []
 created: 2026-02-05T00:40:00Z
@@ -18,3 +18,8 @@ When the default audio input device changes mid-session (e.g., headset plugged/u
 - If a configuration change occurs during recording, Calliope stops recording and surfaces a clear error state instructing the user to press Start again.
 - Stopping due to a device change leaves the app in a stable idle state (no dangling taps).
 - Unit tests cover the configuration-change path and ensure recording resets cleanly.
+
+## Outcome
+- `AudioCapture` installs a configuration-change handler that stops recording and reports `engineConfigurationChanged`.
+- Stopping on configuration change clears taps/handlers and returns to idle.
+- `AudioCaptureTests` cover the configuration-change path and error state.
