@@ -14,11 +14,16 @@ struct ContentView: View {
     @StateObject private var feedbackViewModel = LiveFeedbackViewModel()
     @StateObject private var microphonePermission = MicrophonePermissionManager()
     @StateObject private var preferencesStore = AnalysisPreferencesStore()
+    @StateObject private var overlayPreferencesStore: OverlayPreferencesStore
     private let privacyDisclosureStore: PrivacyDisclosureStore
     @State private var hasAcceptedDisclosure: Bool
 
-    init(privacyDisclosureStore: PrivacyDisclosureStore = PrivacyDisclosureStore()) {
+    init(
+        overlayPreferencesStore: OverlayPreferencesStore = OverlayPreferencesStore(),
+        privacyDisclosureStore: PrivacyDisclosureStore = PrivacyDisclosureStore()
+    ) {
         self.privacyDisclosureStore = privacyDisclosureStore
+        _overlayPreferencesStore = StateObject(wrappedValue: overlayPreferencesStore)
         _hasAcceptedDisclosure = State(initialValue: privacyDisclosureStore.hasAcceptedDisclosure)
     }
 
@@ -142,6 +147,13 @@ struct ContentView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Overlay")
+                    .font(.headline)
+                Toggle("Always on top", isOn: $overlayPreferencesStore.alwaysOnTop)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
             // Control buttons
             HStack(spacing: 20) {
                 Button(action: toggleRecording) {
@@ -161,6 +173,7 @@ struct ContentView: View {
                 recordingPublisher: audioCapture.$isRecording.eraseToAnyPublisher()
             )
             microphonePermission.refresh()
+            WindowLevelController.apply(alwaysOnTop: overlayPreferencesStore.alwaysOnTop)
         }
         .onChange(of: preferencesStore.paceMin) { newValue in
             if newValue > preferencesStore.paceMax {
@@ -174,6 +187,9 @@ struct ContentView: View {
         }
         .onChange(of: hasAcceptedDisclosure) { newValue in
             privacyDisclosureStore.hasAcceptedDisclosure = newValue
+        }
+        .onChange(of: overlayPreferencesStore.alwaysOnTop) { newValue in
+            WindowLevelController.apply(alwaysOnTop: newValue)
         }
     }
 

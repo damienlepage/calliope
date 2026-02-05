@@ -84,5 +84,5 @@ Acceptance Criteria: App settings UI clearly states local-only processing and us
 Acceptance Criteria: Recording eligibility no longer blocks on headset confirmation; UI removes headset confirmation toggle; tests cover updated eligibility and guardrail behavior.
 5. [DONE][P1] Add sensitivity preferences for pace, pause, and crutch words
 Acceptance Criteria: Preferences model persists pace min/max, pause threshold, and crutch word list locally; UI provides simple controls to edit these values; analysis uses stored preferences for pace, pause, and crutch word detection; defaults match current Constants values; unit tests cover defaults, persistence, and analyzer wiring.
-6. [READY][P2] Add always-on-top overlay toggle
+6. [DONE][P2] Add always-on-top overlay toggle
 Acceptance Criteria: User-facing toggle enables/disables always-on-top behavior; window level switches between floating and normal; toggle persists across launches; unit tests cover default and persistence.
