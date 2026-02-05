@@ -5,6 +5,7 @@
 //  Created on [Date]
 //
 
+import Combine
 import Foundation
 import XCTest
 @testable import Calliope
@@ -14,12 +15,14 @@ final class RecordingListViewModelTests: XCTestCase {
     private final class MockRecordingManager: RecordingManaging {
         var recordings: [URL]
         var deleted: [URL] = []
+        var loadCount = 0
 
         init(recordings: [URL]) {
             self.recordings = recordings
         }
 
         func getAllRecordings() -> [URL] {
+            loadCount += 1
             recordings
         }
 
@@ -70,5 +73,27 @@ final class RecordingListViewModelTests: XCTestCase {
 
         XCTAssertEqual(manager.deleted, [urlA])
         XCTAssertEqual(viewModel.recordings.map(\.url), [urlB])
+    }
+
+    func testReloadsWhenRecordingStops() {
+        let urlA = URL(fileURLWithPath: "/tmp/a.m4a")
+        let manager = MockRecordingManager(recordings: [urlA])
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: NoopWorkspace(),
+            modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) }
+        )
+        let subject = PassthroughSubject<Bool, Never>()
+
+        viewModel.bind(recordingPublisher: subject.eraseToAnyPublisher())
+
+        XCTAssertEqual(manager.loadCount, 0)
+
+        subject.send(true)
+        XCTAssertEqual(manager.loadCount, 0)
+
+        subject.send(false)
+        XCTAssertEqual(manager.loadCount, 1)
+        XCTAssertEqual(viewModel.recordings.map(\.url), [urlA])
     }
 }

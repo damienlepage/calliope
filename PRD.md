@@ -102,3 +102,5 @@ Acceptance Criteria: Starting capture checks microphone permission status before
 Acceptance Criteria: A test-only input path can inject a bundled mono WAV into `AudioCapture` without using the system audio graph; starting and stopping capture produces a local recording file with non-zero size; tests verify file creation and that the input path remains microphone-only in production builds.
 14. [DONE][P2] Add recording management actions in recordings list
 Acceptance Criteria: The recordings list supports reveal-in-Finder and delete actions for `.m4a`/`.wav` items; deletion removes the file locally and updates the list; unit tests cover delete behavior and list refresh.
+15. [DONE][P2] Refresh recordings list after recording stops
+Acceptance Criteria: When a recording session stops, the recordings list reloads so new files appear without relaunching; unit tests cover the reload trigger on recording stop.

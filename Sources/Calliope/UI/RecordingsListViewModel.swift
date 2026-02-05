@@ -6,6 +6,7 @@
 //
 
 import AppKit
+import Combine
 import Foundation
 
 protocol RecordingManaging {
@@ -36,6 +37,7 @@ final class RecordingListViewModel: ObservableObject {
     private let manager: RecordingManaging
     private let workspace: WorkspaceOpening
     private let modificationDateProvider: (URL) -> Date
+    private var cancellables = Set<AnyCancellable>()
 
     init(
         manager: RecordingManaging = RecordingManager.shared,
@@ -52,6 +54,16 @@ final class RecordingListViewModel: ObservableObject {
         recordings = urls.map { url in
             RecordingItem(url: url, modifiedAt: modificationDateProvider(url))
         }
+    }
+
+    func bind(recordingPublisher: AnyPublisher<Bool, Never>) {
+        recordingPublisher
+            .removeDuplicates()
+            .filter { !$0 }
+            .sink { [weak self] _ in
+                self?.loadRecordings()
+            }
+            .store(in: &cancellables)
     }
 
     func reveal(_ item: RecordingItem) {

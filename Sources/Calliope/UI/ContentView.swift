@@ -211,6 +211,9 @@ struct ContentView: View {
                 feedbackPublisher: audioAnalyzer.feedbackPublisher,
                 recordingPublisher: audioCapture.$isRecording.eraseToAnyPublisher()
             )
+            recordingsViewModel.bind(
+                recordingPublisher: audioCapture.$isRecording.eraseToAnyPublisher()
+            )
             microphonePermission.refresh()
             WindowLevelController.apply(alwaysOnTop: overlayPreferencesStore.alwaysOnTop)
         }
