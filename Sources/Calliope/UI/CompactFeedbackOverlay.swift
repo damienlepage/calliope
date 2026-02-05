@@ -13,6 +13,7 @@ struct CompactFeedbackOverlay: View {
     let pauseCount: Int
     let inputLevel: Double
     let showSilenceWarning: Bool
+    let showWaitingForSpeech: Bool
     let paceMin: Double
     let paceMax: Double
     let sessionDurationText: String?
@@ -48,6 +49,11 @@ struct CompactFeedbackOverlay: View {
                 Text("No mic input detected")
                     .font(.caption)
                     .foregroundColor(.orange)
+            }
+            if showWaitingForSpeech {
+                Text("Waiting for speech")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
         }
         .padding(12)
@@ -98,6 +104,7 @@ struct CompactFeedbackOverlay_Previews: PreviewProvider {
             pauseCount: 1,
             inputLevel: 0.6,
             showSilenceWarning: false,
+            showWaitingForSpeech: false,
             paceMin: Constants.targetPaceMin,
             paceMax: Constants.targetPaceMax,
             sessionDurationText: "00:42"

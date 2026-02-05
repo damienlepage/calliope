@@ -91,6 +91,7 @@ struct ContentView: View {
                         pauseCount: feedbackViewModel.state.pauseCount,
                         inputLevel: feedbackViewModel.state.inputLevel,
                         showSilenceWarning: feedbackViewModel.state.showSilenceWarning,
+                        showWaitingForSpeech: feedbackViewModel.showWaitingForSpeech,
                         paceMin: preferencesStore.paceMin,
                         paceMax: preferencesStore.paceMax,
                         sessionDurationText: sessionDurationText
@@ -255,6 +256,7 @@ struct ContentView: View {
                     pauseCount: feedbackViewModel.state.pauseCount,
                     inputLevel: feedbackViewModel.state.inputLevel,
                     showSilenceWarning: feedbackViewModel.state.showSilenceWarning,
+                    showWaitingForSpeech: feedbackViewModel.showWaitingForSpeech,
                     paceMin: preferencesStore.paceMin,
                     paceMax: preferencesStore.paceMax,
                     sessionDurationText: sessionDurationText

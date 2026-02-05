@@ -13,6 +13,7 @@ struct FeedbackPanel: View {
     let pauseCount: Int
     let inputLevel: Double
     let showSilenceWarning: Bool
+    let showWaitingForSpeech: Bool
     let paceMin: Double
     let paceMax: Double
     let sessionDurationText: String?
@@ -74,6 +75,11 @@ struct FeedbackPanel: View {
                         .font(.footnote)
                         .foregroundColor(.orange)
                 }
+                if showWaitingForSpeech {
+                    Text("Waiting for speech")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                }
             }
         }
         .padding()
@@ -102,6 +108,7 @@ struct FeedbackPanel_Previews: PreviewProvider {
             pauseCount: 2,
             inputLevel: 0.4,
             showSilenceWarning: false,
+            showWaitingForSpeech: false,
             paceMin: Constants.targetPaceMin,
             paceMax: Constants.targetPaceMax,
             sessionDurationText: "02:15"

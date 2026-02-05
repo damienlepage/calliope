@@ -11,6 +11,7 @@ import Foundation
 final class LiveFeedbackViewModel: ObservableObject {
     @Published private(set) var state: FeedbackState
     @Published private(set) var sessionDurationSeconds: Int? = nil
+    @Published private(set) var showWaitingForSpeech: Bool = false
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -23,6 +24,7 @@ final class LiveFeedbackViewModel: ObservableObject {
         recordingPublisher: AnyPublisher<Bool, Never>,
         receiveOn queue: DispatchQueue = .main,
         throttleInterval: DispatchQueue.SchedulerTimeType.Stride = .milliseconds(200),
+        staleFeedbackDelay: DispatchQueue.SchedulerTimeType.Stride = .seconds(3),
         now: @escaping () -> Date = Date.init,
         timerPublisherFactory: @escaping () -> AnyPublisher<Date, Never> = {
             Timer.publish(every: 1.0, on: .main, in: .common)
@@ -52,6 +54,33 @@ final class LiveFeedbackViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
+        let feedbackEvents = feedbackPublisher
+            .map { _ in () }
+            .receive(on: queue)
+
+        recordingState
+            .map { isRecording -> AnyPublisher<Bool, Never> in
+                guard isRecording else {
+                    return Just(false).eraseToAnyPublisher()
+                }
+                let trigger = feedbackEvents.prepend(())
+                return trigger
+                    .map { _ in
+                        Just(false)
+                            .append(Just(true).delay(for: staleFeedbackDelay, scheduler: queue))
+                            .eraseToAnyPublisher()
+                    }
+                    .switchToLatest()
+                    .eraseToAnyPublisher()
+            }
+            .switchToLatest()
+            .removeDuplicates()
+            .receive(on: queue)
+            .sink { [weak self] shouldShow in
+                self?.showWaitingForSpeech = shouldShow
+            }
+            .store(in: &cancellables)
+
         recordingState
             .filter { !$0 }
             .receive(on: queue)
@@ -59,6 +88,7 @@ final class LiveFeedbackViewModel: ObservableObject {
                 guard let self else { return }
                 self.state = .zero
                 self.sessionDurationSeconds = nil
+                self.showWaitingForSpeech = false
             }
             .store(in: &cancellables)
 

@@ -224,4 +224,70 @@ final class LiveFeedbackViewModelTests: XCTestCase {
 
         wait(for: [expectation], timeout: 1.0)
     }
+
+    func testWaitingForSpeechTogglesOnStaleFeedbackAndClearsOnUpdate() {
+        let feedbackSubject = PassthroughSubject<FeedbackState, Never>()
+        let recordingSubject = CurrentValueSubject<Bool, Never>(false)
+        let viewModel = LiveFeedbackViewModel()
+
+        viewModel.bind(
+            feedbackPublisher: feedbackSubject.eraseToAnyPublisher(),
+            recordingPublisher: recordingSubject.eraseToAnyPublisher(),
+            receiveOn: .main,
+            throttleInterval: .milliseconds(0),
+            staleFeedbackDelay: .milliseconds(50)
+        )
+
+        let expectation = expectation(description: "Waiting message toggles on and off")
+
+        viewModel.$showWaitingForSpeech
+            .dropFirst()
+            .collect(3)
+            .sink { values in
+                XCTAssertEqual(values, [false, true, false])
+                expectation.fulfill()
+            }
+            .store(in: &cancellables)
+
+        recordingSubject.send(true)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+            feedbackSubject.send(FeedbackState(pace: 130, crutchWords: 1, pauseCount: 0))
+        }
+
+        wait(for: [expectation], timeout: 1.0)
+    }
+
+    func testWaitingForSpeechClearsWhenRecordingStops() {
+        let feedbackSubject = PassthroughSubject<FeedbackState, Never>()
+        let recordingSubject = CurrentValueSubject<Bool, Never>(false)
+        let viewModel = LiveFeedbackViewModel()
+
+        viewModel.bind(
+            feedbackPublisher: feedbackSubject.eraseToAnyPublisher(),
+            recordingPublisher: recordingSubject.eraseToAnyPublisher(),
+            receiveOn: .main,
+            throttleInterval: .milliseconds(0),
+            staleFeedbackDelay: .milliseconds(50)
+        )
+
+        let expectation = expectation(description: "Waiting message clears on stop")
+
+        viewModel.$showWaitingForSpeech
+            .dropFirst()
+            .collect(3)
+            .sink { values in
+                XCTAssertEqual(values, [false, true, false])
+                expectation.fulfill()
+            }
+            .store(in: &cancellables)
+
+        recordingSubject.send(true)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+            recordingSubject.send(false)
+        }
+
+        wait(for: [expectation], timeout: 1.0)
+    }
 }
