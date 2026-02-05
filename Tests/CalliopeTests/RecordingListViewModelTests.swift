@@ -200,10 +200,12 @@ final class RecordingListViewModelTests: XCTestCase {
 
         subject.send(true)
         XCTAssertEqual(manager.loadCount, 0)
+        XCTAssertTrue(viewModel.isRecording)
 
         subject.send(false)
         XCTAssertEqual(manager.loadCount, 1)
         XCTAssertEqual(viewModel.recordings.map(\.url), [urlA])
+        XCTAssertFalse(viewModel.isRecording)
     }
 
     func testOpenRecordingsFolderSelectsDirectory() {
@@ -361,6 +363,24 @@ final class RecordingListViewModelTests: XCTestCase {
 
         XCTAssertNil(viewModel.activePlaybackURL)
         XCTAssertFalse(viewModel.isPlaybackPaused)
+    }
+
+    func testRecordingStartStopsPlayback() {
+        let url = URL(fileURLWithPath: "/tmp/active.m4a")
+        let (viewModel, _, store) = makeViewModelWithPlayback(recordings: [url])
+        let subject = PassthroughSubject<Bool, Never>()
+
+        viewModel.bind(recordingPublisher: subject.eraseToAnyPublisher())
+        viewModel.loadRecordings()
+        let item = viewModel.recordings[0]
+        viewModel.togglePlayPause(item)
+
+        subject.send(true)
+
+        XCTAssertTrue(viewModel.isRecording)
+        XCTAssertNil(viewModel.activePlaybackURL)
+        XCTAssertFalse(viewModel.isPlaybackPaused)
+        XCTAssertEqual(store.players[url]?.stopCount, 1)
     }
 
     func testConfirmDeleteStopsActivePlayback() {

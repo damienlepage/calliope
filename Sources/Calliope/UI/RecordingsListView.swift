@@ -26,6 +26,7 @@ struct RecordingsListView: View {
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             } else {
+                let isRecording = viewModel.isRecording
                 ForEach(viewModel.recordings) { item in
                     let isActive = viewModel.activePlaybackURL == item.url
                     let isPaused = isActive && viewModel.isPlaybackPaused
@@ -57,11 +58,12 @@ struct RecordingsListView: View {
                             viewModel.togglePlayPause(item)
                         }
                         .buttonStyle(.bordered)
+                        .disabled(isRecording)
                         Button("Stop") {
                             viewModel.stopPlayback()
                         }
                         .buttonStyle(.bordered)
-                        .disabled(!isActive)
+                        .disabled(!isActive || isRecording)
                         Button("Reveal") {
                             viewModel.reveal(item)
                         }

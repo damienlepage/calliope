@@ -132,6 +132,7 @@ final class RecordingListViewModel: ObservableObject {
     @Published var deleteErrorMessage: String?
     @Published private(set) var activePlaybackURL: URL?
     @Published private(set) var isPlaybackPaused = false
+    @Published private(set) var isRecording = false
 
     private let manager: RecordingManaging
     private let workspace: WorkspaceOpening
@@ -180,9 +181,14 @@ final class RecordingListViewModel: ObservableObject {
     func bind(recordingPublisher: AnyPublisher<Bool, Never>) {
         recordingPublisher
             .removeDuplicates()
-            .filter { !$0 }
-            .sink { [weak self] _ in
-                self?.loadRecordings()
+            .sink { [weak self] isRecording in
+                guard let self else { return }
+                self.isRecording = isRecording
+                if isRecording {
+                    self.stopPlayback()
+                } else {
+                    self.loadRecordings()
+                }
             }
             .store(in: &cancellables)
     }
