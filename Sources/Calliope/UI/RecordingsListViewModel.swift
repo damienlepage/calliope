@@ -77,7 +77,9 @@ struct RecordingItem: Identifiable, Equatable {
     let metadata: RecordingMetadata?
 
     var id: URL { url }
-    var displayName: String { RecordingItem.displayName(for: url, metadata: metadata) }
+    var displayName: String {
+        RecordingItem.displayName(for: url, metadata: metadata, modifiedAt: modifiedAt)
+    }
     var detailText: String {
         let dateText = modifiedAt.formatted(date: .abbreviated, time: .shortened)
         let details = [
@@ -244,7 +246,11 @@ struct RecordingItem: Identifiable, Equatable {
         self.metadata = metadata
     }
 
-    static func displayName(for url: URL, metadata: RecordingMetadata? = nil) -> String {
+    static func displayName(
+        for url: URL,
+        metadata: RecordingMetadata? = nil,
+        modifiedAt: Date? = nil
+    ) -> String {
         let name = url.deletingPathExtension().lastPathComponent
         if let title = metadata?.title.trimmingCharacters(in: .whitespacesAndNewlines),
            !title.isEmpty {
@@ -253,10 +259,21 @@ struct RecordingItem: Identifiable, Equatable {
             }
             return title
         }
+        if let sessionDate = timestampDate(from: name) ?? modifiedAt {
+            let sessionTitle = defaultSessionTitle(for: sessionDate)
+            if let segmentInfo = segmentInfo(from: name) {
+                return "\(sessionTitle) (Part \(segmentInfo.partLabel))"
+            }
+            return sessionTitle
+        }
         if let segmentLabel = segmentLabel(from: name) {
             return segmentLabel
         }
         return name
+    }
+
+    static func defaultSessionTitle(for date: Date) -> String {
+        "Session \(defaultNameFormatter.string(from: date))"
     }
 
     private static let durationFormatter: DateComponentsFormatter = {
@@ -278,6 +295,13 @@ struct RecordingItem: Identifiable, Equatable {
     private static let sizeFormatter: ByteCountFormatter = {
         let formatter = ByteCountFormatter()
         formatter.countStyle = .file
+        return formatter
+    }()
+
+    private static let defaultNameFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
         return formatter
     }()
 
@@ -357,6 +381,17 @@ struct RecordingItem: Identifiable, Equatable {
             ? String(segmentInfo.sessionID.prefix(8))
             : segmentInfo.sessionID
         return "Session \(shortSessionID) Part \(segmentInfo.partLabel)"
+    }
+
+    private static func timestampDate(from name: String) -> Date? {
+        guard name.hasPrefix("recording_") else { return nil }
+        let suffix = name.dropFirst("recording_".count)
+        guard let underscoreIndex = suffix.firstIndex(of: "_") else { return nil }
+        let timestampString = String(suffix[..<underscoreIndex])
+        guard let timestampMs = Double(timestampString) else { return nil }
+        let seconds = timestampMs / 1000
+        guard seconds > 0 else { return nil }
+        return Date(timeIntervalSince1970: seconds)
     }
 }
 

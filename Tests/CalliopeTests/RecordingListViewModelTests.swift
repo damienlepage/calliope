@@ -161,12 +161,16 @@ final class RecordingListViewModelTests: XCTestCase {
             urlA: Date(timeIntervalSince1970: 10),
             urlB: Date(timeIntervalSince1970: 20)
         ]
+        let metadata: [URL: RecordingMetadata] = [
+            urlA: RecordingMetadata(title: "Team Sync")
+        ]
         let viewModel = RecordingListViewModel(
             manager: manager,
             workspace: SpyWorkspace(),
             modificationDateProvider: { dates[$0] ?? .distantPast },
             durationProvider: { _ in nil },
-            fileSizeProvider: { _ in nil }
+            fileSizeProvider: { _ in nil },
+            metadataProvider: { metadata[$0] }
         )
 
         viewModel.loadRecordings()
@@ -239,7 +243,9 @@ final class RecordingListViewModelTests: XCTestCase {
     }
 
     func testRecordingItemDisplayNameStripsExtension() {
-        let url = URL(fileURLWithPath: "/tmp/recording_123.m4a")
+        let timestampMs = 123.0
+        let date = Date(timeIntervalSince1970: timestampMs / 1000)
+        let url = URL(fileURLWithPath: "/tmp/recording_\(Int(timestampMs)).m4a")
         let item = RecordingItem(
             url: url,
             modifiedAt: Date(timeIntervalSince1970: 0),
@@ -249,7 +255,7 @@ final class RecordingListViewModelTests: XCTestCase {
             integrityReport: nil
         )
 
-        XCTAssertEqual(item.displayName, "recording_123")
+        XCTAssertEqual(item.displayName, RecordingItem.defaultSessionTitle(for: date))
     }
 
     func testLoadRecordingsSurfacesIntegrityWarnings() {

@@ -4,19 +4,35 @@ import XCTest
 
 final class RecordingItemTests: XCTestCase {
     func testDisplayNameUsesSegmentLabelForSessionParts() {
-        let url = URL(fileURLWithPath: "/tmp/recording_123_ABC_session-1234567890abcdef_part-02.m4a")
+        let timestampMs = 1_700_000_000_000.0
+        let date = Date(timeIntervalSince1970: timestampMs / 1000)
+        let url = URL(
+            fileURLWithPath: "/tmp/recording_\(Int(timestampMs))_ABC_session-1234567890abcdef_part-02.m4a"
+        )
 
         let displayName = RecordingItem.displayName(for: url)
 
-        XCTAssertEqual(displayName, "Session 12345678 Part 02")
+        XCTAssertEqual(
+            displayName,
+            "\(RecordingItem.defaultSessionTitle(for: date)) (Part 02)"
+        )
     }
 
     func testDisplayNameFallsBackToFilenameWhenNoSegment() {
-        let url = URL(fileURLWithPath: "/tmp/recording_123_ABC.m4a")
+        let url = URL(fileURLWithPath: "/tmp/audio_capture.m4a")
 
         let displayName = RecordingItem.displayName(for: url)
 
-        XCTAssertEqual(displayName, "recording_123_ABC")
+        XCTAssertEqual(displayName, "audio_capture")
+    }
+
+    func testDisplayNameUsesModifiedAtWhenTimestampMissing() {
+        let date = Date(timeIntervalSince1970: 1_700_000_000)
+        let url = URL(fileURLWithPath: "/tmp/audio_capture.m4a")
+
+        let displayName = RecordingItem.displayName(for: url, modifiedAt: date)
+
+        XCTAssertEqual(displayName, RecordingItem.defaultSessionTitle(for: date))
     }
 
     func testDisplayNameUsesMetadataTitleForSingleSegment() {
