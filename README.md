@@ -96,3 +96,13 @@ For a proper macOS app (with icon and bundle metadata), run:
 The bundle will be created at `dist/Calliope.app`.
 
 The code structure is designed to work with both SPM and Xcode projects.
+
+### Packaging a Release Artifact
+
+To generate a distributable app bundle and a versioned zip, run:
+
+```bash
+./scripts/package-release.sh
+```
+
+This creates `dist/Calliope.app` and a versioned zip in `dist/` (for example, `Calliope-1.0.0.zip`).

@@ -1,6 +1,6 @@
 ---
 id: cal-8el3
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-06T16:06:37Z
