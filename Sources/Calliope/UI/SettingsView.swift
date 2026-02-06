@@ -50,6 +50,7 @@ struct SettingsView: View {
             get: { audioCapturePreferencesStore.maxSegmentDuration / 3600 },
             set: { audioCapturePreferencesStore.maxSegmentDuration = $0 * 3600 }
         )
+        let appVersionText = AppVersionInfo().displayText
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 Text("Settings")
@@ -288,6 +289,15 @@ struct SettingsView: View {
                             .font(.footnote)
                             .foregroundColor(micTestStatusColor(for: audioCapture.micTestStatus))
                     }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("About")
+                        .font(.headline)
+                    Text(appVersionText)
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }

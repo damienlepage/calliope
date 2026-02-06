@@ -1,2 +1,2 @@
 last_reviewed: 2026-02-06
-summary: "Added per-recording detail sheet with crutch word breakdown, pause metrics, and processing stats."
+summary: "Added Settings About section with app version/build info plus AppVersionInfo utility and tests."
