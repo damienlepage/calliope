@@ -7,6 +7,7 @@ LOG_DIR="$STATE_DIR/logs"
 SESS_DIR="$STATE_DIR/sessions"
 STOP_FILE="$STATE_DIR/STOP"
 PID_FILE="$STATE_DIR/ralph.pid"
+NOTIFY_QUEUE="$STATE_DIR/notify-queue.txt"
 
 ITERATION_DELAY="${ITERATION_DELAY:-60}"
 AGENT_CMD="${AGENT_CMD:-codex exec --full-auto}"
@@ -22,6 +23,16 @@ log() {
 notify() {
   if [[ -n "${NTFY_TOPIC:-}" ]]; then
     curl -s -d "$*" "https://ntfy.sh/${NTFY_TOPIC}" >/dev/null || true
+  fi
+}
+
+flush_notifications() {
+  if [[ -s "$NOTIFY_QUEUE" ]]; then
+    while IFS= read -r line; do
+      [[ -n "$line" ]] || continue
+      notify "$line"
+    done < "$NOTIFY_QUEUE"
+    : > "$NOTIFY_QUEUE"
   fi
 }
 
@@ -155,6 +166,7 @@ main_loop() {
       successes=$(read_status_value "consecutive_successes")
       successes=$((successes + 1))
       write_status "$next_iteration" "SUCCESS" "$successes" 0
+      flush_notifications
       if (( successes % 10 == 0 )); then
         local start_iteration=$((next_iteration - 9))
         notify "Ralph iterations ${start_iteration}-${next_iteration} succeeded."

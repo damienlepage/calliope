@@ -41,7 +41,8 @@ Build Calliope into a privacy-first, low-latency macOS communication coach that 
    - Goals must be high-level and outcome-oriented at the feature/UX capability level (avoid task-level phrasing, single-screen tweaks, or test-only goals).
 8. When a goal is complete:
    - Update its status to `AT_TARGET` in `ralph-state/goals.yaml` with a note explaining what you validated
-   - Run the command `curl -s -d "Goal completed: $title" "https://ntfy.sh/ralph-dlepage-calliope"` where $title is replaced with the goal title
+   - Run this command to append a notification line for ralph.sh to send:
+     - `printf '%s\n' "Goal completed: $title" >> .ralph-state/notify-queue.txt` where $title is replaced with the goal title
 9. Commit all changes in the repository with the details of the iteration.
 
 ## Stopping Conditions
