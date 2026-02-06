@@ -1,6 +1,6 @@
 ---
 id: cal-y77k
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-06T06:53:57Z

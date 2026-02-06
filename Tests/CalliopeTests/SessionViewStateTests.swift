@@ -16,7 +16,8 @@ final class SessionViewStateTests: XCTestCase {
         XCTAssertFalse(state.shouldShowFeedbackPanel)
         XCTAssertFalse(state.shouldShowRecordingIndicators)
         XCTAssertFalse(state.shouldShowStatus)
-        XCTAssertTrue(state.shouldShowBlockingReasons)
+        XCTAssertFalse(state.shouldShowDeviceSelectionMessage)
+        XCTAssertFalse(state.shouldShowBlockingReasons)
         XCTAssertEqual(state.primaryButtonTitle, "Start")
     }
 
@@ -27,6 +28,7 @@ final class SessionViewStateTests: XCTestCase {
         XCTAssertTrue(state.shouldShowFeedbackPanel)
         XCTAssertTrue(state.shouldShowRecordingIndicators)
         XCTAssertTrue(state.shouldShowStatus)
+        XCTAssertTrue(state.shouldShowDeviceSelectionMessage)
         XCTAssertFalse(state.shouldShowBlockingReasons)
         XCTAssertEqual(state.primaryButtonTitle, "Stop")
     }
@@ -38,6 +40,7 @@ final class SessionViewStateTests: XCTestCase {
         XCTAssertFalse(state.shouldShowFeedbackPanel)
         XCTAssertFalse(state.shouldShowRecordingIndicators)
         XCTAssertTrue(state.shouldShowStatus)
+        XCTAssertTrue(state.shouldShowDeviceSelectionMessage)
         XCTAssertTrue(state.shouldShowBlockingReasons)
         XCTAssertEqual(state.primaryButtonTitle, "Start")
     }

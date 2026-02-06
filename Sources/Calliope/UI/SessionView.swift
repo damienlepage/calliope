@@ -36,7 +36,7 @@ struct SessionView: View {
                             .font(.headline)
                     }
                 }
-                if let message = audioCapture.deviceSelectionMessage {
+                if viewState.shouldShowDeviceSelectionMessage, let message = audioCapture.deviceSelectionMessage {
                     Text(message)
                         .font(.footnote)
                         .foregroundColor(.secondary)

@@ -31,8 +31,18 @@ struct SessionViewState: Equatable {
         return false
     }
 
+    var shouldShowDeviceSelectionMessage: Bool {
+        shouldShowStatus
+    }
+
     var shouldShowBlockingReasons: Bool {
-        !isRecording
+        if isRecording {
+            return false
+        }
+        if case .error = status {
+            return true
+        }
+        return false
     }
 
     var primaryButtonTitle: String {
