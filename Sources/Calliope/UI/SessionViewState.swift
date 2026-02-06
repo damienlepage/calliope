@@ -22,7 +22,13 @@ struct SessionViewState: Equatable {
     }
 
     var shouldShowStatus: Bool {
-        isRecording || status == .error
+        if isRecording {
+            return true
+        }
+        if case .error = status {
+            return true
+        }
+        return false
     }
 
     var primaryButtonTitle: String {
