@@ -25,3 +25,11 @@ goals:
     notes:
       - "2026-02-06: Added rolling processing-latency status (OK/High) during recording."
       - "2026-02-06: Added critical latency threshold with warning text and red status color in session/overlay."
+  - id: G6
+    title: Release-ready macOS app packaging
+    status: BELOW_TARGET
+    notes: []
+  - id: G7
+    title: Quality gate: reliable tests and coverage confidence
+    status: BELOW_TARGET
+    notes: []
