@@ -198,7 +198,10 @@ main_loop() {
       successes=$(read_status_value "consecutive_successes")
       successes=$((successes + 1))
       write_status "$next_iteration" "SUCCESS" "$successes" 0
-      notify "Ralph iteration ${next_iteration} succeeded."
+      if (( successes % 10 == 0 )); then
+        local start_iteration=$((next_iteration - 9))
+        notify "Ralph iterations ${start_iteration}-${next_iteration} succeeded."
+      fi
     else
       local failures
       failures=$(read_status_value "consecutive_failures")
