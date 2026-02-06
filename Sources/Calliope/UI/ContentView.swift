@@ -53,6 +53,7 @@ struct ContentView: View {
         )
         let sessionDurationText = feedbackViewModel.sessionDurationSeconds
             .map(SessionDurationFormatter.format)
+        let sessionDurationSeconds = feedbackViewModel.sessionDurationSeconds
         let blockingReasons = RecordingEligibility.blockingReasons(
             privacyState: privacyState,
             microphonePermission: microphonePermission.state,
@@ -71,6 +72,7 @@ struct ContentView: View {
                         feedbackViewModel: feedbackViewModel,
                         preferencesStore: preferencesStore,
                         sessionDurationText: sessionDurationText,
+                        sessionDurationSeconds: sessionDurationSeconds,
                         canStartRecording: canStartRecording,
                         blockingReasonsText: blockingReasonsText,
                         onToggleRecording: toggleRecording
@@ -110,7 +112,8 @@ struct ContentView: View {
                     showWaitingForSpeech: feedbackViewModel.showWaitingForSpeech,
                     paceMin: preferencesStore.paceMin,
                     paceMax: preferencesStore.paceMax,
-                    sessionDurationText: sessionDurationText
+                    sessionDurationText: sessionDurationText,
+                    sessionDurationSeconds: sessionDurationSeconds
                 )
                 .padding(.top, 12)
                 .padding(.trailing, 12)

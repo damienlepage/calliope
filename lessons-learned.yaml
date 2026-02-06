@@ -1,1 +1,3 @@
-lessons: []
+lessons:
+  - date: 2026-02-06
+    note: "swift test fails with ModuleCache permission errors under /Users/dlepage/.cache/clang/ModuleCache; cache permissions need adjustment."

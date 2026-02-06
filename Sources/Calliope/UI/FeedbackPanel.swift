@@ -19,8 +19,13 @@ struct FeedbackPanel: View {
     let paceMin: Double
     let paceMax: Double
     let sessionDurationText: String?
+    let sessionDurationSeconds: Int?
     
     var body: some View {
+        let pauseRateText = PauseRateFormatter.rateText(
+            pauseCount: pauseCount,
+            durationSeconds: sessionDurationSeconds
+        )
         VStack(alignment: .leading, spacing: 15) {
             HStack {
                 Text("Real-time Feedback")
@@ -45,7 +50,7 @@ struct FeedbackPanel: View {
                 }
                 Spacer()
                 HStack(spacing: 6) {
-                    Text(paceValueText(pace))
+                    Text(PaceFeedback.valueText(for: pace))
                         .font(.subheadline)
                         .foregroundColor(paceColor(pace))
                     Text(PaceFeedback.label(for: pace, minPace: paceMin, maxPace: paceMax))
@@ -72,7 +77,7 @@ struct FeedbackPanel: View {
                 HStack(spacing: 6) {
                     Text("\(pauseCount)")
                         .font(.subheadline)
-                    Text("Avg \(pauseAverageDurationText(pauseAverageDuration))")
+                    Text(pauseDetailsText(rateText: pauseRateText))
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -112,15 +117,16 @@ struct FeedbackPanel: View {
         }
     }
 
-    private func paceValueText(_ pace: Double) -> String {
-        guard pace > 0 else {
-            return "—"
-        }
-        return "\(Int(pace)) WPM"
-    }
-
     private func pauseAverageDurationText(_ duration: TimeInterval) -> String {
         String(format: "%.1fs", duration)
+    }
+
+    private func pauseDetailsText(rateText: String?) -> String {
+        var details = ["Avg \(pauseAverageDurationText(pauseAverageDuration))"]
+        if let rateText {
+            details.append(rateText)
+        }
+        return details.joined(separator: " • ")
     }
 }
 
@@ -137,7 +143,8 @@ struct FeedbackPanel_Previews: PreviewProvider {
             showWaitingForSpeech: false,
             paceMin: Constants.targetPaceMin,
             paceMax: Constants.targetPaceMax,
-            sessionDurationText: "02:15"
+            sessionDurationText: "02:15",
+            sessionDurationSeconds: 135
         )
             .padding()
     }

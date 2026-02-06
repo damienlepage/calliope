@@ -19,8 +19,13 @@ struct CompactFeedbackOverlay: View {
     let paceMin: Double
     let paceMax: Double
     let sessionDurationText: String?
+    let sessionDurationSeconds: Int?
 
     var body: some View {
+        let pauseRateText = PauseRateFormatter.rateText(
+            pauseCount: pauseCount,
+            durationSeconds: sessionDurationSeconds
+        )
         VStack(alignment: .leading, spacing: 6) {
             if let sessionDurationText {
                 Text(sessionDurationText)
@@ -30,7 +35,7 @@ struct CompactFeedbackOverlay: View {
             HStack(spacing: 12) {
                 metric(
                     title: "Pace",
-                    value: paceValueText(pace),
+                    value: PaceFeedback.valueText(for: pace),
                     color: paceColor(pace),
                     subtitle: PaceFeedback.label(for: pace, minPace: paceMin, maxPace: paceMax)
                 )
@@ -43,7 +48,7 @@ struct CompactFeedbackOverlay: View {
                     title: "Pause",
                     value: "\(pauseCount)",
                     color: .primary,
-                    subtitle: pauseAverageDurationText(pauseAverageDuration)
+                    subtitle: pauseSubtitleText(rateText: pauseRateText)
                 )
             }
             InputLevelMeterView(level: inputLevel)
@@ -99,15 +104,16 @@ struct CompactFeedbackOverlay: View {
         }
     }
 
-    private func paceValueText(_ pace: Double) -> String {
-        guard pace > 0 else {
-            return "—"
-        }
-        return "\(Int(pace))"
-    }
-
     private func pauseAverageDurationText(_ duration: TimeInterval) -> String {
         String(format: "%.1fs", duration)
+    }
+
+    private func pauseSubtitleText(rateText: String?) -> String {
+        var details = [pauseAverageDurationText(pauseAverageDuration)]
+        if let rateText {
+            details.append(rateText)
+        }
+        return details.joined(separator: " • ")
     }
 }
 
@@ -124,7 +130,8 @@ struct CompactFeedbackOverlay_Previews: PreviewProvider {
             showWaitingForSpeech: false,
             paceMin: Constants.targetPaceMin,
             paceMax: Constants.targetPaceMax,
-            sessionDurationText: "00:42"
+            sessionDurationText: "00:42",
+            sessionDurationSeconds: 42
         )
         .padding()
     }

@@ -12,6 +12,7 @@ struct SessionView: View {
     @ObservedObject var feedbackViewModel: LiveFeedbackViewModel
     @ObservedObject var preferencesStore: AnalysisPreferencesStore
     let sessionDurationText: String?
+    let sessionDurationSeconds: Int?
     let canStartRecording: Bool
     let blockingReasonsText: String?
     let onToggleRecording: () -> Void
@@ -19,7 +20,8 @@ struct SessionView: View {
     var body: some View {
         let viewState = SessionViewState(
             isRecording: audioCapture.isRecording,
-            status: audioCapture.status
+            status: audioCapture.status,
+            hasBlockingReasons: blockingReasonsText != nil
         )
         ScrollView {
             VStack(spacing: 20) {
@@ -71,7 +73,8 @@ struct SessionView: View {
                         showWaitingForSpeech: feedbackViewModel.showWaitingForSpeech,
                         paceMin: preferencesStore.paceMin,
                         paceMax: preferencesStore.paceMax,
-                        sessionDurationText: sessionDurationText
+                        sessionDurationText: sessionDurationText,
+                        sessionDurationSeconds: sessionDurationSeconds
                     )
                 }
 
@@ -115,6 +118,7 @@ struct SessionView: View {
         feedbackViewModel: LiveFeedbackViewModel(),
         preferencesStore: AnalysisPreferencesStore(),
         sessionDurationText: "00:32",
+        sessionDurationSeconds: 32,
         canStartRecording: true,
         blockingReasonsText: nil,
         onToggleRecording: {}
