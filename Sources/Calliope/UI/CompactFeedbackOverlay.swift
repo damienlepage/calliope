@@ -25,6 +25,7 @@ struct CompactFeedbackOverlay: View {
     let paceMax: Double
     let sessionDurationText: String?
     let sessionDurationSeconds: Int?
+    let storageStatus: RecordingStorageStatus
 
     var body: some View {
         let pauseRateText = PauseRateFormatter.rateText(
@@ -82,6 +83,11 @@ struct CompactFeedbackOverlay: View {
                 ))
                     .font(.caption)
                     .foregroundColor(utilizationStatusColor(processingUtilizationStatus))
+            }
+            if let warningText = RecordingStorageWarningFormatter.warningText(status: storageStatus) {
+                Text(warningText)
+                    .font(.caption)
+                    .foregroundColor(.orange)
             }
             if showSilenceWarning {
                 Text("No mic input detected")
@@ -184,7 +190,8 @@ struct CompactFeedbackOverlay_Previews: PreviewProvider {
             paceMin: Constants.targetPaceMin,
             paceMax: Constants.targetPaceMax,
             sessionDurationText: "00:42",
-            sessionDurationSeconds: 42
+            sessionDurationSeconds: 42,
+            storageStatus: .ok
         )
         .padding()
     }

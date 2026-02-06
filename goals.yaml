@@ -42,3 +42,4 @@ goals:
     notes:
       - "2026-02-06: Added next focus area for multi-hour session support and UX clarity."
       - "2026-02-06: Recordings detail duration uses hours for long sessions."
+      - "2026-02-06: Added low-storage guardrail warning during recording with unit coverage."

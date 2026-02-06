@@ -82,6 +82,7 @@ struct ContentView: View {
                         sessionDurationSeconds: sessionDurationSeconds,
                         canStartRecording: canStartRecording,
                         blockingReasonsText: blockingReasonsText,
+                        storageStatus: audioCapture.storageStatus,
                         onToggleRecording: toggleRecording
                     )
                 case .recordings:
@@ -128,7 +129,8 @@ struct ContentView: View {
                     paceMin: preferencesStore.paceMin,
                     paceMax: preferencesStore.paceMax,
                     sessionDurationText: sessionDurationText,
-                    sessionDurationSeconds: sessionDurationSeconds
+                    sessionDurationSeconds: sessionDurationSeconds,
+                    storageStatus: audioCapture.storageStatus
                 )
                 .padding(.top, 12)
                 .padding(.trailing, 12)

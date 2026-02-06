@@ -1,2 +1,2 @@
 last_reviewed: 2026-02-06
-summary: "Added default signing entitlements template, wired packaging script to use it, and documented release override."
+summary: "Added low-storage guardrail warnings during recording with storage monitor coverage."

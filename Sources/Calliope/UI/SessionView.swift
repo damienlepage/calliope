@@ -15,6 +15,7 @@ struct SessionView: View {
     let sessionDurationSeconds: Int?
     let canStartRecording: Bool
     let blockingReasonsText: String?
+    let storageStatus: RecordingStorageStatus
     let onToggleRecording: () -> Void
 
     var body: some View {
@@ -73,7 +74,8 @@ struct SessionView: View {
                         paceMin: preferencesStore.paceMin,
                         paceMax: preferencesStore.paceMax,
                         sessionDurationText: sessionDurationText,
-                        sessionDurationSeconds: sessionDurationSeconds
+                        sessionDurationSeconds: sessionDurationSeconds,
+                        storageStatus: storageStatus
                     )
                 }
 
@@ -120,6 +122,7 @@ struct SessionView: View {
         sessionDurationSeconds: 32,
         canStartRecording: true,
         blockingReasonsText: nil,
+        storageStatus: .ok,
         onToggleRecording: {}
     )
 }

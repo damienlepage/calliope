@@ -311,6 +311,7 @@ class AudioCapture: NSObject, ObservableObject {
     @Published private(set) var backendStatus: AudioCaptureBackendStatus = .standard
     @Published private(set) var deviceSelectionMessage: String?
     @Published private(set) var inputFormatSnapshot: AudioInputFormatSnapshot?
+    @Published private(set) var storageStatus: RecordingStorageStatus = .ok
 
     private let bufferSubject = PassthroughSubject<AVAudioPCMBuffer, Never>()
     var audioBufferPublisher: AnyPublisher<AVAudioPCMBuffer, Never> {
@@ -339,6 +340,10 @@ class AudioCapture: NSObject, ObservableObject {
     private var captureStartValidationWorkItem: DispatchWorkItem?
     private var didReceiveMeaningfulInput = false
     private var awaitingRecordingStart = false
+    private let storageMonitor: RecordingStorageMonitor
+    private let storageMonitorQueue: DispatchQueue
+    private let storageMonitorInterval: TimeInterval
+    private var storageMonitorTimer: DispatchSourceTimer?
 
     var statusText: String {
         switch status {
@@ -405,7 +410,10 @@ class AudioCapture: NSObject, ObservableObject {
         fileSizeProvider: @escaping (URL) -> Int = { url in
             let values = try? url.resourceValues(forKeys: [.fileSizeKey])
             return values?.fileSize ?? 0
-        }
+        },
+        storageMonitor: RecordingStorageMonitor? = nil,
+        storageMonitorQueue: DispatchQueue = DispatchQueue(label: "com.calliope.storageMonitor"),
+        storageMonitorInterval: TimeInterval = 15.0
     ) {
         self.recordingManager = recordingManager
         self.capturePreferencesStore = capturePreferencesStore
@@ -419,6 +427,11 @@ class AudioCapture: NSObject, ObservableObject {
         self.inputLevelProvider = inputLevelProvider
         self.fileSizeProvider = fileSizeProvider
         self.captureStartValidationThreshold = captureStartValidationThreshold
+        self.storageMonitor = storageMonitor ?? RecordingStorageMonitor(
+            fileSizeProvider: fileSizeProvider
+        )
+        self.storageMonitorQueue = storageMonitorQueue
+        self.storageMonitorInterval = storageMonitorInterval
         super.init()
         // macOS doesn't use AVAudioSession - AVAudioEngine handles this directly
     }
@@ -651,6 +664,7 @@ class AudioCapture: NSObject, ObservableObject {
         let wasRecording = isRecording
         cancelRecordingStartTimeout()
         cancelCaptureStartValidation()
+        stopStorageMonitoring()
         awaitingRecordingStart = false
         backend?.clearConfigurationChangeHandler()
         backend?.removeTap()
@@ -816,6 +830,7 @@ class AudioCapture: NSObject, ObservableObject {
     private func markRecordingStarted() {
         isRecording = true
         updateStatus(.recording)
+        startStorageMonitoring()
         scheduleCaptureStartValidation()
     }
 
@@ -877,6 +892,39 @@ class AudioCapture: NSObject, ObservableObject {
     private func cancelCaptureStartValidation() {
         captureStartValidationWorkItem?.cancel()
         captureStartValidationWorkItem = nil
+    }
+
+    private func startStorageMonitoring() {
+        stopStorageMonitoring()
+        guard let recordingURL = currentRecordingURL else { return }
+        storageMonitor.reset()
+        let timer = DispatchSource.makeTimerSource(queue: storageMonitorQueue)
+        timer.schedule(deadline: .now(), repeating: storageMonitorInterval)
+        timer.setEventHandler { [weak self] in
+            guard let self, self.isRecording else { return }
+            let status = self.storageMonitor.evaluate(
+                recordingURL: recordingURL,
+                inputFormat: self.inputFormatSnapshot
+            )
+            DispatchQueue.main.async {
+                self.storageStatus = status
+            }
+        }
+        storageMonitorTimer = timer
+        timer.resume()
+    }
+
+    private func stopStorageMonitoring() {
+        storageMonitorTimer?.cancel()
+        storageMonitorTimer = nil
+        storageMonitor.reset()
+        if Thread.isMainThread {
+            storageStatus = .ok
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                self?.storageStatus = .ok
+            }
+        }
     }
 
     private func cleanupFailedRecordingIfNeeded(wasRecording: Bool) {

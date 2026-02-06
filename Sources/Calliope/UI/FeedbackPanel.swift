@@ -24,6 +24,7 @@ struct FeedbackPanel: View {
     let paceMax: Double
     let sessionDurationText: String?
     let sessionDurationSeconds: Int?
+    let storageStatus: RecordingStorageStatus
     
     var body: some View {
         let pauseRateText = PauseRateFormatter.rateText(
@@ -123,6 +124,11 @@ struct FeedbackPanel: View {
                         .font(.footnote)
                         .foregroundColor(.secondary)
                 }
+                if let warningText = RecordingStorageWarningFormatter.warningText(status: storageStatus) {
+                    Text(warningText)
+                        .font(.footnote)
+                        .foregroundColor(.orange)
+                }
                 if showSilenceWarning {
                     Text("No mic input detected")
                         .font(.footnote)
@@ -202,7 +208,8 @@ struct FeedbackPanel_Previews: PreviewProvider {
             paceMin: Constants.targetPaceMin,
             paceMax: Constants.targetPaceMax,
             sessionDurationText: "02:15",
-            sessionDurationSeconds: 135
+            sessionDurationSeconds: 135,
+            storageStatus: .ok
         )
             .padding()
     }
