@@ -154,6 +154,7 @@ class AudioAnalyzer: ObservableObject {
     }
 
     func processAudioBuffer(_ buffer: AVAudioPCMBuffer) {
+        guard isRecording else { return }
         // Process audio buffer for real-time analysis
         // This will be called continuously during recording
         speechTranscriber?.appendAudioBuffer(buffer)

@@ -87,6 +87,39 @@ final class AudioAnalyzerTests: XCTestCase {
         XCTAssertEqual(analyzer.crutchWordCount, 0)
         XCTAssertEqual(analyzer.currentPace, 0)
     }
+
+    #if canImport(AVFoundation)
+    func testAudioBufferIgnoredWhenNotRecording() {
+        let analyzer = AudioAnalyzer()
+        analyzer.applyPreferences(
+            AnalysisPreferences(
+                paceMin: 110,
+                paceMax: 170,
+                pauseThreshold: 1.0,
+                crutchWords: ["uh"]
+            )
+        )
+
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 1),
+              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 4) else {
+            XCTFail("Failed to create test audio buffer.")
+            return
+        }
+        buffer.frameLength = 4
+        if let channelData = buffer.floatChannelData {
+            channelData[0][0] = 1.0
+            channelData[0][1] = 1.0
+            channelData[0][2] = 1.0
+            channelData[0][3] = 1.0
+        }
+
+        analyzer.processAudioBuffer(buffer)
+
+        XCTAssertEqual(analyzer.inputLevel, 0.0)
+        XCTAssertEqual(analyzer.pauseCount, 0)
+        XCTAssertEqual(analyzer.pauseAverageDuration, 0)
+    }
+    #endif
 }
 
 private final class FakeSpeechTranscriber: SpeechTranscribing {
