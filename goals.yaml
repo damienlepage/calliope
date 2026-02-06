@@ -38,8 +38,9 @@ goals:
       - "Validated 2026-02-06: Coverage gate ignores SwiftUI view files; ./scripts/coverage.sh reports 84.03%."
   - id: G8
     title: Long-session readiness and clarity
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "2026-02-06: Added next focus area for multi-hour session support and UX clarity."
       - "2026-02-06: Recordings detail duration uses hours for long sessions."
       - "2026-02-06: Added low-storage guardrail warning during recording with unit coverage."
+      - "Validated 2026-02-06: Recording segments rotate on max duration with tests; recordings list labels session parts."

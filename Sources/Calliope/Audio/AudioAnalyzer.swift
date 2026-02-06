@@ -60,11 +60,14 @@ class AudioAnalyzer: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private let silenceMonitor = SilenceMonitor()
     private var silenceTimer: DispatchSourceTimer?
+    private var checkpointTimer: RepeatingTimer?
     private var isRecording = false
     private let summaryWriter: AnalysisSummaryWriting
     private let now: () -> Date
+    private let checkpointInterval: TimeInterval
+    private let checkpointTimerFactory: () -> RepeatingTimer
     private let speechTranscriberFactory: () -> SpeechTranscribing
-    private var recordingURLForSession: URL?
+    private var recordingURLs: [URL] = []
     private var recordingStart: Date?
     private var paceStats = PaceStatsTracker()
     private var latestCrutchWordCounts: [String: Int] = [:]
@@ -77,11 +80,15 @@ class AudioAnalyzer: ObservableObject {
     init(
         summaryWriter: AnalysisSummaryWriting = RecordingManager.shared,
         now: @escaping () -> Date = Date.init,
-        speechTranscriberFactory: @escaping () -> SpeechTranscribing = { SpeechTranscriber() }
+        speechTranscriberFactory: @escaping () -> SpeechTranscribing = { SpeechTranscriber() },
+        checkpointInterval: TimeInterval = Constants.analysisCheckpointInterval,
+        checkpointTimerFactory: @escaping () -> RepeatingTimer = { DispatchRepeatingTimer() }
     ) {
         self.summaryWriter = summaryWriter
         self.now = now
         self.speechTranscriberFactory = speechTranscriberFactory
+        self.checkpointInterval = checkpointInterval
+        self.checkpointTimerFactory = checkpointTimerFactory
     }
 
     func setup(audioCapture: AudioCapture, preferencesStore: AnalysisPreferencesStore) {
@@ -125,10 +132,15 @@ class AudioAnalyzer: ObservableObject {
                         self.latestCrutchWordCounts = [:]
                         self.latestWordCount = 0
                         self.recordingStart = self.now()
-                        self.recordingURLForSession = audioCapture.currentRecordingURL
+                        self.recordingURLs = []
+                        if let currentURL = audioCapture.currentRecordingURL {
+                            self.recordingURLs.append(currentURL)
+                        }
                         self.startSilenceTimer()
+                        self.startCheckpointTimer()
                         self.speechTranscriber?.startTranscription()
                     } else {
+                        self.stopCheckpointTimer()
                         self.writeSummaryIfNeeded()
                         self.stopSilenceTimer()
                         self.speechTranscriber?.stopTranscription()
@@ -146,7 +158,7 @@ class AudioAnalyzer: ObservableObject {
                         self.processingUtilizationStatus = .ok
                         self.processingUtilizationAverage = 0
                         self.recordingStart = nil
-                        self.recordingURLForSession = nil
+                        self.recordingURLs = []
                         self.processingLatencyTracker.reset()
                         self.processingUtilizationTracker.reset()
                         self.processingLatencyStats.reset()
@@ -159,6 +171,16 @@ class AudioAnalyzer: ObservableObject {
                     update()
                 } else {
                     DispatchQueue.main.async(execute: update)
+                }
+            }
+            .store(in: &cancellables)
+
+        audioCapture.$currentRecordingURL
+            .compactMap { $0 }
+            .sink { [weak self] url in
+                guard let self, self.isRecording else { return }
+                if !self.recordingURLs.contains(url) {
+                    self.recordingURLs.append(url)
                 }
             }
             .store(in: &cancellables)
@@ -330,8 +352,24 @@ class AudioAnalyzer: ObservableObject {
         silenceTimer = nil
     }
 
+    private func startCheckpointTimer() {
+        stopCheckpointTimer()
+        guard checkpointInterval > 0 else { return }
+        let timer = checkpointTimerFactory()
+        timer.schedule(interval: checkpointInterval) { [weak self] in
+            guard let self, self.isRecording else { return }
+            self.writeSummaryIfNeeded()
+        }
+        checkpointTimer = timer
+    }
+
+    private func stopCheckpointTimer() {
+        checkpointTimer?.cancel()
+        checkpointTimer = nil
+    }
+
     private func writeSummaryIfNeeded() {
-        guard let recordingURL = recordingURLForSession, let recordingStart else { return }
+        guard let recordingStart, !recordingURLs.isEmpty else { return }
         let pauseTotal = pauseDetector?.getPauseCount() ?? pauseCount
         let pauseThreshold = pauseDetector?.pauseThreshold ?? Constants.pauseThreshold
         let pauseAverage = pauseDetector?.averagePauseDuration(currentTime: now()) ?? pauseAverageDuration
@@ -360,10 +398,12 @@ class AudioAnalyzer: ObservableObject {
             ),
             processing: processing
         )
-        do {
-            try summaryWriter.writeSummary(summary, for: recordingURL)
-        } catch {
-            print("Failed to write analysis summary: \(error)")
+        for recordingURL in recordingURLs {
+            do {
+                try summaryWriter.writeSummary(summary, for: recordingURL)
+            } catch {
+                print("Failed to write analysis summary: \(error)")
+            }
         }
     }
 }

@@ -31,10 +31,16 @@ class RecordingManager {
         ensureDirectoryExists()
     }
     
-    func getNewRecordingURL() -> URL {
+    func getNewRecordingURL(sessionID: String? = nil, segmentIndex: Int? = nil) -> URL {
         ensureDirectoryExists()
         let timestamp = Int64(now().timeIntervalSince1970 * 1000)
-        let filename = "recording_\(timestamp)_\(uuid().uuidString).m4a"
+        let identifier = uuid().uuidString
+        var filename = "recording_\(timestamp)_\(identifier)"
+        if let sessionID, let segmentIndex {
+            let partLabel = String(format: "%02d", segmentIndex)
+            filename += "_session-\(sessionID)_part-\(partLabel)"
+        }
+        filename += ".m4a"
         return recordingsDirectory.appendingPathComponent(filename)
     }
     

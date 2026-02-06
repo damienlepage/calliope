@@ -1,2 +1,2 @@
 last_reviewed: 2026-02-06
-summary: "Added low-storage guardrail warnings during recording with storage monitor coverage."
+summary: "Added recording segment rollover coverage and labeled session parts in the recordings list."

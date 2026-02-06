@@ -1,6 +1,6 @@
 ---
 id: cal-61vu
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-06T16:37:08Z

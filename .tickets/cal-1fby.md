@@ -1,6 +1,6 @@
 ---
 id: cal-1fby
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-06T16:37:11Z

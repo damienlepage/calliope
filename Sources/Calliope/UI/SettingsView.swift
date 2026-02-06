@@ -42,6 +42,10 @@ struct SettingsView: View {
             )
         } ?? "Unknown"
         let preferredName = audioCapturePreferencesStore.preferredMicrophoneName
+        let segmentHoursBinding = Binding(
+            get: { audioCapturePreferencesStore.maxSegmentDuration / 3600 },
+            set: { audioCapturePreferencesStore.maxSegmentDuration = $0 * 3600 }
+        )
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 Text("Settings")
@@ -135,6 +139,22 @@ struct SettingsView: View {
                             .foregroundColor(.secondary)
                     }
                     Text("Recordings are stored locally at \(recordingsPath)")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                    HStack {
+                        Text("Max Segment Length")
+                            .font(.subheadline)
+                        Spacer()
+                        Stepper(
+                            value: segmentHoursBinding,
+                            in: 0.5...6.0,
+                            step: 0.5
+                        ) {
+                            Text(segmentDurationLabel(hours: segmentHoursBinding.wrappedValue))
+                                .font(.subheadline)
+                        }
+                    }
+                    Text("Long recordings are split into parts at this interval.")
                         .font(.footnote)
                         .foregroundColor(.secondary)
                     Button("Open Recordings Folder") {
@@ -284,6 +304,15 @@ struct SettingsView: View {
         case .failure:
             return .orange
         }
+    }
+
+    private func segmentDurationLabel(hours: Double) -> String {
+        let rounded = (hours * 10).rounded() / 10
+        if abs(rounded - rounded.rounded()) < 0.01 {
+            let value = Int(rounded.rounded())
+            return value == 1 ? "1 hr" : "\(value) hr"
+        }
+        return String(format: "%.1f hr", rounded)
     }
 }
 

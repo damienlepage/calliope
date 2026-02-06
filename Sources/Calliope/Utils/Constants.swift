@@ -25,6 +25,10 @@ enum Constants {
     static let processingUtilizationWindowSize: Int = 30
     static let processingUtilizationHighThreshold: Double = 0.75
     static let processingUtilizationCriticalThreshold: Double = 1.0
+
+    // Long-session guardrails
+    static let analysisCheckpointInterval: TimeInterval = 300 // seconds
+    static let maxRecordingSegmentDuration: TimeInterval = 2 * 60 * 60 // seconds
     
     // Crutch words
     static let crutchWords: [String] = [

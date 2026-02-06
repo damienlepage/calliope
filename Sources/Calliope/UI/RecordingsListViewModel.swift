@@ -73,7 +73,7 @@ struct RecordingItem: Identifiable, Equatable {
     let summary: AnalysisSummary?
 
     var id: URL { url }
-    var displayName: String { url.deletingPathExtension().lastPathComponent }
+    var displayName: String { RecordingItem.displayName(for: url) }
     var detailText: String {
         let dateText = modifiedAt.formatted(date: .abbreviated, time: .shortened)
         let details = [
@@ -112,6 +112,14 @@ struct RecordingItem: Identifiable, Equatable {
             utilizationText
         ].compactMap { $0 }
         return pieces.joined(separator: " • ")
+    }
+
+    static func displayName(for url: URL) -> String {
+        let name = url.deletingPathExtension().lastPathComponent
+        if let segmentLabel = segmentLabel(from: name) {
+            return segmentLabel
+        }
+        return name
     }
 
     private static let durationFormatter: DateComponentsFormatter = {
@@ -189,6 +197,17 @@ struct RecordingItem: Identifiable, Equatable {
         let averagePercent = average * 100
         let peakPercent = peak * 100
         return String(format: "Util %.0f/%.0f%%", averagePercent, peakPercent)
+    }
+
+    private static func segmentLabel(from name: String) -> String? {
+        guard let sessionRange = name.range(of: "_session-") else { return nil }
+        let sessionPart = name[sessionRange.upperBound...]
+        guard let partRange = sessionPart.range(of: "_part-") else { return nil }
+        let sessionID = String(sessionPart[..<partRange.lowerBound])
+        let partLabel = String(sessionPart[partRange.upperBound...])
+        guard !sessionID.isEmpty, !partLabel.isEmpty else { return nil }
+        let shortSessionID = sessionID.count > 8 ? String(sessionID.prefix(8)) : sessionID
+        return "Session \(shortSessionID) Part \(partLabel)"
     }
 }
 

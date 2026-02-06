@@ -113,6 +113,81 @@ final class AudioCaptureTests: XCTestCase {
         XCTAssertEqual(capture.inputDeviceName, "Test Microphone")
     }
 
+    func testRecordingSegmentRotatesWhenMaxDurationExceeded() {
+        let backend = FakeAudioCaptureBackend()
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let preferencesStore = makePreferencesStore()
+        preferencesStore.maxSegmentDuration = 1.0
+        var currentTime = Date()
+        var createdURLs: [URL] = []
+        let capture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: preferencesStore,
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
+            audioFileFactory: { url, _ in
+                createdURLs.append(url)
+                return FakeAudioFileWriter()
+            },
+            now: { currentTime }
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+        let firstURL = capture.currentRecordingURL
+        backend.simulateBuffer()
+
+        currentTime = currentTime.addingTimeInterval(1.2)
+        backend.simulateBuffer()
+        let secondURL = capture.currentRecordingURL
+
+        XCTAssertEqual(createdURLs.count, 2)
+        XCTAssertNotNil(firstURL)
+        XCTAssertNotNil(secondURL)
+        XCTAssertNotEqual(firstURL, secondURL)
+        XCTAssertTrue(firstURL?.lastPathComponent.contains("part-01") ?? false)
+        XCTAssertTrue(secondURL?.lastPathComponent.contains("part-02") ?? false)
+        capture.stopRecording()
+    }
+
+    func testRecordingSegmentDoesNotRotateWhenDisabled() {
+        let backend = FakeAudioCaptureBackend()
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let preferencesStore = makePreferencesStore()
+        preferencesStore.maxSegmentDuration = 0
+        var currentTime = Date()
+        var createdURLs: [URL] = []
+        let capture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: preferencesStore,
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
+            audioFileFactory: { url, _ in
+                createdURLs.append(url)
+                return FakeAudioFileWriter()
+            },
+            now: { currentTime }
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+        backend.simulateBuffer()
+
+        currentTime = currentTime.addingTimeInterval(3.0)
+        backend.simulateBuffer()
+
+        XCTAssertEqual(createdURLs.count, 1)
+        capture.stopRecording()
+    }
+
     func testStartRecordingSelectsPreferredMicrophoneWhenConfigured() {
         let backend = FakeAudioCaptureBackend()
         backend.selectionResult = .selected
@@ -826,6 +901,43 @@ final class AudioCaptureTests: XCTestCase {
         )
         XCTAssertTrue(backend.removeTapCalled)
         XCTAssertFalse(backend.isStarted)
+    }
+
+    func testRecordingRolloverCreatesNewSegment() {
+        let backend = FakeAudioCaptureBackend()
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let preferencesStore = makePreferencesStore()
+        preferencesStore.maxSegmentDuration = 1.0
+        var now = Date()
+        var createdURLs: [URL] = []
+        var writers: [FakeAudioFileWriter] = []
+        let capture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: preferencesStore,
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
+            audioFileFactory: { url, _ in
+                createdURLs.append(url)
+                let writer = FakeAudioFileWriter()
+                writers.append(writer)
+                return writer
+            },
+            now: { now }
+        )
+
+        let privacyState = PrivacyGuardrails.State(hasAcceptedDisclosure: true)
+        capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+        backend.simulateBuffer()
+
+        now = now.addingTimeInterval(2.0)
+        backend.simulateBuffer()
+
+        XCTAssertEqual(createdURLs.count, 2)
+        XCTAssertEqual(capture.currentRecordingURL, createdURLs.last)
+        XCTAssertTrue(createdURLs.first?.lastPathComponent.contains("part-01") == true)
+        XCTAssertTrue(createdURLs.last?.lastPathComponent.contains("part-02") == true)
+        XCTAssertEqual(writers.count, 2)
     }
 
     func testRecordingPublishesBuffersAndWritesToFile() {

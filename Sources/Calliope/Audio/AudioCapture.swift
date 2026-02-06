@@ -332,6 +332,7 @@ class AudioCapture: NSObject, ObservableObject {
     private let recordingStartTimeoutQueue: DispatchQueue
     private let recordingStartConfirmation: () -> Bool
     private var recordingStartWorkItem: DispatchWorkItem?
+    private let now: () -> Date
     private let captureStartValidationTimeout: TimeInterval
     private let captureStartValidationQueue: DispatchQueue
     private let inputLevelProvider: (AVAudioPCMBuffer) -> Double
@@ -344,6 +345,11 @@ class AudioCapture: NSObject, ObservableObject {
     private let storageMonitorQueue: DispatchQueue
     private let storageMonitorInterval: TimeInterval
     private var storageMonitorTimer: DispatchSourceTimer?
+    private var recordingSessionID: String?
+    private var recordingSegmentIndex: Int = 0
+    private var recordingSegmentStart: Date?
+    private var recordingFileSettings: [String: Any]?
+    private var maxSegmentDuration: TimeInterval = 0
 
     var statusText: String {
         switch status {
@@ -366,6 +372,7 @@ class AudioCapture: NSObject, ObservableObject {
         recordingStartTimeout: TimeInterval = 1.0,
         recordingStartTimeoutQueue: DispatchQueue = .main,
         recordingStartConfirmation: @escaping () -> Bool = { false },
+        now: @escaping () -> Date = Date.init,
         captureStartValidationTimeout: TimeInterval = 2.0,
         captureStartValidationQueue: DispatchQueue = .main,
         captureStartValidationThreshold: Double = InputLevelMeter.meaningfulThreshold,
@@ -422,6 +429,7 @@ class AudioCapture: NSObject, ObservableObject {
         self.recordingStartTimeout = recordingStartTimeout
         self.recordingStartTimeoutQueue = recordingStartTimeoutQueue
         self.recordingStartConfirmation = recordingStartConfirmation
+        self.now = now
         self.captureStartValidationTimeout = captureStartValidationTimeout
         self.captureStartValidationQueue = captureStartValidationQueue
         self.inputLevelProvider = inputLevelProvider
@@ -512,12 +520,12 @@ class AudioCapture: NSObject, ObservableObject {
 
         // Recordings are written locally only; no network transmission.
         // Create audio file
-        let url = recordingManager.getNewRecordingURL()
-        do {
-            audioFile = try audioFileFactory(url, recordingFormat.settings)
-            currentRecordingURL = url
-        } catch {
-            updateStatus(.error(.audioFileCreationFailed))
+        recordingSessionID = UUID().uuidString
+        recordingSegmentIndex = 0
+        recordingSegmentStart = nil
+        recordingFileSettings = recordingFormat.settings
+        maxSegmentDuration = max(0, preferences.maxSegmentDuration)
+        guard startNewRecordingSegment() else {
             self.backend = nil
             return
         }
@@ -529,7 +537,7 @@ class AudioCapture: NSObject, ObservableObject {
 
         // Install tap to capture audio
         backend.installTap(bufferSize: 1024) { [weak self] buffer in
-            guard let self = self, let audioFile = self.audioFile else { return }
+            guard let self else { return }
 
             if let copiedBuffer = AudioBufferCopy.copy(buffer) {
                 self.bufferSubject.send(copiedBuffer)
@@ -544,7 +552,10 @@ class AudioCapture: NSObject, ObservableObject {
                 self.didReceiveMeaningfulInput = true
             }
 
+            self.rotateRecordingSegmentIfNeeded()
+
             do {
+                guard let audioFile = self.audioFile else { return }
                 try audioFile.write(from: buffer)
             } catch {
                 self.handleCaptureError(.bufferWriteFailed)
@@ -671,6 +682,11 @@ class AudioCapture: NSObject, ObservableObject {
         backend?.stop()
         audioFile = nil
         backend = nil
+        recordingSessionID = nil
+        recordingSegmentIndex = 0
+        recordingSegmentStart = nil
+        recordingFileSettings = nil
+        maxSegmentDuration = 0
 
         isRecording = false
         updateStatus(statusOverride)
@@ -896,12 +912,13 @@ class AudioCapture: NSObject, ObservableObject {
 
     private func startStorageMonitoring() {
         stopStorageMonitoring()
-        guard let recordingURL = currentRecordingURL else { return }
+        guard currentRecordingURL != nil else { return }
         storageMonitor.reset()
         let timer = DispatchSource.makeTimerSource(queue: storageMonitorQueue)
         timer.schedule(deadline: .now(), repeating: storageMonitorInterval)
         timer.setEventHandler { [weak self] in
             guard let self, self.isRecording else { return }
+            guard let recordingURL = self.currentRecordingURL else { return }
             let status = self.storageMonitor.evaluate(
                 recordingURL: recordingURL,
                 inputFormat: self.inputFormatSnapshot
@@ -934,5 +951,38 @@ class AudioCapture: NSObject, ObservableObject {
         let fileSize = values?.fileSize ?? 0
         guard fileSize == 0 else { return }
         try? recordingManager.deleteRecording(at: url)
+    }
+
+    private func startNewRecordingSegment() -> Bool {
+        guard let recordingFileSettings else { return false }
+        let sessionID = recordingSessionID ?? UUID().uuidString
+        recordingSessionID = sessionID
+        recordingSegmentIndex += 1
+        let url = recordingManager.getNewRecordingURL(
+            sessionID: sessionID,
+            segmentIndex: recordingSegmentIndex
+        )
+        do {
+            audioFile = try audioFileFactory(url, recordingFileSettings)
+            currentRecordingURL = url
+            recordingSegmentStart = now()
+            return true
+        } catch {
+            updateStatus(.error(.audioFileCreationFailed))
+            return false
+        }
+    }
+
+    private func rotateRecordingSegmentIfNeeded() {
+        guard maxSegmentDuration > 0 else { return }
+        guard let segmentStart = recordingSegmentStart else { return }
+        let elapsed = now().timeIntervalSince(segmentStart)
+        guard elapsed >= maxSegmentDuration else { return }
+        audioFile = nil
+        if !startNewRecordingSegment() {
+            handleCaptureError(.audioFileCreationFailed)
+            return
+        }
+        storageMonitor.reset()
     }
 }

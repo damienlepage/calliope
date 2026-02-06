@@ -251,6 +251,72 @@ final class AnalysisSummaryTests: XCTestCase {
         XCTAssertGreaterThan(writer.lastSummary?.processing.utilizationAverage ?? 0, 0)
         XCTAssertGreaterThan(writer.lastSummary?.processing.utilizationPeak ?? 0, 0)
     }
+
+    func testCheckpointSummaryWritesWhileRecording() {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            UUID().uuidString,
+            isDirectory: true
+        )
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let suiteName = "AnalysisSummaryTests.Checkpoints.\(UUID().uuidString)"
+        let captureDefaults = UserDefaults(suiteName: suiteName)!
+        captureDefaults.removePersistentDomain(forName: suiteName)
+        let preferencesStore = AudioCapturePreferencesStore(defaults: captureDefaults)
+        let audioCapture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: preferencesStore,
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: FakeAudioCaptureBackend(), status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() }
+        )
+        let writer = CountingSummaryWriter()
+        let start = Date(timeIntervalSince1970: 2_000)
+        let clock = TestClock([
+            start,
+            start.addingTimeInterval(300),
+            start.addingTimeInterval(300),
+            start.addingTimeInterval(300),
+            start.addingTimeInterval(600),
+            start.addingTimeInterval(600),
+            start.addingTimeInterval(600)
+        ])
+        let timer = TestRepeatingTimer()
+        let analyzer = AudioAnalyzer(
+            summaryWriter: writer,
+            now: clock.now,
+            speechTranscriberFactory: { FakeSpeechTranscriber() },
+            checkpointInterval: 300,
+            checkpointTimerFactory: { timer }
+        )
+        let analysisDefaults = UserDefaults(suiteName: "AnalysisSummaryTests.Checkpoints.Analysis")!
+        analysisDefaults.removePersistentDomain(forName: "AnalysisSummaryTests.Checkpoints.Analysis")
+        let preferences = AnalysisPreferencesStore(defaults: analysisDefaults)
+
+        analyzer.setup(audioCapture: audioCapture, preferencesStore: preferences)
+
+        let recordingURL = manager.getNewRecordingURL()
+        audioCapture.setRecordingURLForTesting(recordingURL)
+
+        audioCapture.isRecording = true
+        let startHandled = expectation(description: "start handled")
+        DispatchQueue.main.async { startHandled.fulfill() }
+        wait(for: [startHandled], timeout: 1.0)
+
+        XCTAssertEqual(timer.scheduledInterval, 300)
+        timer.fire()
+        XCTAssertEqual(writer.writeCount, 1)
+
+        audioCapture.isRecording = false
+        let stopHandled = expectation(description: "stop handled")
+        DispatchQueue.main.async { stopHandled.fulfill() }
+        wait(for: [stopHandled], timeout: 1.0)
+
+        XCTAssertEqual(writer.writeCount, 2)
+
+        timer.fire()
+        XCTAssertEqual(writer.writeCount, 2)
+    }
 }
 
 private final class TestClock {
@@ -303,6 +369,40 @@ private final class MockSummaryWriter: AnalysisSummaryWriting {
 
     func deleteSummary(for recordingURL: URL) throws {
         return
+    }
+}
+
+private final class CountingSummaryWriter: AnalysisSummaryWriting {
+    private(set) var writeCount: Int = 0
+
+    func summaryURL(for recordingURL: URL) -> URL {
+        recordingURL
+    }
+
+    func writeSummary(_ summary: AnalysisSummary, for recordingURL: URL) throws {
+        writeCount += 1
+    }
+
+    func deleteSummary(for recordingURL: URL) throws {
+        return
+    }
+}
+
+private final class TestRepeatingTimer: RepeatingTimer {
+    private(set) var scheduledInterval: TimeInterval?
+    private var handler: (() -> Void)?
+
+    func schedule(interval: TimeInterval, handler: @escaping () -> Void) {
+        scheduledInterval = interval
+        self.handler = handler
+    }
+
+    func cancel() {
+        handler = nil
+    }
+
+    func fire() {
+        handler?()
     }
 }
 

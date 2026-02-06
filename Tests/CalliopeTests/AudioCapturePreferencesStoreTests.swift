@@ -12,6 +12,8 @@ final class AudioCapturePreferencesStoreTests: XCTestCase {
         XCTAssertEqual(store.current.voiceIsolationEnabled, true)
         XCTAssertNil(store.preferredMicrophoneName)
         XCTAssertNil(store.current.preferredMicrophoneName)
+        XCTAssertEqual(store.maxSegmentDuration, Constants.maxRecordingSegmentDuration)
+        XCTAssertEqual(store.current.maxSegmentDuration, Constants.maxRecordingSegmentDuration)
     }
 
     func testVoiceIsolationPreferencePersists() {
@@ -58,5 +60,20 @@ final class AudioCapturePreferencesStoreTests: XCTestCase {
         let reloaded = AudioCapturePreferencesStore(defaults: defaults)
         XCTAssertNil(reloaded.preferredMicrophoneName)
         XCTAssertNil(reloaded.current.preferredMicrophoneName)
+    }
+
+    func testMaxSegmentDurationPersists() {
+        let suiteName = "AudioCapturePreferencesStoreTests.maxSegmentDuration"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+
+        do {
+            let store = AudioCapturePreferencesStore(defaults: defaults)
+            store.maxSegmentDuration = 3600
+        }
+
+        let reloaded = AudioCapturePreferencesStore(defaults: defaults)
+        XCTAssertEqual(reloaded.maxSegmentDuration, 3600)
+        XCTAssertEqual(reloaded.current.maxSegmentDuration, 3600)
     }
 }
