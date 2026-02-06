@@ -30,4 +30,15 @@ final class SessionViewStateTests: XCTestCase {
         XCTAssertFalse(state.shouldShowBlockingReasons)
         XCTAssertEqual(state.primaryButtonTitle, "Stop")
     }
+
+    func testErrorStateShowsStatusWhenIdle() {
+        let state = SessionViewState(isRecording: false, status: .error)
+
+        XCTAssertTrue(state.shouldShowIdlePrompt)
+        XCTAssertFalse(state.shouldShowFeedbackPanel)
+        XCTAssertFalse(state.shouldShowRecordingIndicators)
+        XCTAssertTrue(state.shouldShowStatus)
+        XCTAssertTrue(state.shouldShowBlockingReasons)
+        XCTAssertEqual(state.primaryButtonTitle, "Start")
+    }
 }

@@ -73,8 +73,6 @@ struct ContentView: View {
                         sessionDurationText: sessionDurationText,
                         canStartRecording: canStartRecording,
                         blockingReasonsText: blockingReasonsText,
-                        showOpenSoundSettingsAction: showOpenSoundSettingsAction,
-                        onOpenSoundSettings: soundSettingsActionModel.openSoundSettings,
                         onToggleRecording: toggleRecording
                     )
                 case .recordings:

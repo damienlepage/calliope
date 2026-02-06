@@ -14,8 +14,6 @@ struct SessionView: View {
     let sessionDurationText: String?
     let canStartRecording: Bool
     let blockingReasonsText: String?
-    let showOpenSoundSettingsAction: Bool
-    let onOpenSoundSettings: () -> Void
     let onToggleRecording: () -> Void
 
     var body: some View {
@@ -91,12 +89,6 @@ struct SessionView: View {
                         .font(.footnote)
                         .foregroundColor(.secondary)
                 }
-                if showOpenSoundSettingsAction {
-                    Button("Open Sound Settings") {
-                        onOpenSoundSettings()
-                    }
-                    .buttonStyle(.bordered)
-                }
             }
             .padding()
         }
@@ -123,8 +115,6 @@ struct SessionView: View {
         sessionDurationText: "00:32",
         canStartRecording: true,
         blockingReasonsText: nil,
-        showOpenSoundSettingsAction: false,
-        onOpenSoundSettings: {},
         onToggleRecording: {}
     )
 }

@@ -1,6 +1,6 @@
 ---
 id: cal-g6fc
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-06T06:47:08Z
