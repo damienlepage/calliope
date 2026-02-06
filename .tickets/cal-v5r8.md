@@ -1,6 +1,6 @@
 ---
 id: cal-v5r8
-status: ready
+status: closed
 deps: []
 links: []
 created: 2026-02-06T17:10:20Z

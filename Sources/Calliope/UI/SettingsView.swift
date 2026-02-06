@@ -149,6 +149,26 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 VStack(alignment: .leading, spacing: 8) {
+                    Text("Conferencing Compatibility")
+                        .font(.headline)
+                    Text("Checklist and troubleshooting guidance for common call platforms.")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                    ForEach(ConferencingCompatibilityChecklist.sections) { section in
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(section.title)
+                                .font(.subheadline)
+                            ForEach(section.items, id: \.self) { item in
+                                Text("• \(item)")
+                                    .font(.footnote)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                VStack(alignment: .leading, spacing: 8) {
                     Text("Quick Start")
                         .font(.headline)
                     Text("Reopen the quick-start checklist anytime.")
