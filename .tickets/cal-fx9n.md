@@ -1,6 +1,6 @@
 ---
 id: cal-fx9n
-status: ready
+status: closed
 deps: []
 links: []
 created: 2026-02-06T09:06:00Z

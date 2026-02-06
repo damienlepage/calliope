@@ -39,9 +39,9 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Microphone Access")
                         .font(.headline)
-                    Text(microphonePermissionDescription(for: microphonePermission.state))
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+                Text(microphonePermission.state.description)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
                     if microphonePermission.state.shouldShowGrantAccess {
                         Button("Grant Microphone Access") {
                             onRequestMicAccess()
@@ -221,19 +221,6 @@ struct SettingsView: View {
             .padding()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private func microphonePermissionDescription(for state: MicrophonePermissionState) -> String {
-        switch state {
-        case .authorized:
-            return "Microphone access is granted."
-        case .notDetermined:
-            return "Microphone access is required for live coaching."
-        case .denied:
-            return "Microphone access is denied. Enable it in System Settings > Privacy & Security > Microphone."
-        case .restricted:
-            return "Microphone access is restricted by system policy."
-        }
     }
 
     private func crutchWordsBinding() -> Binding<String> {

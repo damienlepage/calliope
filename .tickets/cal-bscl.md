@@ -1,6 +1,6 @@
 ---
 id: cal-bscl
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-06T08:22:26Z
