@@ -277,7 +277,8 @@ final class RecordingListViewModelTests: XCTestCase {
             ),
             pauses: AnalysisSummary.PauseStats(
                 count: 2,
-                thresholdSeconds: 1.0
+                thresholdSeconds: 1.0,
+                averageDurationSeconds: 1.6
             ),
             crutchWords: AnalysisSummary.CrutchWordStats(
                 totalCount: 3,
@@ -298,7 +299,7 @@ final class RecordingListViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.recordings.first?.summary, summary)
         XCTAssertEqual(
             viewModel.recordings.first?.summaryText,
-            "Avg 120 WPM • Pauses 2 • Crutch 3"
+            "Avg 120 WPM • Pauses 2 • Avg Pause 1.6s • Crutch 3"
         )
     }
 

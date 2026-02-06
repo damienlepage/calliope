@@ -58,6 +58,7 @@ struct SessionView: View {
                         pace: feedbackViewModel.state.pace,
                         crutchWords: feedbackViewModel.state.crutchWords,
                         pauseCount: feedbackViewModel.state.pauseCount,
+                        pauseAverageDuration: feedbackViewModel.state.pauseAverageDuration,
                         inputLevel: feedbackViewModel.state.inputLevel,
                         showSilenceWarning: feedbackViewModel.state.showSilenceWarning,
                         showWaitingForSpeech: feedbackViewModel.showWaitingForSpeech,

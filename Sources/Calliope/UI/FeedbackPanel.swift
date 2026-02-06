@@ -5,12 +5,14 @@
 //  Created on [Date]
 //
 
+import Foundation
 import SwiftUI
 
 struct FeedbackPanel: View {
     let pace: Double // words per minute
     let crutchWords: Int
     let pauseCount: Int
+    let pauseAverageDuration: TimeInterval
     let inputLevel: Double
     let showSilenceWarning: Bool
     let showWaitingForSpeech: Bool
@@ -62,8 +64,13 @@ struct FeedbackPanel: View {
                 Text("Pauses:")
                     .font(.subheadline)
                 Spacer()
-                Text("\(pauseCount)")
-                    .font(.subheadline)
+                HStack(spacing: 6) {
+                    Text("\(pauseCount)")
+                        .font(.subheadline)
+                    Text("Avg \(pauseAverageDurationText(pauseAverageDuration))")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
             }
 
             VStack(alignment: .leading, spacing: 4) {
@@ -97,6 +104,10 @@ struct FeedbackPanel: View {
             return .red // Too fast
         }
     }
+
+    private func pauseAverageDurationText(_ duration: TimeInterval) -> String {
+        String(format: "%.1fs", duration)
+    }
 }
 
 #if DEBUG
@@ -106,6 +117,7 @@ struct FeedbackPanel_Previews: PreviewProvider {
             pace: 150,
             crutchWords: 3,
             pauseCount: 2,
+            pauseAverageDuration: 1.4,
             inputLevel: 0.4,
             showSilenceWarning: false,
             showWaitingForSpeech: false,

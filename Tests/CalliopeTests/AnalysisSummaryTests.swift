@@ -83,7 +83,8 @@ final class AnalysisSummaryTests: XCTestCase {
             ),
             pauses: AnalysisSummary.PauseStats(
                 count: 2,
-                thresholdSeconds: 1.5
+                thresholdSeconds: 1.5,
+                averageDurationSeconds: 1.2
             ),
             crutchWords: AnalysisSummary.CrutchWordStats(
                 totalCount: 3,
@@ -120,7 +121,8 @@ final class AnalysisSummaryTests: XCTestCase {
             ),
             pauses: AnalysisSummary.PauseStats(
                 count: 1,
-                thresholdSeconds: 1.0
+                thresholdSeconds: 1.0,
+                averageDurationSeconds: 0.8
             ),
             crutchWords: AnalysisSummary.CrutchWordStats(
                 totalCount: 1,

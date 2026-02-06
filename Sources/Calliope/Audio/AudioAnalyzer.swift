@@ -12,18 +12,20 @@ class AudioAnalyzer: ObservableObject {
     @Published var currentPace: Double = 0.0 // words per minute
     @Published var crutchWordCount: Int = 0
     @Published var pauseCount: Int = 0
+    @Published var pauseAverageDuration: TimeInterval = 0
     @Published var inputLevel: Double = 0.0
     @Published var silenceWarning: Bool = false
 
     var feedbackPublisher: AnyPublisher<FeedbackState, Never> {
-        Publishers.CombineLatest4($currentPace, $crutchWordCount, $pauseCount, $inputLevel)
+        Publishers.CombineLatest5($currentPace, $crutchWordCount, $pauseCount, $pauseAverageDuration, $inputLevel)
             .combineLatest($silenceWarning)
             .map { combined, warning in
                 FeedbackState(
                     pace: combined.0,
                     crutchWords: combined.1,
                     pauseCount: combined.2,
-                    inputLevel: combined.3,
+                    pauseAverageDuration: combined.3,
+                    inputLevel: combined.4,
                     showSilenceWarning: warning
                 )
             }
@@ -82,6 +84,7 @@ class AudioAnalyzer: ObservableObject {
                         self.paceAnalyzer?.start()
                         self.pauseDetector?.reset()
                         self.pauseCount = 0
+                        self.pauseAverageDuration = 0
                         self.inputLevel = 0.0
                         self.silenceWarning = false
                         self.silenceMonitor.reset()
@@ -102,6 +105,7 @@ class AudioAnalyzer: ObservableObject {
                         self.currentPace = 0.0
                         self.crutchWordCount = 0
                         self.pauseCount = 0
+                        self.pauseAverageDuration = 0
                         self.inputLevel = 0.0
                         self.silenceWarning = false
                         self.recordingStart = nil
@@ -152,11 +156,13 @@ class AudioAnalyzer: ObservableObject {
         updateInputLevel(from: buffer)
         if let pauseDetector = pauseDetector {
             let didDetectPause = pauseDetector.detectPause(in: buffer)
-            if didDetectPause {
-                let updatedCount = pauseDetector.getPauseCount()
-                DispatchQueue.main.async { [weak self] in
+            let updatedCount = pauseDetector.getPauseCount()
+            let averageDuration = pauseDetector.averagePauseDuration()
+            DispatchQueue.main.async { [weak self] in
+                if didDetectPause {
                     self?.pauseCount = updatedCount
                 }
+                self?.pauseAverageDuration = averageDuration
             }
         }
     }
@@ -248,6 +254,7 @@ class AudioAnalyzer: ObservableObject {
         guard let recordingURL = recordingURLForSession, let recordingStart else { return }
         let pauseTotal = pauseDetector?.getPauseCount() ?? pauseCount
         let pauseThreshold = pauseDetector?.pauseThreshold ?? Constants.pauseThreshold
+        let pauseAverage = pauseDetector?.averagePauseDuration(currentTime: now()) ?? pauseAverageDuration
         let paceSummary = paceStats.summary(totalWords: latestWordCount)
         let crutchCounts = latestCrutchWordCounts
         let crutchTotal = crutchCounts.values.reduce(0, +)
@@ -258,7 +265,8 @@ class AudioAnalyzer: ObservableObject {
             pace: paceSummary,
             pauses: AnalysisSummary.PauseStats(
                 count: pauseTotal,
-                thresholdSeconds: pauseThreshold
+                thresholdSeconds: pauseThreshold,
+                averageDurationSeconds: pauseAverage
             ),
             crutchWords: AnalysisSummary.CrutchWordStats(
                 totalCount: crutchTotal,

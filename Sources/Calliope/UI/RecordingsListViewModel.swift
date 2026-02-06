@@ -88,9 +88,11 @@ struct RecordingItem: Identifiable, Equatable {
     var summaryText: String? {
         guard let summary else { return nil }
         let pace = Int(summary.pace.averageWPM.rounded())
+        let averagePause = RecordingItem.formatSeconds(summary.pauses.averageDurationSeconds)
         let pieces = [
             "Avg \(pace) WPM",
             "Pauses \(summary.pauses.count)",
+            "Avg Pause \(averagePause)",
             "Crutch \(summary.crutchWords.totalCount)"
         ]
         return pieces.joined(separator: " • ")
@@ -122,6 +124,10 @@ struct RecordingItem: Identifiable, Equatable {
             return nil
         }
         return sizeFormatter.string(fromByteCount: Int64(bytes))
+    }
+
+    private static func formatSeconds(_ seconds: TimeInterval) -> String {
+        String(format: "%.1fs", seconds)
     }
 }
 

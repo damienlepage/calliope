@@ -5,12 +5,14 @@
 //  Created on [Date]
 //
 
+import Foundation
 import SwiftUI
 
 struct CompactFeedbackOverlay: View {
     let pace: Double
     let crutchWords: Int
     let pauseCount: Int
+    let pauseAverageDuration: TimeInterval
     let inputLevel: Double
     let showSilenceWarning: Bool
     let showWaitingForSpeech: Bool
@@ -40,7 +42,8 @@ struct CompactFeedbackOverlay: View {
                 metric(
                     title: "Pause",
                     value: "\(pauseCount)",
-                    color: .primary
+                    color: .primary,
+                    subtitle: pauseAverageDurationText(pauseAverageDuration)
                 )
             }
             InputLevelMeterView(level: inputLevel)
@@ -93,6 +96,10 @@ struct CompactFeedbackOverlay: View {
             return .red
         }
     }
+
+    private func pauseAverageDurationText(_ duration: TimeInterval) -> String {
+        String(format: "%.1fs", duration)
+    }
 }
 
 #if DEBUG
@@ -102,6 +109,7 @@ struct CompactFeedbackOverlay_Previews: PreviewProvider {
             pace: 165,
             crutchWords: 2,
             pauseCount: 1,
+            pauseAverageDuration: 0.9,
             inputLevel: 0.6,
             showSilenceWarning: false,
             showWaitingForSpeech: false,
