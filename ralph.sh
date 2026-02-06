@@ -86,7 +86,7 @@ build_prompt() {
     echo
     echo "## Instructions"
     echo "- Complete exactly ONE ready ticket."
-    echo "- If no ready tickets, create or refine tickets based on PRD.md."
+    echo "- If no ready tickets, use 'tk create' to create tickets based on PRD.md."
     echo "- Keep changes minimal and safe."
     echo "- Update tickets and goals if needed."
     echo "- Run 'swift build' if reasonable."
