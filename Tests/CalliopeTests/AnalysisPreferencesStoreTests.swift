@@ -48,6 +48,26 @@ final class AnalysisPreferencesStoreTests: XCTestCase {
         XCTAssertEqual(parsed, ["uh", "um", "you know", "so"])
     }
 
+    func testParseCrutchWordsHandlesCommaAndNewlineSeparators() {
+        let input = "alpha, beta\ngamma,delta\n\nepsilon"
+        let parsed = AnalysisPreferencesStore.parseCrutchWords(from: input)
+
+        XCTAssertEqual(parsed, ["alpha", "beta", "gamma", "delta", "epsilon"])
+    }
+
+    func testParseCrutchWordsTrimsLowercasesAndRemovesDuplicates() {
+        let input = "  So  ,\nSO,  like\nLike ,  \n  "
+        let parsed = AnalysisPreferencesStore.parseCrutchWords(from: input)
+
+        XCTAssertEqual(parsed, ["so", "like"])
+    }
+
+    func testFormatCrutchWordsUsesCommaSpaceSeparator() {
+        let formatted = AnalysisPreferencesStore.formatCrutchWords(["uh", "um", "you know"])
+
+        XCTAssertEqual(formatted, "uh, um, you know")
+    }
+
     func testStoreNormalizesPersistedValuesOnLoad() {
         let suiteName = "AnalysisPreferencesStoreTests.normalizeOnLoad"
         guard let defaults = UserDefaults(suiteName: suiteName) else {
