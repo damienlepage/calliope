@@ -575,6 +575,81 @@ final class RecordingListViewModelTests: XCTestCase {
         )
     }
 
+    func testRecordingItemCrutchBreakdownSortsAndFilters() {
+        let summary = AnalysisSummary(
+            version: 1,
+            createdAt: Date(timeIntervalSince1970: 1),
+            durationSeconds: 90,
+            pace: AnalysisSummary.PaceStats(
+                averageWPM: 100,
+                minWPM: 90,
+                maxWPM: 120,
+                totalWords: 150
+            ),
+            pauses: AnalysisSummary.PauseStats(
+                count: 2,
+                thresholdSeconds: 0.8,
+                averageDurationSeconds: 1.1
+            ),
+            crutchWords: AnalysisSummary.CrutchWordStats(
+                totalCount: 12,
+                counts: ["uh": 5, "like": 5, "um": 2, "": 3, "so": 0]
+            )
+        )
+        let item = RecordingItem(
+            url: URL(fileURLWithPath: "/tmp/summary-breakdown.m4a"),
+            modifiedAt: Date(timeIntervalSince1970: 1),
+            duration: 90,
+            fileSizeBytes: nil,
+            summary: summary
+        )
+
+        let breakdown = item.crutchBreakdown.map { "\($0.word):\($0.count)" }
+
+        XCTAssertEqual(breakdown, ["like:5", "uh:5", "um:2"])
+    }
+
+    func testRecordingItemProcessingDetailLinesFormatsStats() {
+        let summary = AnalysisSummary(
+            version: 1,
+            createdAt: Date(timeIntervalSince1970: 1),
+            durationSeconds: 120,
+            pace: AnalysisSummary.PaceStats(
+                averageWPM: 130,
+                minWPM: 110,
+                maxWPM: 150,
+                totalWords: 240
+            ),
+            pauses: AnalysisSummary.PauseStats(
+                count: 3,
+                thresholdSeconds: 0.7,
+                averageDurationSeconds: 1.4
+            ),
+            crutchWords: AnalysisSummary.CrutchWordStats(
+                totalCount: 1,
+                counts: ["um": 1]
+            ),
+            processing: AnalysisSummary.ProcessingStats(
+                latencyAverageMs: 12,
+                latencyPeakMs: 25,
+                utilizationAverage: 0.4,
+                utilizationPeak: 0.9
+            )
+        )
+        let item = RecordingItem(
+            url: URL(fileURLWithPath: "/tmp/summary-processing.m4a"),
+            modifiedAt: Date(timeIntervalSince1970: 1),
+            duration: 120,
+            fileSizeBytes: nil,
+            summary: summary
+        )
+
+        XCTAssertEqual(
+            item.processingDetailLines,
+            ["Latency avg/peak: 12/25 ms", "Util avg/peak: 40/90%"]
+        )
+    }
+
     func testConfirmDeleteFailureKeepsListAndSetsErrorMessage() {
         struct DeleteFailure: Error {}
         let url = URL(fileURLWithPath: "/tmp/fail.m4a")

@@ -88,6 +88,10 @@ struct RecordingsListView: View {
                             viewModel.reveal(item)
                         }
                         .buttonStyle(.bordered)
+                        Button("Details") {
+                            viewModel.detailItem = item
+                        }
+                        .buttonStyle(.bordered)
                         Button("Delete") {
                             viewModel.requestDelete(item)
                         }
@@ -106,6 +110,9 @@ struct RecordingsListView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .onAppear {
             viewModel.loadRecordings()
+        }
+        .sheet(item: $viewModel.detailItem) { item in
+            RecordingDetailView(item: item)
         }
         .alert(item: $viewModel.pendingDelete) { item in
             Alert(

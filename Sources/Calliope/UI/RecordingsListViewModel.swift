@@ -114,6 +114,91 @@ struct RecordingItem: Identifiable, Equatable {
         return pieces.joined(separator: " • ")
     }
 
+    var detailMetadataText: String {
+        let dateText = modifiedAt.formatted(date: .abbreviated, time: .shortened)
+        let details = [
+            RecordingItem.formatDuration(duration),
+            RecordingItem.formatFileSize(fileSizeBytes)
+        ].compactMap { $0 }
+        guard !details.isEmpty else {
+            return dateText
+        }
+        return ([dateText] + details).joined(separator: " • ")
+    }
+
+    var paceDetailLines: [String] {
+        guard let summary else { return [] }
+        let average = Int(summary.pace.averageWPM.rounded())
+        let minWPM = Int(summary.pace.minWPM.rounded())
+        let maxWPM = Int(summary.pace.maxWPM.rounded())
+        return [
+            "Average: \(average) WPM",
+            "Range: \(minWPM)-\(maxWPM) WPM",
+            "Total words: \(summary.pace.totalWords)"
+        ]
+    }
+
+    var pauseDetailLines: [String] {
+        guard let summary else { return [] }
+        let averagePause = RecordingItem.formatSeconds(summary.pauses.averageDurationSeconds)
+        let threshold = RecordingItem.formatSeconds(summary.pauses.thresholdSeconds)
+        let durationSeconds = summary.durationSeconds > 0 ? summary.durationSeconds : duration
+        let pausesPerMinute = RecordingItem.formatPausesPerMinute(
+            count: summary.pauses.count,
+            durationSeconds: durationSeconds
+        )
+        var lines = [
+            "Pause count: \(summary.pauses.count)",
+            "Avg pause: \(averagePause)",
+            "Pause threshold: \(threshold)"
+        ]
+        if let pausesPerMinute {
+            lines.append("Pauses/min: \(pausesPerMinute)")
+        }
+        return lines
+    }
+
+    var processingDetailLines: [String] {
+        guard let summary else { return [] }
+        var lines: [String] = []
+        let latencyAverage = summary.processing.latencyAverageMs
+        let latencyPeak = summary.processing.latencyPeakMs
+        if latencyAverage > 0 || latencyPeak > 0 {
+            lines.append(
+                String(
+                    format: "Latency avg/peak: %.0f/%.0f ms",
+                    latencyAverage,
+                    latencyPeak
+                )
+            )
+        }
+        let utilizationAverage = summary.processing.utilizationAverage * 100
+        let utilizationPeak = summary.processing.utilizationPeak * 100
+        if utilizationAverage > 0 || utilizationPeak > 0 {
+            lines.append(
+                String(
+                    format: "Util avg/peak: %.0f/%.0f%%",
+                    utilizationAverage,
+                    utilizationPeak
+                )
+            )
+        }
+        return lines
+    }
+
+    var crutchBreakdown: [(word: String, count: Int)] {
+        guard let summary else { return [] }
+        return summary.crutchWords.counts
+            .filter { !$0.key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && $0.value > 0 }
+            .sorted { lhs, rhs in
+                if lhs.value != rhs.value {
+                    return lhs.value > rhs.value
+                }
+                return lhs.key.localizedCaseInsensitiveCompare(rhs.key) == .orderedAscending
+            }
+            .map { (word: $0.key, count: $0.value) }
+    }
+
     static func displayName(for url: URL) -> String {
         let name = url.deletingPathExtension().lastPathComponent
         if let segmentLabel = segmentLabel(from: name) {
@@ -217,6 +302,7 @@ final class RecordingListViewModel: ObservableObject {
 
     @Published private(set) var recordings: [RecordingItem] = []
     @Published var pendingDelete: RecordingItem?
+    @Published var detailItem: RecordingItem?
     @Published var deleteErrorMessage: String?
     @Published private(set) var activePlaybackURL: URL?
     @Published private(set) var isPlaybackPaused = false

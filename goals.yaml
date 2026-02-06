@@ -50,3 +50,8 @@ goals:
     notes:
       - "2026-02-06: Added speech recognition permission manager, settings UI, and usage string."
       - "Validated 2026-02-06: Speech transcription start is gated by permission status with unit coverage."
+  - id: G10
+    title: Recording insights for self-review
+    status: AT_TARGET
+    notes:
+      - "2026-02-06: Added per-recording detail sheet with crutch breakdown, pause metrics, and processing stats."

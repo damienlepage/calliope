@@ -1,2 +1,2 @@
 last_reviewed: 2026-02-06
-summary: "Added speech recognition permission UX with settings surface, usage string, and transcription gating."
+summary: "Added per-recording detail sheet with crutch word breakdown, pause metrics, and processing stats."
