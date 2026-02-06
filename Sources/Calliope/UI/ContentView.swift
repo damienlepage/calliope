@@ -345,16 +345,14 @@ struct ContentView: View {
 
     private func saveSessionTitle() {
         guard let pendingSession = pendingSessionForTitle else { return }
-        guard let titleInfo = RecordingMetadata.normalizedTitleInfo(sessionTitleDraft) else {
-            skipSessionTitle()
-            return
-        }
-        let metadata = RecordingMetadata(
-            title: titleInfo.normalized,
+        let didSave = RecordingManager.shared.saveSessionTitle(
+            sessionTitleDraft,
+            for: pendingSession.recordingURLs,
             createdAt: pendingSession.createdAt
         )
-        for url in pendingSession.recordingURLs {
-            try? RecordingManager.shared.writeMetadata(metadata, for: url)
+        guard didSave else {
+            skipSessionTitle()
+            return
         }
         recordingsViewModel.refreshRecordings()
         pendingSessionForTitle = nil

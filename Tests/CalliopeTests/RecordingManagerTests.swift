@@ -323,6 +323,62 @@ final class RecordingManagerTests: XCTestCase {
         XCTAssertEqual(readBack?.title, RecordingMetadata.defaultSessionTitle(for: createdAt))
     }
 
+    func testSaveSessionTitleUsesNormalizedTitleAndInferredCreatedAtWhenSessionCreatedAtInvalid() {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let now = Date(timeIntervalSince1970: 1_700_000_000)
+        let manager = RecordingManager(baseDirectory: tempDir, now: { now })
+        let recordingsDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
+        let timestampMsA: Double = 1_699_000_000_000
+        let timestampMsB: Double = 1_699_000_100_000
+        let urlA = recordingsDirectory
+            .appendingPathComponent("recording_\(Int64(timestampMsA))_aaa.m4a")
+        let urlB = recordingsDirectory
+            .appendingPathComponent("recording_\(Int64(timestampMsB))_bbb.m4a")
+
+        FileManager.default.createFile(atPath: urlA.path, contents: Data([0x1]))
+        FileManager.default.createFile(atPath: urlB.path, contents: Data([0x1]))
+
+        let futureCreatedAt = now.addingTimeInterval(60 * 60 * 24 * 5)
+        let didSave = manager.saveSessionTitle(
+            "  Weekly \n Review  ",
+            for: [urlA, urlB],
+            createdAt: futureCreatedAt
+        )
+
+        XCTAssertTrue(didSave)
+        let expectedDate = Date(timeIntervalSince1970: timestampMsA / 1000)
+        let metadataA = manager.readMetadata(for: urlA)
+        let metadataB = manager.readMetadata(for: urlB)
+        XCTAssertEqual(metadataA?.title, "Weekly Review")
+        XCTAssertEqual(metadataA?.createdAt, expectedDate)
+        XCTAssertEqual(metadataB?.title, "Weekly Review")
+        XCTAssertEqual(metadataB?.createdAt, expectedDate)
+    }
+
+    func testSaveSessionTitleSkipsInvalidTitle() {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let recordingsDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
+        let recordingURL = recordingsDirectory.appendingPathComponent("recording_1.m4a")
+
+        FileManager.default.createFile(atPath: recordingURL.path, contents: Data([0x1]))
+        let createdAt = Date(timeIntervalSince1970: 1_700_000_000)
+        manager.writeDefaultMetadataIfNeeded(for: [recordingURL], createdAt: createdAt)
+
+        let didSave = manager.saveSessionTitle(
+            "   \n\t ",
+            for: [recordingURL],
+            createdAt: createdAt
+        )
+
+        XCTAssertFalse(didSave)
+        let readBack = manager.readMetadata(for: recordingURL)
+        XCTAssertEqual(readBack?.title, RecordingMetadata.defaultSessionTitle(for: createdAt))
+        XCTAssertEqual(readBack?.createdAt, createdAt)
+    }
+
     func testReadMetadataRemovesInvalidJSON() {
         let tempDir = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)

@@ -1,6 +1,6 @@
 ---
 id: cal-g24c
-status: ready
+status: closed
 deps: []
 links: []
 created: 2026-02-06T23:47:19Z
@@ -20,5 +20,9 @@ Harden the post-recording title flow so saved metadata is always normalized and 
 - Add/update unit coverage for the save flow or supporting helper(s) to prove the normalization and fallback behavior.
 
 ## Notes
+
+**2026-02-06T23:59:00Z**
+
+Added RecordingManager save flow to normalize titles, infer createdAt fallback (filename or now), and skip invalid titles; ContentView now uses it with unit coverage.
 
 Focus on the `ContentView` title prompt flow and use `RecordingMetadata.normalizedCreatedAt` for date normalization.

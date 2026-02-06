@@ -235,6 +235,34 @@ extension RecordingManager {
             .appendingPathExtension("metadata.json")
     }
 
+    @discardableResult
+    func saveSessionTitle(
+        _ rawTitle: String,
+        for recordingURLs: [URL],
+        createdAt: Date?
+    ) -> Bool {
+        guard let titleInfo = RecordingMetadata.normalizedTitleInfo(rawTitle) else {
+            return false
+        }
+        let currentTime = now()
+        let inferredCreatedAt = recordingURLs
+            .compactMap { RecordingMetadata.inferredCreatedAt(from: $0) }
+            .min()
+        let normalizedCreatedAt = RecordingMetadata.normalizedCreatedAt(
+            createdAt,
+            inferred: inferredCreatedAt,
+            now: currentTime
+        ) ?? currentTime
+        let metadata = RecordingMetadata(
+            title: titleInfo.normalized,
+            createdAt: normalizedCreatedAt
+        )
+        for url in recordingURLs {
+            try? writeMetadata(metadata, for: url)
+        }
+        return true
+    }
+
     func writeMetadata(_ metadata: RecordingMetadata, for recordingURL: URL) throws {
         let url = metadataURL(for: recordingURL)
         guard let normalizedTitle = RecordingMetadata.resolvedTitle(
