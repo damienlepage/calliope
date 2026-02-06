@@ -335,6 +335,7 @@ final class LiveFeedbackViewModelTests: XCTestCase {
         let waitingExpectation = expectation(description: "Waiting for speech becomes true")
         let clearedExpectation = expectation(description: "Waiting for speech clears on feedback")
         var sawWaiting = false
+        var didClear = false
 
         viewModel.$showWaitingForSpeech
             .dropFirst()
@@ -345,6 +346,8 @@ final class LiveFeedbackViewModelTests: XCTestCase {
                     waitingExpectation.fulfill()
                     feedbackSubject.send(FeedbackState(pace: 120, crutchWords: 1, pauseCount: 0))
                 } else if sawWaiting {
+                    guard !didClear else { return }
+                    didClear = true
                     clearedExpectation.fulfill()
                     recordingSubject.send(false)
                 }
