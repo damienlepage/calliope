@@ -39,7 +39,10 @@ Build Calliope into a privacy-first, low-latency macOS communication coach that 
    - Existing patterns (code conventions, testing approach, error handling).
    - Current state (what works, what's incomplete, technical debt).
    - Goals must be high-level and outcome-oriented at the feature/UX capability level (avoid task-level phrasing, single-screen tweaks, or test-only goals).
-8. Commit all changes in the repository with the details of the iteration.
+8. When a goal is complete:
+   - Update its status to `AT_TARGET` in `ralph-state/goals.yaml` with a note explaining what you validated
+   - Run the command `curl -s -d "Goal completed: $title" "https://ntfy.sh/ralph-dlepage-calliope"` where $title is replaced with the goal title
+9. Commit all changes in the repository with the details of the iteration.
 
 ## Stopping Conditions
 - PRD is fully implemented.
