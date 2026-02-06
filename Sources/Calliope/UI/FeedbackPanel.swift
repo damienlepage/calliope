@@ -119,6 +119,7 @@ struct FeedbackPanel: View {
 
     private func pauseDetailsText(rateText: String?) -> String {
         PauseDetailsFormatter.detailsText(
+            pauseCount: pauseCount,
             averageDuration: pauseAverageDuration,
             rateText: rateText
         )

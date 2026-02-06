@@ -106,6 +106,7 @@ struct CompactFeedbackOverlay: View {
 
     private func pauseSubtitleText(rateText: String?) -> String {
         PauseDetailsFormatter.detailsText(
+            pauseCount: pauseCount,
             averageDuration: pauseAverageDuration,
             rateText: rateText
         )

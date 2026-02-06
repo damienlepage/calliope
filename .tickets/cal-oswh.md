@@ -1,6 +1,6 @@
 ---
 id: cal-oswh
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-06T08:14:22Z

@@ -8,8 +8,9 @@
 import Foundation
 
 struct PauseDetailsFormatter {
-    static func detailsText(averageDuration: TimeInterval, rateText: String?) -> String {
-        var details = ["Avg \(formatSeconds(averageDuration))"]
+    static func detailsText(pauseCount: Int, averageDuration: TimeInterval, rateText: String?) -> String {
+        let averageText = pauseCount > 0 ? "Avg \(formatSeconds(averageDuration))" : "Avg --"
+        var details = [averageText]
         if let rateText {
             details.append(rateText)
         }
