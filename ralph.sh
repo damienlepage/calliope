@@ -11,6 +11,7 @@ PID_FILE="$STATE_DIR/ralph.pid"
 ITERATION_DELAY="${ITERATION_DELAY:-60}"
 AGENT_CMD="${AGENT_CMD:-codex exec --full-auto}"
 MAX_ITERATIONS="${MAX_ITERATIONS:-50}"
+MAX_TEST_ATTEMPTS="${MAX_TEST_ATTEMPTS:-10}"
 
 mkdir -p "$LOG_DIR" "$SESS_DIR"
 
@@ -101,11 +102,50 @@ run_iteration() {
   log "Starting iteration ${iteration}"
   if echo "$(cat "$session_file")" | eval "$AGENT_CMD"; then
     log "Iteration ${iteration} completed"
-    return 0
   else
     log "Iteration ${iteration} failed"
     return 1
   fi
+
+  local test_attempt=0
+  while true; do
+    test_attempt=$((test_attempt + 1))
+    local test_log="$LOG_DIR/tests-iter-${iteration}-attempt-${test_attempt}.log"
+    local test_session="$SESS_DIR/test-session-${iteration}-${test_attempt}.md"
+
+    log "Running swift test (iteration ${iteration}, attempt ${test_attempt})"
+    set +e
+    swift test 2>&1 | tee "$test_log"
+    local test_status=${PIPESTATUS[0]}
+    set -e
+
+    if [[ "$test_status" -eq 0 ]]; then
+      log "swift test passed (iteration ${iteration}, attempt ${test_attempt})"
+      return 0
+    fi
+
+    if [[ "$test_attempt" -ge "$MAX_TEST_ATTEMPTS" ]]; then
+      log "swift test still failing after ${MAX_TEST_ATTEMPTS} attempts"
+      return 1
+    fi
+
+    {
+      echo "You are Ralph, an autonomous dev agent for the Calliope repo."
+      echo
+      echo "## Test Output"
+      cat "$test_log"
+      echo
+      echo "## Instructions"
+      echo "- Fix the failing tests shown above."
+      echo "- Make minimal, safe changes."
+    } > "$test_session"
+
+    log "Sending failing test output to agent (iteration ${iteration}, attempt ${test_attempt})"
+    if ! echo "$(cat "$test_session")" | eval "$AGENT_CMD"; then
+      log "Agent failed while fixing tests (iteration ${iteration}, attempt ${test_attempt})"
+      return 1
+    fi
+  done
 }
 
 main_loop() {
@@ -153,6 +193,8 @@ main_loop() {
       failures=$((failures + 1))
       write_status "$next_iteration" "FAILURE" 0 "$failures"
       notify "Ralph iteration ${next_iteration} failed."
+      log "Iteration failure detected, stopping main loop"
+      exit 1
     fi
 
     if [[ "$single_iteration" == "true" ]]; then
