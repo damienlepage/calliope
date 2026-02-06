@@ -16,6 +16,12 @@ final class RecordingsFolderActionModelTests: XCTestCase {
 
         func deleteRecording(at url: URL) throws {}
 
+        func deleteAllRecordings() throws {}
+
+        func deleteRecordings(olderThan cutoff: Date) -> Int {
+            0
+        }
+
         func recordingsDirectoryURL() -> URL {
             directoryURL
         }

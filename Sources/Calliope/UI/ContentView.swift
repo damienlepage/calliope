@@ -17,8 +17,9 @@ struct ContentView: View {
     @StateObject private var speechPermission = SpeechPermissionManager()
     @StateObject private var microphoneDevices = MicrophoneDeviceManager()
     @StateObject private var audioCapturePreferencesStore: AudioCapturePreferencesStore
+    @StateObject private var recordingPreferencesStore: RecordingRetentionPreferencesStore
     @StateObject private var preferencesStore = AnalysisPreferencesStore()
-    @StateObject private var recordingsViewModel = RecordingListViewModel()
+    @StateObject private var recordingsViewModel: RecordingListViewModel
     @StateObject private var overlayPreferencesStore: OverlayPreferencesStore
     @State private var privacyDisclosureStore: PrivacyDisclosureStore
     @State private var quickStartStore: QuickStartStore
@@ -33,6 +34,7 @@ struct ContentView: View {
 
     init(
         audioCapturePreferencesStore: AudioCapturePreferencesStore = AudioCapturePreferencesStore(),
+        recordingPreferencesStore: RecordingRetentionPreferencesStore = RecordingRetentionPreferencesStore(),
         overlayPreferencesStore: OverlayPreferencesStore = OverlayPreferencesStore(),
         privacyDisclosureStore: PrivacyDisclosureStore = PrivacyDisclosureStore(),
         quickStartStore: QuickStartStore = QuickStartStore(),
@@ -45,8 +47,12 @@ struct ContentView: View {
         _quickStartStore = State(initialValue: quickStartStore)
         _overlayPreferencesStore = StateObject(wrappedValue: overlayPreferencesStore)
         _audioCapturePreferencesStore = StateObject(wrappedValue: audioCapturePreferencesStore)
+        _recordingPreferencesStore = StateObject(wrappedValue: recordingPreferencesStore)
         _audioCapture = StateObject(wrappedValue: AudioCapture(
             capturePreferencesStore: audioCapturePreferencesStore
+        ))
+        _recordingsViewModel = StateObject(wrappedValue: RecordingListViewModel(
+            recordingPreferencesStore: recordingPreferencesStore
         ))
         let accepted = privacyDisclosureStore.hasAcceptedDisclosure
         let hasSeenQuickStart = quickStartStore.hasSeenQuickStart
@@ -110,6 +116,7 @@ struct ContentView: View {
                         preferencesStore: preferencesStore,
                         overlayPreferencesStore: overlayPreferencesStore,
                         audioCapturePreferencesStore: audioCapturePreferencesStore,
+                        recordingPreferencesStore: recordingPreferencesStore,
                         audioCapture: audioCapture,
                         hasAcceptedDisclosure: hasAcceptedDisclosure,
                         recordingsPath: PathDisplayFormatter.displayPath(

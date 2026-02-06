@@ -176,4 +176,68 @@ final class RecordingManagerTests: XCTestCase {
         XCTAssertFalse(normalized.contains(emptyURL.standardizedFileURL))
         XCTAssertTrue(normalized.contains(validURL.standardizedFileURL))
     }
+
+    func testDeleteAllRecordingsRemovesAudioAndMetadataFiles() throws {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let recordingsDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
+
+        let audioURL = recordingsDirectory.appendingPathComponent("recording_1.m4a")
+        let wavURL = recordingsDirectory.appendingPathComponent("recording_2.wav")
+        let summaryURL = recordingsDirectory.appendingPathComponent("recording_1.summary.json")
+        let integrityURL = recordingsDirectory.appendingPathComponent("recording_1.integrity.json")
+        let keepURL = recordingsDirectory.appendingPathComponent("notes.txt")
+
+        FileManager.default.createFile(atPath: audioURL.path, contents: Data([0x1]))
+        FileManager.default.createFile(atPath: wavURL.path, contents: Data([0x1]))
+        FileManager.default.createFile(atPath: summaryURL.path, contents: Data([0x1]))
+        FileManager.default.createFile(atPath: integrityURL.path, contents: Data([0x1]))
+        FileManager.default.createFile(atPath: keepURL.path, contents: Data([0x1]))
+
+        try manager.deleteAllRecordings()
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: audioURL.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: wavURL.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: summaryURL.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: integrityURL.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: keepURL.path))
+    }
+
+    func testDeleteRecordingsOlderThanRemovesAudioAndMetadata() throws {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let recordingsDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
+
+        let oldURL = recordingsDirectory.appendingPathComponent("old.m4a")
+        let newURL = recordingsDirectory.appendingPathComponent("new.m4a")
+        let oldSummaryURL = oldURL.deletingPathExtension().appendingPathExtension("summary.json")
+        let oldIntegrityURL = oldURL.deletingPathExtension().appendingPathExtension("integrity.json")
+
+        FileManager.default.createFile(atPath: oldURL.path, contents: Data([0x1]))
+        FileManager.default.createFile(atPath: newURL.path, contents: Data([0x1]))
+        FileManager.default.createFile(atPath: oldSummaryURL.path, contents: Data([0x1]))
+        FileManager.default.createFile(atPath: oldIntegrityURL.path, contents: Data([0x1]))
+
+        let now = Date()
+        try FileManager.default.setAttributes(
+            [.modificationDate: now.addingTimeInterval(-10 * 24 * 60 * 60)],
+            ofItemAtPath: oldURL.path
+        )
+        try FileManager.default.setAttributes(
+            [.modificationDate: now],
+            ofItemAtPath: newURL.path
+        )
+
+        let deletedCount = manager.deleteRecordings(
+            olderThan: now.addingTimeInterval(-5 * 24 * 60 * 60)
+        )
+
+        XCTAssertEqual(deletedCount, 1)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: oldURL.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: oldSummaryURL.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: oldIntegrityURL.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: newURL.path))
+    }
 }

@@ -81,6 +81,71 @@ class RecordingManager {
     func deleteRecording(at url: URL) throws {
         try fileManager.removeItem(at: url)
         try? deleteSummary(for: url)
+        try? deleteIntegrityReport(for: url)
+    }
+
+    func deleteAllRecordings() throws {
+        ensureDirectoryExists()
+        let urls = (try? fileManager.contentsOfDirectory(
+            at: recordingsDirectory,
+            includingPropertiesForKeys: nil,
+            options: [.skipsHiddenFiles]
+        )) ?? []
+        var firstError: Error?
+        for url in urls {
+            let path = url.path.lowercased()
+            if path.hasSuffix(".m4a") || path.hasSuffix(".wav") {
+                do {
+                    try deleteRecording(at: url)
+                } catch {
+                    firstError = firstError ?? error
+                }
+                continue
+            }
+            if path.hasSuffix(".summary.json") || path.hasSuffix(".integrity.json") {
+                guard fileManager.fileExists(atPath: url.path) else {
+                    continue
+                }
+                do {
+                    try fileManager.removeItem(at: url)
+                } catch {
+                    firstError = firstError ?? error
+                }
+            }
+        }
+        if let firstError {
+            throw firstError
+        }
+    }
+
+    @discardableResult
+    func deleteRecordings(olderThan cutoff: Date) -> Int {
+        ensureDirectoryExists()
+        let keys: [URLResourceKey] = [
+            .isRegularFileKey,
+            .contentModificationDateKey
+        ]
+        let urls = (try? fileManager.contentsOfDirectory(
+            at: recordingsDirectory,
+            includingPropertiesForKeys: keys,
+            options: [.skipsHiddenFiles]
+        )) ?? []
+        var deletedCount = 0
+        for url in urls {
+            let values = try? url.resourceValues(forKeys: Set(keys))
+            guard values?.isRegularFile == true else { continue }
+            let ext = url.pathExtension.lowercased()
+            guard ext == "m4a" || ext == "wav" else { continue }
+            let modified = values?.contentModificationDate ?? .distantPast
+            guard modified < cutoff else { continue }
+            do {
+                try deleteRecording(at: url)
+                deletedCount += 1
+            } catch {
+                continue
+            }
+        }
+        return deletedCount
     }
 
     func recordingsDirectoryURL() -> URL {
@@ -115,5 +180,34 @@ extension RecordingManager: AnalysisSummaryWriting {
         if fileManager.fileExists(atPath: url.path) {
             try fileManager.removeItem(at: url)
         }
+    }
+}
+
+extension RecordingManager: RecordingIntegrityWriting {
+    func integrityReportURL(for recordingURL: URL) -> URL {
+        RecordingIntegrityReport.reportURL(for: recordingURL)
+    }
+
+    func writeIntegrityReport(_ report: RecordingIntegrityReport, for recordingURL: URL) throws {
+        let url = integrityReportURL(for: recordingURL)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        let data = try encoder.encode(report)
+        try data.write(to: url, options: [.atomic])
+    }
+
+    func deleteIntegrityReport(for recordingURL: URL) throws {
+        let url = integrityReportURL(for: recordingURL)
+        if fileManager.fileExists(atPath: url.path) {
+            try fileManager.removeItem(at: url)
+        }
+    }
+
+    func readIntegrityReport(for recordingURL: URL) -> RecordingIntegrityReport? {
+        let url = integrityReportURL(for: recordingURL)
+        guard let data = try? Data(contentsOf: url) else {
+            return nil
+        }
+        return try? JSONDecoder().decode(RecordingIntegrityReport.self, from: data)
     }
 }

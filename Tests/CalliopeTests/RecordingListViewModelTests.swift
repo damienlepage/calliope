@@ -15,9 +15,13 @@ final class RecordingListViewModelTests: XCTestCase {
     private final class MockRecordingManager: RecordingManaging {
         var recordings: [URL]
         var deleted: [URL] = []
+        var deleteAllCount = 0
         var loadCount = 0
+        var deleteOlderCount = 0
+        var deleteOlderCutoff: Date?
         var recordingsDirectory = URL(fileURLWithPath: "/tmp/CalliopeRecordings")
         var deleteError: Error?
+        var deleteAllError: Error?
 
         init(recordings: [URL]) {
             self.recordings = recordings
@@ -34,6 +38,20 @@ final class RecordingListViewModelTests: XCTestCase {
             }
             deleted.append(url)
             recordings.removeAll { $0 == url }
+        }
+
+        func deleteAllRecordings() throws {
+            if let deleteAllError {
+                throw deleteAllError
+            }
+            deleteAllCount += 1
+            recordings.removeAll()
+        }
+
+        func deleteRecordings(olderThan cutoff: Date) -> Int {
+            deleteOlderCount += 1
+            deleteOlderCutoff = cutoff
+            return 0
         }
 
         func recordingsDirectoryURL() -> URL {
@@ -343,7 +361,7 @@ final class RecordingListViewModelTests: XCTestCase {
 
         let target = viewModel.recordings[0]
         viewModel.requestDelete(target)
-        XCTAssertEqual(viewModel.pendingDelete, target)
+        XCTAssertEqual(viewModel.pendingDelete, .single(target))
 
         viewModel.cancelDelete()
 
@@ -493,6 +511,93 @@ final class RecordingListViewModelTests: XCTestCase {
 
         XCTAssertNil(viewModel.pendingDelete)
         XCTAssertNil(viewModel.deleteErrorMessage)
+    }
+
+    func testRequestDeleteAllSetsPendingDelete() {
+        let url = URL(fileURLWithPath: "/tmp/all.m4a")
+        let manager = MockRecordingManager(recordings: [url])
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) },
+            durationProvider: { _ in nil },
+            fileSizeProvider: { _ in nil }
+        )
+
+        viewModel.loadRecordings()
+        viewModel.requestDeleteAll()
+
+        XCTAssertEqual(viewModel.pendingDelete, .all)
+    }
+
+    func testConfirmDeleteAllClearsRecordings() {
+        let urlA = URL(fileURLWithPath: "/tmp/all-a.m4a")
+        let urlB = URL(fileURLWithPath: "/tmp/all-b.m4a")
+        let manager = MockRecordingManager(recordings: [urlA, urlB])
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) },
+            durationProvider: { _ in nil },
+            fileSizeProvider: { _ in nil }
+        )
+
+        viewModel.loadRecordings()
+        viewModel.requestDeleteAll()
+        viewModel.confirmDeleteAll()
+
+        XCTAssertEqual(manager.deleteAllCount, 1)
+        XCTAssertTrue(viewModel.recordings.isEmpty)
+        XCTAssertNil(viewModel.pendingDelete)
+    }
+
+    func testConfirmDeleteAllWhileRecordingDoesNotDelete() {
+        let url = URL(fileURLWithPath: "/tmp/all-active.m4a")
+        let manager = MockRecordingManager(recordings: [url])
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) },
+            durationProvider: { _ in nil },
+            fileSizeProvider: { _ in nil }
+        )
+        let subject = PassthroughSubject<Bool, Never>()
+
+        viewModel.bind(recordingPublisher: subject.eraseToAnyPublisher())
+        viewModel.loadRecordings()
+        subject.send(true)
+
+        viewModel.requestDeleteAll()
+        viewModel.confirmDeleteAll()
+
+        XCTAssertEqual(manager.deleteAllCount, 0)
+        XCTAssertEqual(viewModel.recordings.map(\.url), [url])
+        XCTAssertEqual(
+            viewModel.deleteErrorMessage,
+            RecordingListViewModel.deleteWhileRecordingMessage
+        )
+    }
+
+    func testConfirmDeleteAllFailureKeepsListAndSetsErrorMessage() {
+        struct BulkDeleteFailure: Error {}
+        let url = URL(fileURLWithPath: "/tmp/bulk-fail.m4a")
+        let manager = MockRecordingManager(recordings: [url])
+        manager.deleteAllError = BulkDeleteFailure()
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) },
+            durationProvider: { _ in nil },
+            fileSizeProvider: { _ in nil }
+        )
+
+        viewModel.loadRecordings()
+        viewModel.requestDeleteAll()
+        viewModel.confirmDeleteAll()
+
+        XCTAssertEqual(viewModel.recordings.map(\.url), [url])
+        XCTAssertNotNil(viewModel.deleteErrorMessage)
+        XCTAssertEqual(manager.deleteAllCount, 0)
     }
 
     func testOpenRecordingsFolderSelectsDirectory() {

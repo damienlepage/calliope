@@ -13,6 +13,8 @@ import Foundation
 protocol RecordingManaging {
     func getAllRecordings() -> [URL]
     func deleteRecording(at url: URL) throws
+    func deleteAllRecordings() throws
+    func deleteRecordings(olderThan cutoff: Date) -> Int
     func recordingsDirectoryURL() -> URL
 }
 
@@ -71,6 +73,7 @@ struct RecordingItem: Identifiable, Equatable {
     let duration: TimeInterval?
     let fileSizeBytes: Int?
     let summary: AnalysisSummary?
+    let integrityReport: RecordingIntegrityReport?
 
     var id: URL { url }
     var displayName: String { RecordingItem.displayName(for: url) }
@@ -112,6 +115,23 @@ struct RecordingItem: Identifiable, Equatable {
             utilizationText
         ].compactMap { $0 }
         return pieces.joined(separator: " • ")
+    }
+
+    var integrityWarningText: String? {
+        guard let integrityReport else { return nil }
+        guard !integrityReport.issues.isEmpty else { return nil }
+        let hasAudioIssue = integrityReport.issues.contains(.missingAudioFile)
+        let hasSummaryIssue = integrityReport.issues.contains(.missingSummary)
+        switch (hasAudioIssue, hasSummaryIssue) {
+        case (true, true):
+            return "Audio and analysis summary are missing. Try recording again to capture a complete session."
+        case (true, false):
+            return "Audio file is missing. Try recording again to capture a complete session."
+        case (false, true):
+            return "Analysis summary is missing. Try recording again to capture full insights."
+        case (false, false):
+            return nil
+        }
     }
 
     var detailMetadataText: String {
@@ -296,12 +316,26 @@ struct RecordingItem: Identifiable, Equatable {
     }
 }
 
+enum RecordingDeleteRequest: Identifiable, Equatable {
+    case single(RecordingItem)
+    case all
+
+    var id: String {
+        switch self {
+        case .single(let item):
+            return "single-\(item.url.absoluteString)"
+        case .all:
+            return "all"
+        }
+    }
+}
+
 @MainActor
 final class RecordingListViewModel: ObservableObject {
     static let deleteWhileRecordingMessage = "Stop recording before deleting recordings."
 
     @Published private(set) var recordings: [RecordingItem] = []
-    @Published var pendingDelete: RecordingItem?
+    @Published var pendingDelete: RecordingDeleteRequest?
     @Published var detailItem: RecordingItem?
     @Published var deleteErrorMessage: String?
     @Published private(set) var activePlaybackURL: URL?
@@ -346,10 +380,13 @@ final class RecordingListViewModel: ObservableObject {
 
     private let manager: RecordingManaging
     private let workspace: WorkspaceOpening
+    private let recordingPreferencesStore: RecordingRetentionPreferencesStore
+    private let now: () -> Date
     private let modificationDateProvider: @MainActor (URL) -> Date
     private let durationProvider: @MainActor (URL) -> TimeInterval?
     private let fileSizeProvider: @MainActor (URL) -> Int?
     private let summaryProvider: @MainActor (URL) -> AnalysisSummary?
+    private let integrityReportProvider: @MainActor (URL) -> RecordingIntegrityReport?
     private let mostRecentDateTextProvider: @MainActor (Date) -> String
     private let audioPlayerFactory: (URL) throws -> AudioPlaying
     private var audioPlayer: AudioPlaying?
@@ -408,17 +445,23 @@ final class RecordingListViewModel: ObservableObject {
         durationProvider: @escaping @MainActor (URL) -> TimeInterval? = RecordingListViewModel.defaultDuration,
         fileSizeProvider: @escaping @MainActor (URL) -> Int? = RecordingListViewModel.defaultFileSize,
         summaryProvider: @escaping @MainActor (URL) -> AnalysisSummary? = RecordingListViewModel.defaultSummary,
+        integrityReportProvider: @escaping @MainActor (URL) -> RecordingIntegrityReport? = RecordingListViewModel.defaultIntegrityReport,
         mostRecentDateTextProvider: @escaping @MainActor (Date) -> String = RecordingListViewModel.defaultMostRecentDateText,
+        recordingPreferencesStore: RecordingRetentionPreferencesStore = RecordingRetentionPreferencesStore(),
+        now: @escaping () -> Date = Date.init,
         audioPlayerFactory: @escaping (URL) throws -> AudioPlaying = { url in
             try SystemAudioPlayer(url: url)
         }
     ) {
         self.manager = manager
         self.workspace = workspace
+        self.recordingPreferencesStore = recordingPreferencesStore
+        self.now = now
         self.modificationDateProvider = modificationDateProvider
         self.durationProvider = durationProvider
         self.fileSizeProvider = fileSizeProvider
         self.summaryProvider = summaryProvider
+        self.integrityReportProvider = integrityReportProvider
         self.mostRecentDateTextProvider = mostRecentDateTextProvider
         self.audioPlayerFactory = audioPlayerFactory
     }
@@ -433,7 +476,8 @@ final class RecordingListViewModel: ObservableObject {
                 modifiedAt: modificationDateProvider(url),
                 duration: durationProvider(url),
                 fileSizeBytes: fileSizeProvider(url),
-                summary: summaryProvider(url)
+                summary: summaryProvider(url),
+                integrityReport: integrityReportProvider(url)
             )
         }
         let sortedItems = items.sorted { left, right in
@@ -451,6 +495,7 @@ final class RecordingListViewModel: ObservableObject {
 
     func refreshRecordings() {
         guard !isRecording else { return }
+        autoCleanIfNeeded()
         loadRecordings()
     }
 
@@ -463,6 +508,7 @@ final class RecordingListViewModel: ObservableObject {
                 if isRecording {
                     self.stopPlayback()
                 } else {
+                    self.autoCleanIfNeeded()
                     self.loadRecordings()
                 }
             }
@@ -483,7 +529,16 @@ final class RecordingListViewModel: ObservableObject {
             deleteErrorMessage = Self.deleteWhileRecordingMessage
             return
         }
-        pendingDelete = item
+        pendingDelete = .single(item)
+    }
+
+    func requestDeleteAll() {
+        deleteErrorMessage = nil
+        guard !isRecording else {
+            deleteErrorMessage = Self.deleteWhileRecordingMessage
+            return
+        }
+        pendingDelete = .all
     }
 
     func confirmDelete(_ item: RecordingItem) {
@@ -500,6 +555,23 @@ final class RecordingListViewModel: ObservableObject {
             try manager.deleteRecording(at: item.url)
         } catch {
             deleteErrorMessage = "Unable to delete recording. Please try again."
+            return
+        }
+        loadRecordings()
+    }
+
+    func confirmDeleteAll() {
+        pendingDelete = nil
+        deleteErrorMessage = nil
+        guard !isRecording else {
+            deleteErrorMessage = Self.deleteWhileRecordingMessage
+            return
+        }
+        stopPlayback()
+        do {
+            try manager.deleteAllRecordings()
+        } catch {
+            deleteErrorMessage = "Unable to delete recordings. Please try again."
             return
         }
         loadRecordings()
@@ -552,6 +624,14 @@ final class RecordingListViewModel: ObservableObject {
         }
     }
 
+    private func autoCleanIfNeeded() {
+        guard !isRecording else { return }
+        guard recordingPreferencesStore.autoCleanEnabled else { return }
+        let retentionDays = recordingPreferencesStore.retentionOption.days
+        let cutoff = now().addingTimeInterval(-TimeInterval(retentionDays) * 24 * 60 * 60)
+        _ = manager.deleteRecordings(olderThan: cutoff)
+    }
+
     private static func defaultModificationDate(_ url: URL) -> Date {
         let values = try? url.resourceValues(forKeys: [.contentModificationDateKey])
         return values?.contentModificationDate ?? .distantPast
@@ -580,5 +660,9 @@ final class RecordingListViewModel: ObservableObject {
             return nil
         }
         return try? JSONDecoder().decode(AnalysisSummary.self, from: data)
+    }
+
+    private static func defaultIntegrityReport(_ url: URL) -> RecordingIntegrityReport? {
+        RecordingManager.shared.readIntegrityReport(for: url)
     }
 }

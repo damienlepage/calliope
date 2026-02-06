@@ -14,6 +14,7 @@ struct SettingsView: View {
     @ObservedObject var preferencesStore: AnalysisPreferencesStore
     @ObservedObject var overlayPreferencesStore: OverlayPreferencesStore
     @ObservedObject var audioCapturePreferencesStore: AudioCapturePreferencesStore
+    @ObservedObject var recordingPreferencesStore: RecordingRetentionPreferencesStore
     @ObservedObject var audioCapture: AudioCapture
     let hasAcceptedDisclosure: Bool
     let recordingsPath: String
@@ -211,6 +212,28 @@ struct SettingsView: View {
                     Text("Long recordings are split into parts at this interval.")
                         .font(.footnote)
                         .foregroundColor(.secondary)
+                    Toggle("Auto-clean recordings", isOn: $recordingPreferencesStore.autoCleanEnabled)
+                    HStack {
+                        Text("Keep recordings for")
+                            .font(.subheadline)
+                        Spacer()
+                        Picker("Retention period", selection: $recordingPreferencesStore.retentionOption) {
+                            ForEach(RecordingRetentionOption.allCases) { option in
+                                Text(option.label).tag(option)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .disabled(!recordingPreferencesStore.autoCleanEnabled)
+                    }
+                    Text(
+                        "Deletes recordings older than \(recordingPreferencesStore.retentionOption.days) days after sessions end."
+                    )
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+                    Text("Auto-clean runs locally and never while recording.")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
                     Button("Open Recordings Folder") {
                         onOpenRecordingsFolder()
                     }
@@ -387,6 +410,7 @@ struct SettingsView: View {
         preferencesStore: AnalysisPreferencesStore(),
         overlayPreferencesStore: OverlayPreferencesStore(),
         audioCapturePreferencesStore: AudioCapturePreferencesStore(),
+        recordingPreferencesStore: RecordingRetentionPreferencesStore(),
         audioCapture: AudioCapture(capturePreferencesStore: AudioCapturePreferencesStore()),
         hasAcceptedDisclosure: true,
         recordingsPath: "/Users/you/Recordings",
