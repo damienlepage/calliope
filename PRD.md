@@ -1,7 +1,7 @@
 # Calliope PRD
 
 ## Summary
-Calliope is a macOS app that acts as a real-time communication coach during conference calls. It isolates the user’s voice and provides immediate, visual feedback on speaking pace, filler words, and pauses while keeping all audio and data local to the device.
+Calliope is a macOS app that acts as a real-time communication coach during conference calls. It isolates the user’s voice and provides immediate, visual feedback on speaking pace, filler words, and pauses while keeping all audio and data local to the device, plus a browsable history of session metadata and speaking statistics.
 
 ## Goals
 - Help users improve spoken clarity and confidence during live calls.
@@ -11,7 +11,7 @@ Calliope is a macOS app that acts as a real-time communication coach during conf
 ## Non-Goals
 - Recording or transcribing other participants’ voices.
 - Cloud storage, remote processing, or shared analytics.
-- Post-production editing or detailed call analytics beyond core feedback.
+- Post-production editing or detailed call analytics beyond core feedback beyond what is listed in the requirements.
 
 ## Target Users
 - Professionals who frequently present or lead meetings.
@@ -32,8 +32,13 @@ Calliope is a macOS app that acts as a real-time communication coach during conf
    - Crutch word detection (e.g., “uh”, “ah”, “so”).
    - Pause analysis (detect effective frequency and duration of pauses).
 3. Local storage of recordings and analysis artifacts on the user’s file system.
-4. Privacy safeguards ensuring other participants’ voices are not recorded.
-5. Support for common conferencing tools running on macOS (Zoom, Google Meet, Teams, etc.).
+4. Each session is saved with a default name that includes the session date and start time.
+5. Users can optionally add a title after clicking Stop (e.g. “1:1 with Alex”).
+6. Sessions metadata and statistics are easily browsable and searchable.
+7. For each session, record how often the user spoke and the total duration of user speech.
+8. Users can apply different coaching profiles per session (e.g., different speaking-time targets and sensitivity to crutch words/pauses).
+9. Privacy safeguards ensuring other participants’ voices are not recorded.
+10. Support for common conferencing tools running on macOS (Zoom, Google Meet, Teams, etc.).
 
 ### Non-Functional Requirements
 1. Low-latency processing suitable for live feedback.
@@ -72,6 +77,7 @@ Calliope is a macOS app that acts as a real-time communication coach during conf
 - Recordings list lives in a separate view or window.
 - Only show the recordings list on demand; never block or precede the session start flow.
 - Keep “Open Folder,” playback, and delete actions in the recordings view.
+- Recordings list supports search and basic metadata sorting (e.g., date, duration, speaking-time %).
 
 ### Navigation & Behavior
 - Use a macOS-standard toolbar with a segmented control or sidebar for:
@@ -80,6 +86,9 @@ Calliope is a macOS app that acts as a real-time communication coach during conf
   - Settings
 - Always default to Session when starting the app.
 - All elements on the Session screen must have a purpose for the current session.
+- Session creation uses the currently selected profile.
+- The profile can still be changed after the Session started.
+- After Stop, prompt for optional session title without blocking immediate access to stats.
 
 ## Data & Privacy
 - All audio and analysis remain on-device.
@@ -105,3 +114,4 @@ Calliope is a macOS app that acts as a real-time communication coach during conf
 - What level of customization should be available for crutch word lists?
 - Should feedback be configurable per app (Zoom vs. Meet vs. Teams)?
 - How will we visualize pace and pauses to be effective yet unobtrusive?
+- What is the minimum viable profile system (e.g., presets only vs. editable targets)?
