@@ -58,6 +58,40 @@ final class PerAppFeedbackProfileStoreTests: XCTestCase {
         XCTAssertEqual(normalized?.crutchWords, ["um", "so"])
     }
 
+    func testAddProfileNormalizesIdentifierAndUsesDefaults() {
+        let suiteName = "PerAppFeedbackProfileStoreTests.add"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+
+        let store = PerAppFeedbackProfileStore(defaults: defaults)
+        let created = store.addProfile(appIdentifier: " Us.Zoom.XOS ")
+
+        XCTAssertEqual(created?.appIdentifier, "us.zoom.xos")
+        let profile = store.profile(for: "us.zoom.xos")
+        XCTAssertEqual(profile?.paceMin, Constants.targetPaceMin)
+        XCTAssertEqual(profile?.paceMax, Constants.targetPaceMax)
+        XCTAssertEqual(profile?.pauseThreshold, Constants.pauseThreshold)
+    }
+
+    func testProfileLookupNormalizesIdentifier() {
+        let suiteName = "PerAppFeedbackProfileStoreTests.lookup"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+
+        let store = PerAppFeedbackProfileStore(defaults: defaults)
+        store.setProfile(
+            PerAppFeedbackProfile(
+                appIdentifier: "com.microsoft.teams",
+                paceMin: 120,
+                paceMax: 180,
+                pauseThreshold: 1.1,
+                crutchWords: ["um"]
+            )
+        )
+
+        XCTAssertNotNil(store.profile(for: " COM.MICROSOFT.TEAMS "))
+    }
+
     func testRemoveProfileClearsEntry() {
         let suiteName = "PerAppFeedbackProfileStoreTests.remove"
         let defaults = UserDefaults(suiteName: suiteName)!

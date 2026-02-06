@@ -1,6 +1,6 @@
 ---
 id: cal-ps7j
-status: ready
+status: closed
 deps: []
 links: []
 created: 2026-02-06T19:06:00Z
@@ -21,3 +21,9 @@ Provide an MVP editor for per-app feedback profiles so users can tailor pace, pa
 - UI includes inline guidance about using bundle identifiers and examples for Zoom/Meet/Teams.
 - Unit tests cover profile creation and normalization through the store.
 - No new dependencies.
+
+## Notes
+
+**2026-02-06T18:54:13Z**
+
+Implemented per-app profile manager sheet with list + detail editor, added store normalization/add helper, and new unit coverage. Ran ./scripts/swift-test.sh (warnings only).

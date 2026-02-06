@@ -99,6 +99,7 @@ goals:
       - "Validated 2026-02-06: Recordings header shows 7-day vs prior 7-day trend deltas for pace, crutch words, and pauses/min."
   - id: G19
     title: Per-app feedback profiles for conferencing tools
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "2026-02-06: Goal created to address per-app configuration in PRD open questions."
+      - "Validated 2026-02-06: Settings now includes per-app profile manager with list/detail editor, bundle ID guidance, and store-backed normalization."

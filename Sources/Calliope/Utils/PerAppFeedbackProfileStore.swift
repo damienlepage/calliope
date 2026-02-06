@@ -40,7 +40,9 @@ final class PerAppFeedbackProfileStore: ObservableObject {
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         let loadedProfiles = Self.loadProfiles(from: defaults, key: profilesKey)
-        let normalizedProfiles = loadedProfiles.map(Self.normalize)
+        let normalizedProfiles = loadedProfiles
+            .map(Self.normalize)
+            .filter { !$0.appIdentifier.isEmpty }
         profiles = normalizedProfiles
         if loadedProfiles != normalizedProfiles {
             persist(normalizedProfiles)
@@ -55,11 +57,15 @@ final class PerAppFeedbackProfileStore: ObservableObject {
     }
 
     func profile(for appIdentifier: String) -> PerAppFeedbackProfile? {
-        profiles.first { $0.appIdentifier == appIdentifier }
+        let normalizedIdentifier = Self.normalizeAppIdentifier(appIdentifier)
+        return profiles.first { $0.appIdentifier == normalizedIdentifier }
     }
 
     func setProfile(_ profile: PerAppFeedbackProfile) {
         let normalized = Self.normalize(profile)
+        guard !normalized.appIdentifier.isEmpty else {
+            return
+        }
         if let index = profiles.firstIndex(where: { $0.appIdentifier == normalized.appIdentifier }) {
             profiles[index] = normalized
         } else {
@@ -67,8 +73,20 @@ final class PerAppFeedbackProfileStore: ObservableObject {
         }
     }
 
+    @discardableResult
+    func addProfile(appIdentifier: String) -> PerAppFeedbackProfile? {
+        let normalizedIdentifier = Self.normalizeAppIdentifier(appIdentifier)
+        guard !normalizedIdentifier.isEmpty else {
+            return nil
+        }
+        let profile = PerAppFeedbackProfile.default(for: normalizedIdentifier)
+        setProfile(profile)
+        return profile
+    }
+
     func removeProfile(appIdentifier: String) {
-        profiles.removeAll { $0.appIdentifier == appIdentifier }
+        let normalizedIdentifier = Self.normalizeAppIdentifier(appIdentifier)
+        profiles.removeAll { $0.appIdentifier == normalizedIdentifier }
     }
 
     private static func loadProfiles(from defaults: UserDefaults, key: String) -> [PerAppFeedbackProfile] {
@@ -83,6 +101,7 @@ final class PerAppFeedbackProfileStore: ObservableObject {
     }
 
     private static func normalize(_ profile: PerAppFeedbackProfile) -> PerAppFeedbackProfile {
+        let appIdentifier = normalizeAppIdentifier(profile.appIdentifier)
         var paceMin = profile.paceMin
         var paceMax = profile.paceMax
         if paceMin > paceMax {
@@ -106,12 +125,18 @@ final class PerAppFeedbackProfileStore: ObservableObject {
             }
 
         return PerAppFeedbackProfile(
-            appIdentifier: profile.appIdentifier,
+            appIdentifier: appIdentifier,
             paceMin: paceMin,
             paceMax: paceMax,
             pauseThreshold: pauseThreshold,
             crutchWords: normalizedCrutchWords
         )
+    }
+
+    private static func normalizeAppIdentifier(_ appIdentifier: String) -> String {
+        appIdentifier
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
     }
 
     private func persist(_ profiles: [PerAppFeedbackProfile]) {

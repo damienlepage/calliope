@@ -1,2 +1,2 @@
 last_reviewed: 2026-02-06
-summary: "Added 7-day vs prior trend deltas for pace, crutch words, and pauses in the Recordings header."
+summary: "Added per-app feedback profile manager in Settings with list/detail editor and store-backed normalization."

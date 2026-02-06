@@ -30,6 +30,7 @@ struct SettingsView: View {
     let onOpenRecordingsFolder: () -> Void
     let onRunMicTest: () -> Void
     let onShowQuickStart: () -> Void
+    @State private var isPerAppProfilesPresented = false
 
     var body: some View {
         let canRunMicTest = MicTestEligibility.canRun(
@@ -311,19 +312,20 @@ struct SettingsView: View {
                         .font(.footnote)
                         .foregroundColor(.secondary)
                     if perAppProfileStore.profiles.isEmpty {
-                        Text("No profiles yet. Per-app profiles are coming soon.")
+                        Text("No profiles yet. Add one to tailor feedback for each app.")
                             .font(.footnote)
                             .foregroundColor(.secondary)
                     } else {
-                        ForEach(perAppProfileStore.profiles) { profile in
+                        ForEach(perAppProfileStore.profiles.sorted(by: { $0.appIdentifier < $1.appIdentifier })) { profile in
                             Text(profile.appIdentifier)
                                 .font(.footnote)
                                 .foregroundColor(.secondary)
                         }
                     }
-                    Button("Manage Profiles") {}
+                    Button("Manage Profiles") {
+                        isPerAppProfilesPresented = true
+                    }
                         .buttonStyle(.bordered)
-                        .disabled(true)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -393,6 +395,9 @@ struct SettingsView: View {
         }
         .onChange(of: audioCapture.isTestingMic) { _ in
             audioCapture.refreshDiagnostics()
+        }
+        .sheet(isPresented: $isPerAppProfilesPresented) {
+            PerAppProfilesSheet(perAppProfileStore: perAppProfileStore)
         }
     }
 
