@@ -1,9 +1,9 @@
 goals:
   - id: G1
     title: Real-time session feedback (pace, crutch words, pauses)
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
-      - "Live feedback pipeline exists; validate UX meets PRD expectations."
+      - "Validated 2026-02-06: Session feedback panel shows pace, crutch words, pauses (count/rate/avg), input level, and elapsed time only while recording."
   - id: G2
     title: Privacy and permissions UX guardrails
     status: BELOW_TARGET
