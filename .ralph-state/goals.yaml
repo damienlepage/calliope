@@ -135,9 +135,10 @@ goals:
       - "2026-02-06: Goal created to harden session metadata entry, normalization, and display consistency."
   - id: G25
     title: Performance and energy usage validation
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "2026-02-06: Goal created to validate low CPU/energy impact and expose actionable guardrails."
+      - "Validated 2026-02-06: Settings includes performance validation checklist with targets and step-by-step guidance."
   - id: G26
     title: Conferencing compatibility verification
     status: BELOW_TARGET

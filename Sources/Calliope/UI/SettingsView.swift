@@ -405,6 +405,22 @@ struct SettingsView: View {
                             .font(.footnote)
                             .foregroundColor(.secondary)
                     }
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Validation checklist")
+                            .font(.subheadline)
+                        ForEach(PerformanceValidationChecklist.sections) { section in
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(section.title)
+                                    .font(.footnote)
+                                    .foregroundColor(.secondary)
+                                ForEach(section.items, id: \.self) { item in
+                                    Text("• \(item)")
+                                        .font(.footnote)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                        }
+                    }
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Guardrail checklist")
                             .font(.subheadline)
