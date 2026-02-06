@@ -57,6 +57,10 @@ struct ContentView: View {
         let sessionDurationText = feedbackViewModel.sessionDurationSeconds
             .map(SessionDurationFormatter.format)
         let sessionDurationSeconds = feedbackViewModel.sessionDurationSeconds
+        let overlayCaptureStatusText = CaptureStatusFormatter.overlayStatusText(
+            inputDeviceName: audioCapture.inputDeviceName,
+            backendStatus: audioCapture.backendStatus
+        )
         let blockingReasons = RecordingEligibility.blockingReasons(
             privacyState: privacyState,
             microphonePermission: microphonePermission.state,
@@ -118,6 +122,7 @@ struct ContentView: View {
                     showWaitingForSpeech: feedbackViewModel.showWaitingForSpeech,
                     processingLatencyStatus: feedbackViewModel.state.processingLatencyStatus,
                     processingLatencyAverage: feedbackViewModel.state.processingLatencyAverage,
+                    captureStatusText: overlayCaptureStatusText,
                     paceMin: preferencesStore.paceMin,
                     paceMax: preferencesStore.paceMax,
                     sessionDurationText: sessionDurationText,

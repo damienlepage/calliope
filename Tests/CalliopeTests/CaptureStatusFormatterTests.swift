@@ -31,4 +31,22 @@ final class CaptureStatusFormatterTests: XCTestCase {
 
         XCTAssertEqual(result, "Capture: Voice Isolation enabled")
     }
+
+    func testOverlayIncludesDeviceAndBackend() {
+        let result = CaptureStatusFormatter.overlayStatusText(
+            inputDeviceName: "External Mic",
+            backendStatus: .voiceIsolation
+        )
+
+        XCTAssertEqual(result, "Input: External Mic · Capture: Voice Isolation enabled")
+    }
+
+    func testOverlayFallsBackToBackendWhenDeviceNameEmpty() {
+        let result = CaptureStatusFormatter.overlayStatusText(
+            inputDeviceName: "  ",
+            backendStatus: .standard
+        )
+
+        XCTAssertEqual(result, "Capture: Standard mic")
+    }
 }

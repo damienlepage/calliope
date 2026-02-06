@@ -1,2 +1,2 @@
 last_reviewed: 2026-02-06
-summary: "Added next goals for capture transparency and performance guardrails; session now surfaces input device and capture backend status while recording."
+summary: "Added capture status to compact overlay and marked capture transparency goal as at target; performance guardrails still pending."

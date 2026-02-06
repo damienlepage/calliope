@@ -22,4 +22,16 @@ struct CaptureStatusFormatter {
         }
         return "Input: \(trimmedDeviceName) · \(backendText)"
     }
+
+    static func overlayStatusText(
+        inputDeviceName: String,
+        backendStatus: AudioCaptureBackendStatus
+    ) -> String {
+        let trimmedDeviceName = inputDeviceName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let backendText = backendStatus.message
+        guard !trimmedDeviceName.isEmpty else {
+            return backendText
+        }
+        return "Input: \(trimmedDeviceName) · \(backendText)"
+    }
 }

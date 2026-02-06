@@ -18,6 +18,7 @@ struct CompactFeedbackOverlay: View {
     let showWaitingForSpeech: Bool
     let processingLatencyStatus: ProcessingLatencyStatus
     let processingLatencyAverage: TimeInterval
+    let captureStatusText: String
     let paceMin: Double
     let paceMax: Double
     let sessionDurationText: String?
@@ -34,6 +35,9 @@ struct CompactFeedbackOverlay: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
+            Text(captureStatusText)
+                .font(.caption2)
+                .foregroundColor(.secondary)
             HStack(spacing: 12) {
                 metric(
                     title: "Pace",
@@ -148,6 +152,7 @@ struct CompactFeedbackOverlay_Previews: PreviewProvider {
             showWaitingForSpeech: false,
             processingLatencyStatus: .ok,
             processingLatencyAverage: 0.009,
+            captureStatusText: "Input: Built-in Microphone · Capture: Standard mic",
             paceMin: Constants.targetPaceMin,
             paceMax: Constants.targetPaceMax,
             sessionDurationText: "00:42",
