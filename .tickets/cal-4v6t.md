@@ -1,6 +1,6 @@
 ---
 id: cal-4v6t
-status: ready
+status: closed
 deps: []
 links: []
 created: 2026-02-05T20:10:00Z
