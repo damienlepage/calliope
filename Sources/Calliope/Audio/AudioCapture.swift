@@ -5,6 +5,7 @@
 //  Created on [Date]
 //
 
+import AppKit
 import AVFoundation
 import AudioToolbox
 import Combine
@@ -57,6 +58,29 @@ enum AudioCaptureStatus: Equatable {
     case idle
     case recording
     case error(AudioCaptureError)
+}
+
+enum AudioCaptureInterruption: Equatable {
+    case systemSleep
+    case systemWake
+    case inputRouteChanged
+    case inputDisconnected
+    case inputConnected
+
+    var message: String {
+        switch self {
+        case .systemSleep:
+            return "Recording stopped due to system sleep."
+        case .systemWake:
+            return "System woke. Press Start to resume."
+        case .inputRouteChanged:
+            return "Audio input changed. Recording continues with the new device."
+        case .inputDisconnected:
+            return "Microphone disconnected. Recording will continue when input returns."
+        case .inputConnected:
+            return "Microphone connected. Recording continues."
+        }
+    }
 }
 
 enum MicTestStatus: Equatable {
@@ -312,6 +336,7 @@ class AudioCapture: NSObject, ObservableObject {
     @Published private(set) var deviceSelectionMessage: String?
     @Published private(set) var inputFormatSnapshot: AudioInputFormatSnapshot?
     @Published private(set) var storageStatus: RecordingStorageStatus = .ok
+    @Published private(set) var interruption: AudioCaptureInterruption?
 
     private let bufferSubject = PassthroughSubject<AVAudioPCMBuffer, Never>()
     var audioBufferPublisher: AnyPublisher<AVAudioPCMBuffer, Never> {
@@ -345,6 +370,10 @@ class AudioCapture: NSObject, ObservableObject {
     private let storageMonitorQueue: DispatchQueue
     private let storageMonitorInterval: TimeInterval
     private var storageMonitorTimer: DispatchSourceTimer?
+    private let notificationCenter: NotificationCenter
+    private let workspaceNotificationCenter: NotificationCenter
+    private var notificationObservers: [NSObjectProtocol] = []
+    private var stoppedForSleep = false
     private var recordingSessionID: String?
     private var recordingSegmentIndex: Int = 0
     private var recordingSegmentStart: Date?
@@ -420,7 +449,9 @@ class AudioCapture: NSObject, ObservableObject {
         },
         storageMonitor: RecordingStorageMonitor? = nil,
         storageMonitorQueue: DispatchQueue = DispatchQueue(label: "com.calliope.storageMonitor"),
-        storageMonitorInterval: TimeInterval = 15.0
+        storageMonitorInterval: TimeInterval = 15.0,
+        notificationCenter: NotificationCenter = .default,
+        workspaceNotificationCenter: NotificationCenter = NSWorkspace.shared.notificationCenter
     ) {
         self.recordingManager = recordingManager
         self.capturePreferencesStore = capturePreferencesStore
@@ -440,7 +471,10 @@ class AudioCapture: NSObject, ObservableObject {
         )
         self.storageMonitorQueue = storageMonitorQueue
         self.storageMonitorInterval = storageMonitorInterval
+        self.notificationCenter = notificationCenter
+        self.workspaceNotificationCenter = workspaceNotificationCenter
         super.init()
+        startSystemMonitoring()
         // macOS doesn't use AVAudioSession - AVAudioEngine handles this directly
     }
 
@@ -471,6 +505,10 @@ class AudioCapture: NSObject, ObservableObject {
         micTestStatus.message
     }
 
+    var interruptionMessage: String? {
+        interruption?.message
+    }
+
     var isTestingMic: Bool {
         if case .running = micTestStatus {
             return true
@@ -486,6 +524,8 @@ class AudioCapture: NSObject, ObservableObject {
         guard !isRecording, !awaitingRecordingStart else { return }
         guard !isTestingMic else { return }
         micTestStatus = .idle
+        clearInterruption()
+        stoppedForSleep = false
         let blockingReasons = RecordingEligibility.blockingReasons(
             privacyState: privacyState,
             microphonePermission: microphonePermission,
@@ -690,6 +730,9 @@ class AudioCapture: NSObject, ObservableObject {
 
         isRecording = false
         updateStatus(statusOverride)
+        if case .idle = statusOverride, !stoppedForSleep {
+            clearInterruption()
+        }
         cleanupFailedRecordingIfNeeded(wasRecording: wasRecording)
     }
 
@@ -714,7 +757,7 @@ class AudioCapture: NSObject, ObservableObject {
         DispatchQueue.main.async { [weak self] in
             guard let self, self.isRecording else { return }
             self.refreshInputDeviceName(from: self.backend)
-            self.stopRecordingInternal(statusOverride: .error(.engineConfigurationChanged))
+            self.noteInterruption(.inputRouteChanged)
         }
     }
 
@@ -756,6 +799,26 @@ class AudioCapture: NSObject, ObservableObject {
         } else {
             DispatchQueue.main.async { [weak self] in
                 self?.micTestStatus = newStatus
+            }
+        }
+    }
+
+    private func noteInterruption(_ interruption: AudioCaptureInterruption) {
+        if Thread.isMainThread {
+            self.interruption = interruption
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                self?.interruption = interruption
+            }
+        }
+    }
+
+    private func clearInterruption() {
+        if Thread.isMainThread {
+            interruption = nil
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                self?.interruption = nil
             }
         }
     }
@@ -984,5 +1047,66 @@ class AudioCapture: NSObject, ObservableObject {
             return
         }
         storageMonitor.reset()
+    }
+
+    private func startSystemMonitoring() {
+        notificationObservers = [
+            workspaceNotificationCenter.addObserver(
+                forName: NSWorkspace.willSleepNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                self?.handleSystemSleep()
+            },
+            workspaceNotificationCenter.addObserver(
+                forName: NSWorkspace.didWakeNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                self?.handleSystemWake()
+            },
+            notificationCenter.addObserver(
+                forName: .AVCaptureDeviceWasDisconnected,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                self?.handleInputDisconnected()
+            },
+            notificationCenter.addObserver(
+                forName: .AVCaptureDeviceWasConnected,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                self?.handleInputConnected()
+            }
+        ]
+    }
+
+    private func handleSystemSleep() {
+        guard isRecording || awaitingRecordingStart else { return }
+        stoppedForSleep = true
+        noteInterruption(.systemSleep)
+        stopRecordingInternal(statusOverride: .idle)
+    }
+
+    private func handleSystemWake() {
+        guard stoppedForSleep else { return }
+        stoppedForSleep = false
+        noteInterruption(.systemWake)
+    }
+
+    private func handleInputDisconnected() {
+        guard isRecording else { return }
+        noteInterruption(.inputDisconnected)
+    }
+
+    private func handleInputConnected() {
+        guard isRecording else { return }
+        refreshInputDeviceName(from: backend)
+        noteInterruption(.inputConnected)
+    }
+    deinit {
+        notificationObservers.forEach(notificationCenter.removeObserver)
+        notificationObservers.forEach(workspaceNotificationCenter.removeObserver)
     }
 }

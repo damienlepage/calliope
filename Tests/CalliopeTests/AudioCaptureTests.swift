@@ -1,3 +1,4 @@
+import AppKit
 import AVFoundation
 import Combine
 import XCTest
@@ -698,7 +699,7 @@ final class AudioCaptureTests: XCTestCase {
         XCTAssertEqual(capture.status, .idle)
     }
 
-    func testConfigurationChangeStopsRecordingWithError() {
+    func testConfigurationChangeMarksInterruptionWithoutStopping() {
         let backend = FakeAudioCaptureBackend()
         let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
         let capture = AudioCapture(
@@ -728,9 +729,10 @@ final class AudioCaptureTests: XCTestCase {
         }
         wait(for: [configurationHandled], timeout: 1.0)
 
-        XCTAssertFalse(capture.isRecording)
-        XCTAssertEqual(capture.status, .error(.engineConfigurationChanged))
-        XCTAssertTrue(backend.removeTapCalled)
+        XCTAssertTrue(capture.isRecording)
+        XCTAssertEqual(capture.status, .recording)
+        XCTAssertEqual(capture.interruption, .inputRouteChanged)
+        XCTAssertFalse(backend.removeTapCalled)
     }
 
     func testConfigurationChangeUpdatesInputDeviceName() {
@@ -761,7 +763,112 @@ final class AudioCaptureTests: XCTestCase {
         wait(for: [configurationHandled], timeout: 1.0)
 
         XCTAssertEqual(capture.inputDeviceName, "Secondary Mic")
-        XCTAssertEqual(capture.status, .error(.engineConfigurationChanged))
+        XCTAssertEqual(capture.status, .recording)
+        XCTAssertEqual(capture.interruption, .inputRouteChanged)
+    }
+
+    func testSystemSleepStopsRecordingAndSetsInterruption() {
+        let backend = FakeAudioCaptureBackend()
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let workspaceCenter = NotificationCenter()
+        let capture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() },
+            workspaceNotificationCenter: workspaceCenter
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+        backend.simulateBuffer()
+
+        workspaceCenter.post(name: NSWorkspace.willSleepNotification, object: nil)
+
+        let sleepHandled = expectation(description: "sleep handled")
+        DispatchQueue.main.async {
+            sleepHandled.fulfill()
+        }
+        wait(for: [sleepHandled], timeout: 1.0)
+
+        XCTAssertFalse(capture.isRecording)
+        XCTAssertEqual(capture.status, .idle)
+        XCTAssertEqual(capture.interruption, .systemSleep)
+        XCTAssertTrue(backend.removeTapCalled)
+    }
+
+    func testSystemWakeReportsReadyMessageAfterSleep() {
+        let backend = FakeAudioCaptureBackend()
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let workspaceCenter = NotificationCenter()
+        let capture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() },
+            workspaceNotificationCenter: workspaceCenter
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+        backend.simulateBuffer()
+
+        workspaceCenter.post(name: NSWorkspace.willSleepNotification, object: nil)
+        workspaceCenter.post(name: NSWorkspace.didWakeNotification, object: nil)
+
+        let wakeHandled = expectation(description: "wake handled")
+        DispatchQueue.main.async {
+            wakeHandled.fulfill()
+        }
+        wait(for: [wakeHandled], timeout: 1.0)
+
+        XCTAssertFalse(capture.isRecording)
+        XCTAssertEqual(capture.status, .idle)
+        XCTAssertEqual(capture.interruption, .systemWake)
+    }
+
+    func testInputDisconnectSetsNonBlockingInterruption() {
+        let backend = FakeAudioCaptureBackend()
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let notificationCenter = NotificationCenter()
+        let capture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() },
+            notificationCenter: notificationCenter
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+        backend.simulateBuffer()
+
+        notificationCenter.post(name: .AVCaptureDeviceWasDisconnected, object: nil)
+
+        let disconnectHandled = expectation(description: "disconnect handled")
+        DispatchQueue.main.async {
+            disconnectHandled.fulfill()
+        }
+        wait(for: [disconnectHandled], timeout: 1.0)
+
+        XCTAssertTrue(capture.isRecording)
+        XCTAssertEqual(capture.status, .recording)
+        XCTAssertEqual(capture.interruption, .inputDisconnected)
     }
 
     func testMicTestSucceedsWhenBufferReceived() {

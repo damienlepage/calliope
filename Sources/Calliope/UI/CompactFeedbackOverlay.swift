@@ -26,6 +26,7 @@ struct CompactFeedbackOverlay: View {
     let sessionDurationText: String?
     let sessionDurationSeconds: Int?
     let storageStatus: RecordingStorageStatus
+    let interruptionMessage: String?
 
     var body: some View {
         let pauseRateText = PauseRateFormatter.rateText(
@@ -86,6 +87,11 @@ struct CompactFeedbackOverlay: View {
             }
             if let warningText = RecordingStorageWarningFormatter.warningText(status: storageStatus) {
                 Text(warningText)
+                    .font(.caption)
+                    .foregroundColor(.orange)
+            }
+            if let interruptionMessage {
+                Text(interruptionMessage)
                     .font(.caption)
                     .foregroundColor(.orange)
             }
@@ -191,7 +197,8 @@ struct CompactFeedbackOverlay_Previews: PreviewProvider {
             paceMax: Constants.targetPaceMax,
             sessionDurationText: "00:42",
             sessionDurationSeconds: 42,
-            storageStatus: .ok
+            storageStatus: .ok,
+            interruptionMessage: "Audio input changed. Recording continues with the new device."
         )
         .padding()
     }

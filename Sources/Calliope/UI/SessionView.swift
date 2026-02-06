@@ -49,6 +49,13 @@ struct SessionView: View {
                     .accessibilityLabel("Session status")
                     .accessibilityValue(audioCapture.statusText)
                 }
+                if let interruptionMessage = audioCapture.interruptionMessage {
+                    Text(interruptionMessage)
+                        .font(.footnote)
+                        .foregroundColor(.orange)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 320)
+                }
                 if let captureStatusText {
                     Text(captureStatusText)
                         .font(.footnote)

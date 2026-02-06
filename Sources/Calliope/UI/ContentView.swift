@@ -141,7 +141,8 @@ struct ContentView: View {
                     paceMax: preferencesStore.paceMax,
                     sessionDurationText: sessionDurationText,
                     sessionDurationSeconds: sessionDurationSeconds,
-                    storageStatus: audioCapture.storageStatus
+                    storageStatus: audioCapture.storageStatus,
+                    interruptionMessage: audioCapture.interruptionMessage
                 )
                 .padding(.top, 12)
                 .padding(.trailing, 12)
