@@ -88,7 +88,9 @@ struct ContentView: View {
                         audioCapturePreferencesStore: audioCapturePreferencesStore,
                         audioCapture: audioCapture,
                         hasAcceptedDisclosure: hasAcceptedDisclosure,
-                        recordingsPath: RecordingManager.shared.recordingsDirectoryURL().path,
+                        recordingsPath: PathDisplayFormatter.displayPath(
+                            RecordingManager.shared.recordingsDirectoryURL()
+                        ),
                         showOpenSettingsAction: showOpenSettingsAction,
                         showOpenSoundSettingsAction: showOpenSoundSettingsAction,
                         onRequestMicAccess: microphonePermission.requestAccess,
@@ -166,7 +168,9 @@ struct ContentView: View {
         }
         .sheet(isPresented: $isDisclosureSheetPresented) {
             PrivacyDisclosureSheet(
-                recordingsPath: RecordingManager.shared.recordingsDirectoryURL().path
+                recordingsPath: PathDisplayFormatter.displayPath(
+                    RecordingManager.shared.recordingsDirectoryURL()
+                )
             ) {
                 hasAcceptedDisclosure = true
             }

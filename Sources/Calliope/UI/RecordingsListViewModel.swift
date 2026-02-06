@@ -191,7 +191,7 @@ final class RecordingListViewModel: ObservableObject {
     }
 
     var recordingsPath: String {
-        manager.recordingsDirectoryURL().path
+        PathDisplayFormatter.displayPath(manager.recordingsDirectoryURL())
     }
 
     private let manager: RecordingManaging
