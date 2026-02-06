@@ -26,6 +26,12 @@ final class ProcessingLatencyFormatterTests: XCTestCase {
         XCTAssertEqual(result, "High processing latency. Feedback may lag.")
     }
 
+    func testWarningTextWhenCritical() {
+        let result = ProcessingLatencyFormatter.warningText(status: .critical)
+
+        XCTAssertEqual(result, "Critical processing latency. Feedback may lag.")
+    }
+
     func testWarningTextWhenOk() {
         let result = ProcessingLatencyFormatter.warningText(status: .ok)
 

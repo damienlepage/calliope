@@ -21,6 +21,7 @@ enum Constants {
     // Performance guardrails
     static let processingLatencyWindowSize: Int = 30
     static let processingLatencyHighThreshold: TimeInterval = 0.03 // seconds
+    static let processingLatencyCriticalThreshold: TimeInterval = 0.06 // seconds
     static let processingUtilizationWindowSize: Int = 30
     static let processingUtilizationHighThreshold: Double = 0.75
     static let processingUtilizationCriticalThreshold: Double = 1.0

@@ -10,6 +10,7 @@ import Foundation
 enum ProcessingLatencyStatus: String, Equatable {
     case ok = "OK"
     case high = "High"
+    case critical = "Critical"
 }
 
 struct ProcessingLatencyTracker {
@@ -19,15 +20,20 @@ struct ProcessingLatencyTracker {
     private var total: TimeInterval = 0
 
     let windowSize: Int
-    let threshold: TimeInterval
+    let highThreshold: TimeInterval
+    let criticalThreshold: TimeInterval
 
     init(
         windowSize: Int = Constants.processingLatencyWindowSize,
-        threshold: TimeInterval = Constants.processingLatencyHighThreshold
+        highThreshold: TimeInterval = Constants.processingLatencyHighThreshold,
+        criticalThreshold: TimeInterval = Constants.processingLatencyCriticalThreshold
     ) {
         let safeWindow = max(1, windowSize)
+        let safeHigh = max(0, highThreshold)
+        let safeCritical = max(safeHigh, criticalThreshold)
         self.windowSize = safeWindow
-        self.threshold = threshold
+        self.highThreshold = safeHigh
+        self.criticalThreshold = safeCritical
         self.samples = Array(repeating: 0, count: safeWindow)
     }
 
@@ -37,7 +43,13 @@ struct ProcessingLatencyTracker {
     }
 
     var status: ProcessingLatencyStatus {
-        average >= threshold ? .high : .ok
+        if average >= criticalThreshold {
+            return .critical
+        }
+        if average >= highThreshold {
+            return .high
+        }
+        return .ok
     }
 
     mutating func record(duration: TimeInterval) -> ProcessingLatencyStatus {

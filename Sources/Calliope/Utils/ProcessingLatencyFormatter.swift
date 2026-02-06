@@ -15,7 +15,13 @@ struct ProcessingLatencyFormatter {
     }
 
     static func warningText(status: ProcessingLatencyStatus) -> String? {
-        guard status == .high else { return nil }
-        return "High processing latency. Feedback may lag."
+        switch status {
+        case .ok:
+            return nil
+        case .high:
+            return "High processing latency. Feedback may lag."
+        case .critical:
+            return "Critical processing latency. Feedback may lag."
+        }
     }
 }

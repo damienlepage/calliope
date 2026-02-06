@@ -167,6 +167,8 @@ struct FeedbackPanel: View {
             return .green
         case .high:
             return .orange
+        case .critical:
+            return .red
         }
     }
 

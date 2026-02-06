@@ -1,2 +1,2 @@
 last_reviewed: 2026-02-06
-summary: "Added capture status to compact overlay and marked capture transparency goal as at target; performance guardrails still pending."
+summary: "Added critical processing-latency warning state and marked performance guardrails as at target."

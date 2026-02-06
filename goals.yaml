@@ -21,6 +21,7 @@ goals:
       - "2026-02-06: Session view shows input device and capture backend status while recording; compact overlay now mirrors capture status; Settings exposes capture diagnostics + mic test."
   - id: G5
     title: Performance & latency guardrails
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "2026-02-06: Added rolling processing-latency status (OK/High) during recording."
+      - "2026-02-06: Added critical latency threshold with warning text and red status color in session/overlay."
