@@ -467,6 +467,31 @@ final class AudioCaptureTests: XCTestCase {
         capture.stopRecording()
     }
 
+    func testStartRecordingWhileAwaitingStartIsIgnored() {
+        let backend = FakeAudioCaptureBackend()
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let capture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() },
+            recordingStartTimeout: 0.2,
+            recordingStartConfirmation: { false }
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+        capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+
+        XCTAssertEqual(backend.startCallCount, 1)
+        XCTAssertEqual(backend.installTapCallCount, 1)
+    }
+
     func testCaptureStartValidationStopsWhenInputLevelMissing() {
         let backend = FakeAudioCaptureBackend()
         let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
@@ -872,6 +897,8 @@ private final class FakeAudioCaptureBackend: AudioCaptureBackend {
     var isStarted = false
     var installTapCalled = false
     var removeTapCalled = false
+    var installTapCallCount = 0
+    var startCallCount = 0
     var startError: Error?
     var selectionResult: AudioInputDeviceSelectionResult = .notRequested
     var selectInputDeviceCalls: [String?] = []
@@ -889,6 +916,7 @@ private final class FakeAudioCaptureBackend: AudioCaptureBackend {
 
     func installTap(bufferSize: AVAudioFrameCount, handler: @escaping (AVAudioPCMBuffer) -> Void) {
         installTapCalled = true
+        installTapCallCount += 1
         tapHandler = handler
     }
 
@@ -914,6 +942,7 @@ private final class FakeAudioCaptureBackend: AudioCaptureBackend {
         if let startError {
             throw startError
         }
+        startCallCount += 1
         isStarted = true
     }
 

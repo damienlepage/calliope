@@ -461,7 +461,7 @@ class AudioCapture: NSObject, ObservableObject {
         microphonePermission: MicrophonePermissionState,
         hasMicrophoneInput: Bool = true
     ) {
-        guard !isRecording else { return }
+        guard !isRecording, !awaitingRecordingStart else { return }
         guard !isTestingMic else { return }
         micTestStatus = .idle
         let blockingReasons = RecordingEligibility.blockingReasons(
