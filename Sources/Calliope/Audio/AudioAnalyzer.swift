@@ -67,6 +67,7 @@ class AudioAnalyzer: ObservableObject {
     private let checkpointInterval: TimeInterval
     private let checkpointTimerFactory: () -> RepeatingTimer
     private let speechTranscriberFactory: () -> SpeechTranscribing
+    private var speechPermissionProvider: SpeechPermissionStateProviding?
     private var recordingURLs: [URL] = []
     private var recordingStart: Date?
     private var paceStats = PaceStatsTracker()
@@ -91,7 +92,12 @@ class AudioAnalyzer: ObservableObject {
         self.checkpointTimerFactory = checkpointTimerFactory
     }
 
-    func setup(audioCapture: AudioCapture, preferencesStore: AnalysisPreferencesStore) {
+    func setup(
+        audioCapture: AudioCapture,
+        preferencesStore: AnalysisPreferencesStore,
+        speechPermission: SpeechPermissionStateProviding? = nil
+    ) {
+        speechPermissionProvider = speechPermission
         speechTranscriber = speechTranscriberFactory()
         paceAnalyzer = PaceAnalyzer(now: now)
         applyPreferences(preferencesStore.current)
@@ -138,7 +144,9 @@ class AudioAnalyzer: ObservableObject {
                         }
                         self.startSilenceTimer()
                         self.startCheckpointTimer()
-                        self.speechTranscriber?.startTranscription()
+                        if self.canStartTranscription() {
+                            self.speechTranscriber?.startTranscription()
+                        }
                     } else {
                         self.stopCheckpointTimer()
                         self.writeSummaryIfNeeded()
@@ -190,6 +198,13 @@ class AudioAnalyzer: ObservableObject {
                 self?.processAudioBuffer(buffer)
             }
             .store(in: &cancellables)
+    }
+
+    private func canStartTranscription() -> Bool {
+        guard let speechPermissionProvider else {
+            return true
+        }
+        return speechPermissionProvider.state == .authorized
     }
 
     func applyPreferences(_ preferences: AnalysisPreferences) {

@@ -9,6 +9,8 @@ final class MicrophoneSettingsActionModelTests: XCTestCase {
             openCount += 1
         }
 
+        func openSpeechRecognitionPrivacy() { }
+
         func openSoundInput() { }
     }
 

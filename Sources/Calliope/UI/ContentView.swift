@@ -14,6 +14,7 @@ struct ContentView: View {
     @StateObject private var audioAnalyzer = AudioAnalyzer()
     @StateObject private var feedbackViewModel = LiveFeedbackViewModel()
     @StateObject private var microphonePermission = MicrophonePermissionManager()
+    @StateObject private var speechPermission = SpeechPermissionManager()
     @StateObject private var microphoneDevices = MicrophoneDeviceManager()
     @StateObject private var audioCapturePreferencesStore: AudioCapturePreferencesStore
     @StateObject private var preferencesStore = AnalysisPreferencesStore()
@@ -24,6 +25,7 @@ struct ContentView: View {
     @State private var isDisclosureSheetPresented: Bool
     private let settingsActionModel: MicrophoneSettingsActionModel
     private let soundSettingsActionModel: SoundSettingsActionModel
+    private let speechSettingsActionModel: SpeechSettingsActionModel
     private let recordingsFolderActionModel: RecordingsFolderActionModel
 
     init(
@@ -32,6 +34,7 @@ struct ContentView: View {
         privacyDisclosureStore: PrivacyDisclosureStore = PrivacyDisclosureStore(),
         settingsActionModel: MicrophoneSettingsActionModel = MicrophoneSettingsActionModel(),
         soundSettingsActionModel: SoundSettingsActionModel = SoundSettingsActionModel(),
+        speechSettingsActionModel: SpeechSettingsActionModel = SpeechSettingsActionModel(),
         recordingsFolderActionModel: RecordingsFolderActionModel = RecordingsFolderActionModel()
     ) {
         _privacyDisclosureStore = State(initialValue: privacyDisclosureStore)
@@ -47,6 +50,7 @@ struct ContentView: View {
         )
         self.settingsActionModel = settingsActionModel
         self.soundSettingsActionModel = soundSettingsActionModel
+        self.speechSettingsActionModel = speechSettingsActionModel
         self.recordingsFolderActionModel = recordingsFolderActionModel
     }
 
@@ -69,6 +73,9 @@ struct ContentView: View {
         let canStartRecording = blockingReasons.isEmpty
         let showOpenSettingsAction = settingsActionModel.shouldShow(for: blockingReasons)
         let showOpenSoundSettingsAction = soundSettingsActionModel.shouldShow(for: blockingReasons)
+        let showOpenSpeechSettingsAction = speechSettingsActionModel.shouldShow(
+            state: speechPermission.state
+        )
         let blockingReasonsText = blockingReasonsText(blockingReasons)
         ZStack(alignment: .topTrailing) {
             Group {
@@ -90,6 +97,7 @@ struct ContentView: View {
                 case .settings:
                     SettingsView(
                         microphonePermission: microphonePermission,
+                        speechPermission: speechPermission,
                         microphoneDevices: microphoneDevices,
                         preferencesStore: preferencesStore,
                         overlayPreferencesStore: overlayPreferencesStore,
@@ -101,9 +109,12 @@ struct ContentView: View {
                         ),
                         showOpenSettingsAction: showOpenSettingsAction,
                         showOpenSoundSettingsAction: showOpenSoundSettingsAction,
+                        showOpenSpeechSettingsAction: showOpenSpeechSettingsAction,
                         onRequestMicAccess: microphonePermission.requestAccess,
+                        onRequestSpeechAccess: speechPermission.requestAccess,
                         onOpenSystemSettings: settingsActionModel.openSystemSettings,
                         onOpenSoundSettings: soundSettingsActionModel.openSoundSettings,
+                        onOpenSpeechSettings: speechSettingsActionModel.openSystemSettings,
                         onOpenRecordingsFolder: recordingsFolderActionModel.openRecordingsFolder,
                         onRunMicTest: runMicTest
                     )
@@ -150,7 +161,11 @@ struct ContentView: View {
             }
         }
         .onAppear {
-            audioAnalyzer.setup(audioCapture: audioCapture, preferencesStore: preferencesStore)
+            audioAnalyzer.setup(
+                audioCapture: audioCapture,
+                preferencesStore: preferencesStore,
+                speechPermission: speechPermission
+            )
             feedbackViewModel.bind(
                 feedbackPublisher: audioAnalyzer.feedbackPublisher,
                 recordingPublisher: audioCapture.$isRecording.eraseToAnyPublisher()
@@ -159,6 +174,7 @@ struct ContentView: View {
                 recordingPublisher: audioCapture.$isRecording.eraseToAnyPublisher()
             )
             microphonePermission.refresh()
+            speechPermission.refresh()
             microphoneDevices.refresh()
             WindowLevelController.apply(alwaysOnTop: overlayPreferencesStore.alwaysOnTop)
         }

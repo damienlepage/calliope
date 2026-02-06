@@ -1,2 +1,2 @@
 last_reviewed: 2026-02-06
-summary: "Added recording segment rollover coverage and labeled session parts in the recordings list."
+summary: "Added speech recognition permission UX with settings surface, usage string, and transcription gating."

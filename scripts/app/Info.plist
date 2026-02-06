@@ -24,5 +24,7 @@
     <string>public.app-category.productivity</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>Calliope uses your microphone to provide real-time speaking feedback during calls.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>Calliope uses on-device speech recognition to detect crutch words and pacing.</string>
 </dict>
 </plist>

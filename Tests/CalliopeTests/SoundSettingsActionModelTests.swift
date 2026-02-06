@@ -7,6 +7,8 @@ final class SoundSettingsActionModelTests: XCTestCase {
 
         func openMicrophonePrivacy() { }
 
+        func openSpeechRecognitionPrivacy() { }
+
         func openSoundInput() {
             openSoundCount += 1
         }

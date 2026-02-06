@@ -44,3 +44,9 @@ goals:
       - "2026-02-06: Recordings detail duration uses hours for long sessions."
       - "2026-02-06: Added low-storage guardrail warning during recording with unit coverage."
       - "Validated 2026-02-06: Recording segments rotate on max duration with tests; recordings list labels session parts."
+  - id: G9
+    title: Speech recognition permission UX
+    status: AT_TARGET
+    notes:
+      - "2026-02-06: Added speech recognition permission manager, settings UI, and usage string."
+      - "Validated 2026-02-06: Speech transcription start is gated by permission status with unit coverage."

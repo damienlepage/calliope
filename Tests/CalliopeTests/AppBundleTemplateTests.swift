@@ -37,6 +37,10 @@ final class AppBundleTemplateTests: XCTestCase {
         let micUsage = dict["NSMicrophoneUsageDescription"] as? String
         XCTAssertNotNil(micUsage)
         XCTAssertFalse(micUsage?.isEmpty ?? true)
+
+        let speechUsage = dict["NSSpeechRecognitionUsageDescription"] as? String
+        XCTAssertNotNil(speechUsage)
+        XCTAssertFalse(speechUsage?.isEmpty ?? true)
     }
 
     func testBundleTemplatesArePresentAndUsedByBuildScript() throws {

@@ -9,6 +9,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var microphonePermission: MicrophonePermissionManager
+    @ObservedObject var speechPermission: SpeechPermissionManager
     @ObservedObject var microphoneDevices: MicrophoneDeviceManager
     @ObservedObject var preferencesStore: AnalysisPreferencesStore
     @ObservedObject var overlayPreferencesStore: OverlayPreferencesStore
@@ -18,9 +19,12 @@ struct SettingsView: View {
     let recordingsPath: String
     let showOpenSettingsAction: Bool
     let showOpenSoundSettingsAction: Bool
+    let showOpenSpeechSettingsAction: Bool
     let onRequestMicAccess: () -> Void
+    let onRequestSpeechAccess: () -> Void
     let onOpenSystemSettings: () -> Void
     let onOpenSoundSettings: () -> Void
+    let onOpenSpeechSettings: () -> Void
     let onOpenRecordingsFolder: () -> Void
     let onRunMicTest: () -> Void
 
@@ -124,6 +128,30 @@ struct SettingsView: View {
                             }
                         }
                     }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Speech Recognition")
+                        .font(.headline)
+                    Text(speechPermission.state.description)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    if speechPermission.state.shouldShowGrantAccess {
+                        Button("Grant Speech Access") {
+                            onRequestSpeechAccess()
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                    if showOpenSpeechSettingsAction {
+                        Button("Open System Settings") {
+                            onOpenSpeechSettings()
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                    Text("Speech recognition runs on-device and never leaves your Mac.")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -319,6 +347,7 @@ struct SettingsView: View {
 #Preview {
     SettingsView(
         microphonePermission: MicrophonePermissionManager(),
+        speechPermission: SpeechPermissionManager(),
         microphoneDevices: MicrophoneDeviceManager(),
         preferencesStore: AnalysisPreferencesStore(),
         overlayPreferencesStore: OverlayPreferencesStore(),
@@ -328,9 +357,12 @@ struct SettingsView: View {
         recordingsPath: "/Users/you/Recordings",
         showOpenSettingsAction: false,
         showOpenSoundSettingsAction: false,
+        showOpenSpeechSettingsAction: false,
         onRequestMicAccess: {},
+        onRequestSpeechAccess: {},
         onOpenSystemSettings: {},
         onOpenSoundSettings: {},
+        onOpenSpeechSettings: {},
         onOpenRecordingsFolder: {},
         onRunMicTest: {}
     )

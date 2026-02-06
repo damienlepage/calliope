@@ -10,6 +10,7 @@ import Foundation
 
 protocol SystemSettingsOpening {
     func openMicrophonePrivacy()
+    func openSpeechRecognitionPrivacy()
     func openSoundInput()
 }
 
@@ -17,6 +18,15 @@ struct SystemSettingsOpener: SystemSettingsOpening {
     func openMicrophonePrivacy() {
         guard let url = URL(
             string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone"
+        ) else {
+            return
+        }
+        NSWorkspace.shared.open(url)
+    }
+
+    func openSpeechRecognitionPrivacy() {
+        guard let url = URL(
+            string: "x-apple.systempreferences:com.apple.preference.security?Privacy_SpeechRecognition"
         ) else {
             return
         }
@@ -47,6 +57,22 @@ struct MicrophoneSettingsActionModel {
 
     func openSystemSettings() {
         opener.openMicrophonePrivacy()
+    }
+}
+
+struct SpeechSettingsActionModel {
+    private let opener: SystemSettingsOpening
+
+    init(opener: SystemSettingsOpening = SystemSettingsOpener()) {
+        self.opener = opener
+    }
+
+    func shouldShow(state: SpeechPermissionState) -> Bool {
+        state == .denied || state == .restricted
+    }
+
+    func openSystemSettings() {
+        opener.openSpeechRecognitionPrivacy()
     }
 }
 

@@ -65,7 +65,8 @@ final class AudioAnalyzerTests: XCTestCase {
             backendSelector: { _ in
                 AudioCaptureBackendSelection(backend: FakeAudioCaptureBackend(), status: .standard)
             },
-            audioFileFactory: { _, _ in FakeAudioFileWriter() }
+            audioFileFactory: { _, _ in FakeAudioFileWriter() },
+            recordingStartConfirmation: { true }
         )
         let analysisSuiteName = "AudioAnalyzerTests.Analysis.\(UUID().uuidString)"
         let analysisDefaults = UserDefaults(suiteName: analysisSuiteName)!
@@ -86,6 +87,101 @@ final class AudioAnalyzerTests: XCTestCase {
 
         XCTAssertEqual(analyzer.crutchWordCount, 0)
         XCTAssertEqual(analyzer.currentPace, 0)
+    }
+
+    func testTranscriptionStartsOnlyWhenSpeechPermissionAuthorized() {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            UUID().uuidString,
+            isDirectory: true
+        )
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let suiteName = "AudioAnalyzerTests.AudioCapture.\(UUID().uuidString)"
+        let captureDefaults = UserDefaults(suiteName: suiteName)!
+        captureDefaults.removePersistentDomain(forName: suiteName)
+        let preferencesStore = AudioCapturePreferencesStore(defaults: captureDefaults)
+        let audioCapture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: preferencesStore,
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: FakeAudioCaptureBackend(), status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() },
+            recordingStartConfirmation: { true }
+        )
+        let analysisSuiteName = "AudioAnalyzerTests.Analysis.\(UUID().uuidString)"
+        let analysisDefaults = UserDefaults(suiteName: analysisSuiteName)!
+        analysisDefaults.removePersistentDomain(forName: analysisSuiteName)
+        let analysisPreferences = AnalysisPreferencesStore(defaults: analysisDefaults)
+        let transcriber = TrackingSpeechTranscriber()
+        let analyzer = AudioAnalyzer(
+            summaryWriter: manager,
+            speechTranscriberFactory: { transcriber }
+        )
+
+        analyzer.setup(
+            audioCapture: audioCapture,
+            preferencesStore: analysisPreferences,
+            speechPermission: TestSpeechPermissionStateProvider(state: .authorized)
+        )
+
+        audioCapture.startRecording(
+            privacyState: PrivacyGuardrails.State(hasAcceptedDisclosure: true),
+            microphonePermission: .authorized,
+            hasMicrophoneInput: true
+        )
+
+        let expectation = expectation(description: "Allow main queue to process")
+        DispatchQueue.main.async { expectation.fulfill() }
+        wait(for: [expectation], timeout: 1.0)
+
+        XCTAssertEqual(transcriber.startCount, 1)
+    }
+
+    func testTranscriptionDoesNotStartWhenSpeechPermissionDenied() {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            UUID().uuidString,
+            isDirectory: true
+        )
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let suiteName = "AudioAnalyzerTests.AudioCapture.\(UUID().uuidString)"
+        let captureDefaults = UserDefaults(suiteName: suiteName)!
+        captureDefaults.removePersistentDomain(forName: suiteName)
+        let preferencesStore = AudioCapturePreferencesStore(defaults: captureDefaults)
+        let audioCapture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: preferencesStore,
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: FakeAudioCaptureBackend(), status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() }
+        )
+        let analysisSuiteName = "AudioAnalyzerTests.Analysis.\(UUID().uuidString)"
+        let analysisDefaults = UserDefaults(suiteName: analysisSuiteName)!
+        analysisDefaults.removePersistentDomain(forName: analysisSuiteName)
+        let analysisPreferences = AnalysisPreferencesStore(defaults: analysisDefaults)
+        let transcriber = TrackingSpeechTranscriber()
+        let analyzer = AudioAnalyzer(
+            summaryWriter: manager,
+            speechTranscriberFactory: { transcriber }
+        )
+
+        analyzer.setup(
+            audioCapture: audioCapture,
+            preferencesStore: analysisPreferences,
+            speechPermission: TestSpeechPermissionStateProvider(state: .denied)
+        )
+
+        audioCapture.startRecording(
+            privacyState: PrivacyGuardrails.State(hasAcceptedDisclosure: true),
+            microphonePermission: .authorized,
+            hasMicrophoneInput: true
+        )
+
+        let expectation = expectation(description: "Allow main queue to process")
+        DispatchQueue.main.async { expectation.fulfill() }
+        wait(for: [expectation], timeout: 1.0)
+
+        XCTAssertEqual(transcriber.startCount, 0)
     }
 
     #if canImport(AVFoundation)
@@ -130,6 +226,26 @@ private final class FakeSpeechTranscriber: SpeechTranscribing {
     func appendAudioBuffer(_ buffer: AVAudioPCMBuffer) {}
 
     func stopTranscription() {}
+}
+
+private struct TestSpeechPermissionStateProvider: SpeechPermissionStateProviding {
+    let state: SpeechPermissionState
+}
+
+private final class TrackingSpeechTranscriber: SpeechTranscribing {
+    var onTranscription: ((String) -> Void)?
+    private(set) var startCount = 0
+    private(set) var stopCount = 0
+
+    func startTranscription() {
+        startCount += 1
+    }
+
+    func appendAudioBuffer(_ buffer: AVAudioPCMBuffer) {}
+
+    func stopTranscription() {
+        stopCount += 1
+    }
 }
 
 private final class FakeAudioCaptureBackend: AudioCaptureBackend {
