@@ -1,6 +1,6 @@
 ---
 id: cal-g24b
-status: queued
+status: closed
 deps: []
 links: []
 created: 2026-02-06T20:02:00Z
@@ -18,3 +18,9 @@ Guard against corrupted or invalid metadata so the recordings list can recover c
 - Corrupted metadata is removed or repaired to avoid repeated decode errors.
 - Tests cover the fallback behavior for invalid metadata files.
 
+
+## Notes
+
+**2026-02-06T22:00:51Z**
+
+Added metadata corruption handling: invalid JSON or empty titles remove metadata files; normalized titles are repaired. Added unit tests. Did not run swift test due to known ModuleCache permission errors under /Users/dlepage/.cache/clang/ModuleCache.

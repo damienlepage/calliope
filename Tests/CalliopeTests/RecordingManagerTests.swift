@@ -262,4 +262,61 @@ final class RecordingManagerTests: XCTestCase {
         let readBack = manager.readMetadata(for: recordingURL)
         XCTAssertEqual(readBack, metadata)
     }
+
+    func testReadMetadataRemovesInvalidJSON() {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let recordingsDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
+        let recordingURL = recordingsDirectory.appendingPathComponent("session.m4a")
+        let metadataURL = recordingsDirectory.appendingPathComponent("session.metadata.json")
+
+        FileManager.default.createFile(atPath: recordingURL.path, contents: Data([0x1]))
+        FileManager.default.createFile(atPath: metadataURL.path, contents: Data([0x1, 0x2]))
+
+        let readBack = manager.readMetadata(for: recordingURL)
+
+        XCTAssertNil(readBack)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: metadataURL.path))
+    }
+
+    func testReadMetadataRemovesEmptyTitle() throws {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let recordingsDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
+        let recordingURL = recordingsDirectory.appendingPathComponent("session.m4a")
+        let metadataURL = recordingsDirectory.appendingPathComponent("session.metadata.json")
+
+        FileManager.default.createFile(atPath: recordingURL.path, contents: Data([0x1]))
+        let metadata = RecordingMetadata(title: "   \n ")
+        let data = try JSONEncoder().encode(metadata)
+        try data.write(to: metadataURL)
+
+        let readBack = manager.readMetadata(for: recordingURL)
+
+        XCTAssertNil(readBack)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: metadataURL.path))
+    }
+
+    func testReadMetadataRepairsNormalizedTitle() throws {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let recordingsDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
+        let recordingURL = recordingsDirectory.appendingPathComponent("session.m4a")
+        let metadataURL = recordingsDirectory.appendingPathComponent("session.metadata.json")
+
+        FileManager.default.createFile(atPath: recordingURL.path, contents: Data([0x1]))
+        let metadata = RecordingMetadata(title: "  Weekly \n Review  ")
+        let data = try JSONEncoder().encode(metadata)
+        try data.write(to: metadataURL)
+
+        let readBack = manager.readMetadata(for: recordingURL)
+
+        XCTAssertEqual(readBack?.title, "Weekly Review")
+        let persisted = try Data(contentsOf: metadataURL)
+        let decoded = try JSONDecoder().decode(RecordingMetadata.self, from: persisted)
+        XCTAssertEqual(decoded.title, "Weekly Review")
+    }
 }
