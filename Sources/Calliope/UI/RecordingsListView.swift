@@ -21,6 +21,11 @@ struct RecordingsListView: View {
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
+                    if let recentSummaryText = viewModel.recentSummaryText {
+                        Text(recentSummaryText)
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                    }
                     if let mostRecentText = viewModel.mostRecentRecordingText {
                         Text(mostRecentText)
                             .font(.footnote)
@@ -44,6 +49,14 @@ struct RecordingsListView: View {
                 .buttonStyle(.bordered)
                 .accessibilityLabel("Open recordings folder")
                 .accessibilityHint("Open the recordings folder in Finder.")
+                Button("Delete All") {
+                    viewModel.requestDeleteAll()
+                }
+                .buttonStyle(.bordered)
+                .tint(.red)
+                .disabled(viewModel.isRecording || viewModel.recordings.isEmpty)
+                .accessibilityLabel("Delete all recordings")
+                .accessibilityHint("Deletes every recording in the list.")
             }
             if viewModel.recordings.isEmpty {
                 Text("No recordings yet.")
@@ -133,17 +146,31 @@ struct RecordingsListView: View {
         .sheet(item: $viewModel.detailItem) { item in
             RecordingDetailView(item: item)
         }
-        .alert(item: $viewModel.pendingDelete) { item in
-            Alert(
-                title: Text("Delete recording?"),
-                message: Text("This will remove the recording and its analysis summary."),
-                primaryButton: .destructive(Text("Delete")) {
-                    viewModel.confirmDelete(item)
-                },
-                secondaryButton: .cancel {
-                    viewModel.cancelDelete()
-                }
-            )
+        .alert(item: $viewModel.pendingDelete) { request in
+            switch request {
+            case .single(let item):
+                return Alert(
+                    title: Text("Delete recording?"),
+                    message: Text("This will remove the recording and its analysis summary."),
+                    primaryButton: .destructive(Text("Delete")) {
+                        viewModel.confirmDelete(item)
+                    },
+                    secondaryButton: .cancel {
+                        viewModel.cancelDelete()
+                    }
+                )
+            case .all:
+                return Alert(
+                    title: Text("Delete all recordings?"),
+                    message: Text("This will remove all recordings and their analysis summaries."),
+                    primaryButton: .destructive(Text("Delete All")) {
+                        viewModel.confirmDeleteAll()
+                    },
+                    secondaryButton: .cancel {
+                        viewModel.cancelDelete()
+                    }
+                )
+            }
         }
     }
 }

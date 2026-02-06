@@ -91,3 +91,13 @@ goals:
     status: AT_TARGET
     notes:
       - "2026-02-06: Added quick-start sheet after privacy disclosure with call readiness + privacy reminders; Settings can reopen it; state persists."
+  - id: G18
+    title: Self-review trends across recordings
+    status: BELOW_TARGET
+    notes:
+      - "2026-02-06: Goal created to visualize trends over time for pace, crutch words, and pauses."
+  - id: G19
+    title: Per-app feedback profiles for conferencing tools
+    status: BELOW_TARGET
+    notes:
+      - "2026-02-06: Goal created to address per-app configuration in PRD open questions."

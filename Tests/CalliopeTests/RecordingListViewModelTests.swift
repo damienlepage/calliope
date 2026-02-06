@@ -284,6 +284,136 @@ final class RecordingListViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.recordingsSummaryText, "1 recording")
     }
 
+    func testRecentSummaryTextAggregatesLast7Days() {
+        let now = Date(timeIntervalSince1970: 1_000_000)
+        let urlA = URL(fileURLWithPath: "/tmp/recent-a.m4a")
+        let urlB = URL(fileURLWithPath: "/tmp/recent-b.m4a")
+        let urlOld = URL(fileURLWithPath: "/tmp/old.m4a")
+        let manager = MockRecordingManager(recordings: [urlA, urlB, urlOld])
+        let dates: [URL: Date] = [
+            urlA: now.addingTimeInterval(-60 * 60 * 24),
+            urlB: now.addingTimeInterval(-60 * 60 * 24 * 6),
+            urlOld: now.addingTimeInterval(-60 * 60 * 24 * 8)
+        ]
+        let summaries: [URL: AnalysisSummary] = [
+            urlA: AnalysisSummary(
+                version: 1,
+                createdAt: now,
+                durationSeconds: 60,
+                pace: AnalysisSummary.PaceStats(
+                    averageWPM: 120,
+                    minWPM: 100,
+                    maxWPM: 130,
+                    totalWords: 120
+                ),
+                pauses: AnalysisSummary.PauseStats(
+                    count: 3,
+                    thresholdSeconds: 1.0,
+                    averageDurationSeconds: 1.2
+                ),
+                crutchWords: AnalysisSummary.CrutchWordStats(
+                    totalCount: 2,
+                    counts: ["um": 2]
+                )
+            ),
+            urlB: AnalysisSummary(
+                version: 1,
+                createdAt: now,
+                durationSeconds: 120,
+                pace: AnalysisSummary.PaceStats(
+                    averageWPM: 120,
+                    minWPM: 110,
+                    maxWPM: 140,
+                    totalWords: 240
+                ),
+                pauses: AnalysisSummary.PauseStats(
+                    count: 1,
+                    thresholdSeconds: 1.0,
+                    averageDurationSeconds: 1.4
+                ),
+                crutchWords: AnalysisSummary.CrutchWordStats(
+                    totalCount: 3,
+                    counts: ["uh": 3]
+                )
+            ),
+            urlOld: AnalysisSummary(
+                version: 1,
+                createdAt: now,
+                durationSeconds: 120,
+                pace: AnalysisSummary.PaceStats(
+                    averageWPM: 100,
+                    minWPM: 90,
+                    maxWPM: 110,
+                    totalWords: 200
+                ),
+                pauses: AnalysisSummary.PauseStats(
+                    count: 10,
+                    thresholdSeconds: 1.0,
+                    averageDurationSeconds: 1.8
+                ),
+                crutchWords: AnalysisSummary.CrutchWordStats(
+                    totalCount: 9,
+                    counts: ["like": 9]
+                )
+            )
+        ]
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { dates[$0] ?? .distantPast },
+            durationProvider: { _ in nil },
+            fileSizeProvider: { _ in nil },
+            summaryProvider: { summaries[$0] },
+            now: { now }
+        )
+
+        viewModel.loadRecordings()
+
+        XCTAssertEqual(
+            viewModel.recentSummaryText,
+            "Last 7 days: Avg 120 WPM • Crutch 5 • Pauses/min 1.3"
+        )
+    }
+
+    func testRecentSummaryTextOmitsWhenNoRecentSummaries() {
+        let now = Date(timeIntervalSince1970: 1_000_000)
+        let urlOld = URL(fileURLWithPath: "/tmp/old.m4a")
+        let manager = MockRecordingManager(recordings: [urlOld])
+        let summary = AnalysisSummary(
+            version: 1,
+            createdAt: now,
+            durationSeconds: 120,
+            pace: AnalysisSummary.PaceStats(
+                averageWPM: 100,
+                minWPM: 90,
+                maxWPM: 110,
+                totalWords: 200
+            ),
+            pauses: AnalysisSummary.PauseStats(
+                count: 2,
+                thresholdSeconds: 1.0,
+                averageDurationSeconds: 1.8
+            ),
+            crutchWords: AnalysisSummary.CrutchWordStats(
+                totalCount: 4,
+                counts: ["like": 4]
+            )
+        )
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { _ in now.addingTimeInterval(-60 * 60 * 24 * 8) },
+            durationProvider: { _ in nil },
+            fileSizeProvider: { _ in nil },
+            summaryProvider: { _ in summary },
+            now: { now }
+        )
+
+        viewModel.loadRecordings()
+
+        XCTAssertNil(viewModel.recentSummaryText)
+    }
+
     func testMostRecentRecordingTextUsesNewestDate() {
         let urlA = URL(fileURLWithPath: "/tmp/old.m4a")
         let urlB = URL(fileURLWithPath: "/tmp/new.m4a")

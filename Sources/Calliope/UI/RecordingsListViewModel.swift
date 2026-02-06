@@ -367,6 +367,43 @@ final class RecordingListViewModel: ObservableObject {
         return parts.joined(separator: " • ")
     }
 
+    var recentSummaryText: String? {
+        guard !recordings.isEmpty else { return nil }
+        let cutoff = RecordingListViewModel.recentSummaryCalendar.date(
+            byAdding: .day,
+            value: -7,
+            to: now()
+        ) ?? now()
+        let recentSummaries = recordings
+            .filter { $0.modifiedAt >= cutoff }
+            .compactMap { item -> (summary: AnalysisSummary, durationSeconds: TimeInterval)? in
+                guard let summary = item.summary else { return nil }
+                let durationSeconds = summary.durationSeconds > 0
+                    ? summary.durationSeconds
+                    : (item.duration ?? 0)
+                return (summary, durationSeconds)
+            }
+        guard !recentSummaries.isEmpty else { return nil }
+        let totalDurationSeconds = recentSummaries
+            .map(\.durationSeconds)
+            .filter { $0 > 0 }
+            .reduce(0, +)
+        guard totalDurationSeconds > 0 else { return nil }
+        let totalWords = recentSummaries.map { $0.summary.pace.totalWords }.reduce(0, +)
+        let averageWPM = Int(round(Double(totalWords) / (totalDurationSeconds / 60)))
+        let totalCrutch = recentSummaries.map { $0.summary.crutchWords.totalCount }.reduce(0, +)
+        let totalPauses = recentSummaries.map { $0.summary.pauses.count }.reduce(0, +)
+        let pausesPerMinute = RecordingListViewModel.formatPausesPerMinute(
+            count: totalPauses,
+            durationSeconds: totalDurationSeconds
+        )
+        var parts = ["Last 7 days: Avg \(averageWPM) WPM", "Crutch \(totalCrutch)"]
+        if let pausesPerMinute {
+            parts.append("Pauses/min \(pausesPerMinute)")
+        }
+        return parts.joined(separator: " • ")
+    }
+
     var mostRecentRecordingText: String? {
         guard let mostRecentDate = recordings.map(\.modifiedAt).max() else {
             return nil
@@ -421,6 +458,8 @@ final class RecordingListViewModel: ObservableObject {
         return formatter
     }()
 
+    private static let recentSummaryCalendar = Calendar(identifier: .gregorian)
+
     private static func formatTotalDuration(_ duration: TimeInterval) -> String? {
         if duration >= 3600 {
             guard let formatted = totalDurationLongFormatter.string(from: duration) else {
@@ -436,6 +475,14 @@ final class RecordingListViewModel: ObservableObject {
 
     private static func defaultMostRecentDateText(_ date: Date) -> String {
         mostRecentDateFormatter.string(from: date)
+    }
+
+    private static func formatPausesPerMinute(count: Int, durationSeconds: TimeInterval) -> String? {
+        guard durationSeconds > 0 else { return nil }
+        let safeDuration = max(durationSeconds, 1)
+        let minutes = safeDuration / 60
+        let rate = Double(count) / minutes
+        return String(format: "%.1f", rate)
     }
 
     init(
