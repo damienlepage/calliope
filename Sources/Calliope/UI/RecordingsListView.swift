@@ -21,6 +21,11 @@ struct RecordingsListView: View {
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
+                    if let mostRecentText = viewModel.mostRecentRecordingText {
+                        Text(mostRecentText)
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                    }
                     Text("Stored in \(viewModel.recordingsPath)")
                         .font(.footnote)
                         .foregroundColor(.secondary)

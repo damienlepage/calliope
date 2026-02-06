@@ -183,6 +183,13 @@ final class RecordingListViewModel: ObservableObject {
         return parts.joined(separator: " • ")
     }
 
+    var mostRecentRecordingText: String? {
+        guard let mostRecentDate = recordings.map(\.modifiedAt).max() else {
+            return nil
+        }
+        return "Most recent: \(mostRecentDateTextProvider(mostRecentDate))"
+    }
+
     var recordingsPath: String {
         manager.recordingsDirectoryURL().path
     }
@@ -193,6 +200,7 @@ final class RecordingListViewModel: ObservableObject {
     private let durationProvider: @MainActor (URL) -> TimeInterval?
     private let fileSizeProvider: @MainActor (URL) -> Int?
     private let summaryProvider: @MainActor (URL) -> AnalysisSummary?
+    private let mostRecentDateTextProvider: @MainActor (Date) -> String
     private let audioPlayerFactory: (URL) throws -> AudioPlaying
     private var audioPlayer: AudioPlaying?
     private var cancellables = Set<AnyCancellable>()
@@ -219,6 +227,13 @@ final class RecordingListViewModel: ObservableObject {
         return formatter
     }()
 
+    private static let mostRecentDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter
+    }()
+
     private static func formatTotalDuration(_ duration: TimeInterval) -> String? {
         if duration >= 3600 {
             guard let formatted = totalDurationLongFormatter.string(from: duration) else {
@@ -232,6 +247,10 @@ final class RecordingListViewModel: ObservableObject {
         return totalDurationFormatter.string(from: duration)
     }
 
+    private static func defaultMostRecentDateText(_ date: Date) -> String {
+        mostRecentDateFormatter.string(from: date)
+    }
+
     init(
         manager: RecordingManaging = RecordingManager.shared,
         workspace: WorkspaceOpening = NSWorkspace.shared,
@@ -239,6 +258,7 @@ final class RecordingListViewModel: ObservableObject {
         durationProvider: @escaping @MainActor (URL) -> TimeInterval? = RecordingListViewModel.defaultDuration,
         fileSizeProvider: @escaping @MainActor (URL) -> Int? = RecordingListViewModel.defaultFileSize,
         summaryProvider: @escaping @MainActor (URL) -> AnalysisSummary? = RecordingListViewModel.defaultSummary,
+        mostRecentDateTextProvider: @escaping @MainActor (Date) -> String = RecordingListViewModel.defaultMostRecentDateText,
         audioPlayerFactory: @escaping (URL) throws -> AudioPlaying = { url in
             try SystemAudioPlayer(url: url)
         }
@@ -249,10 +269,12 @@ final class RecordingListViewModel: ObservableObject {
         self.durationProvider = durationProvider
         self.fileSizeProvider = fileSizeProvider
         self.summaryProvider = summaryProvider
+        self.mostRecentDateTextProvider = mostRecentDateTextProvider
         self.audioPlayerFactory = audioPlayerFactory
     }
 
     func loadRecordings() {
+        pendingDelete = nil
         deleteErrorMessage = nil
         let urls = manager.getAllRecordings()
         let items = urls.map { url in
