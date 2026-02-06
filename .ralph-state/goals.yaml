@@ -1,39 +1,111 @@
-current_phase: "MVP Foundation"
-last_updated: "2026-02-05"
-
-objectives:
-  - id: "build_succeeds"
-    description: "swift build succeeds on a clean checkout"
-    target: true
-    current: true
-    status: "AT_TARGET"
-  - id: "app_launches"
-    description: "App launches and shows a window when run via swift run"
-    target: true
-    current: true
-    status: "AT_TARGET"
-  - id: "mic_capture_pipeline"
-    description: "Microphone capture pipeline runs without errors and records user speech when Start is pressed"
-    target: true
-    current: false
-    status: "BELOW_TARGET"
-  - id: "realtime_feedback"
-    description: "UI updates pace/crutch/pause from live audio with glanceable live feedback"
-    target: true
-    current: false
-    status: "BELOW_TARGET"
-  - id: "privacy_guardrails"
-    description: "Privacy safeguards documented and enforced; disclosure acknowledged once and persists"
-    target: true
-    current: true
-    status: "AT_TARGET"
-  - id: "stop_without_errors"
-    description: "Stop action completes without speech recognition errors when no speech is detected"
-    target: true
-    current: true
-    status: "AT_TARGET"
-  - id: "input_device_flexibility"
-    description: "Works with built-in mic or headset without requiring a headset confirmation gate"
-    target: true
-    current: true
-    status: "AT_TARGET"
+goals:
+  - id: G1
+    title: Real-time session feedback (pace, crutch words, pauses)
+    status: AT_TARGET
+    notes:
+      - "Validated 2026-02-06: Session feedback panel shows pace, crutch words, pauses (count/rate/avg), input level, and elapsed time only while recording."
+  - id: G2
+    title: Privacy and permissions UX guardrails
+    status: AT_TARGET
+    notes:
+      - "Validated 2026-02-06: Session screen stays minimal (no permission recovery actions); Settings hosts disclosure and permission recovery actions."
+  - id: G3
+    title: Local recordings management
+    status: AT_TARGET
+    notes:
+      - "Validated 2026-02-06: Recordings view includes playback/reveal/delete plus storage path and open-folder action; Settings provides storage path with open-folder access."
+  - id: G4
+    title: Capture transparency & conferencing readiness
+    status: AT_TARGET
+    notes:
+      - "2026-02-06: Session view shows input device and capture backend status while recording; compact overlay now mirrors capture status; Settings exposes capture diagnostics + mic test."
+  - id: G5
+    title: Performance & latency guardrails
+    status: AT_TARGET
+    notes:
+      - "2026-02-06: Added rolling processing-latency status (OK/High) during recording."
+      - "2026-02-06: Added critical latency threshold with warning text and red status color in session/overlay."
+  - id: G6
+    title: Release-ready macOS app packaging
+    status: AT_TARGET
+    notes:
+      - "2026-02-06: Added default signing entitlements template and wired packaging script to use it; documented override in README."
+  - id: G7
+    title: Quality gate: reliable tests and coverage confidence
+    status: AT_TARGET
+    notes:
+      - "2026-02-06: Added coverage threshold gate (80%) in scripts/coverage.sh with unit test coverage."
+      - "Validated 2026-02-06: Coverage gate ignores SwiftUI view files; ./scripts/coverage.sh reports 84.03%."
+  - id: G8
+    title: Long-session readiness and clarity
+    status: AT_TARGET
+    notes:
+      - "2026-02-06: Added next focus area for multi-hour session support and UX clarity."
+      - "2026-02-06: Recordings detail duration uses hours for long sessions."
+      - "2026-02-06: Added low-storage guardrail warning during recording with unit coverage."
+      - "Validated 2026-02-06: Recording segments rotate on max duration with tests; recordings list labels session parts."
+  - id: G9
+    title: Speech recognition permission UX
+    status: AT_TARGET
+    notes:
+      - "2026-02-06: Added speech recognition permission manager, settings UI, and usage string."
+      - "Validated 2026-02-06: Speech transcription start is gated by permission status with unit coverage."
+  - id: G10
+    title: Recording insights for self-review
+    status: AT_TARGET
+    notes:
+      - "2026-02-06: Added per-recording detail sheet with crutch breakdown, pause metrics, and processing stats."
+  - id: G11
+    title: Release polish: app identity and version visibility
+    status: AT_TARGET
+    notes:
+      - "2026-02-06: Surface app version/build info in Settings for support and release readiness."
+  - id: G12
+    title: Accessibility and keyboard control
+    status: AT_TARGET
+    notes:
+      - "2026-02-06: Added keyboard shortcuts for recordings actions plus accessibility labels for core controls."
+  - id: G13
+    title: Session resilience to system interruptions
+    status: AT_TARGET
+    notes:
+      - "2026-02-06: Added app focus change interruptions; sleep/wake and input route handling already present."
+  - id: G14
+    title: Conferencing readiness guidance
+    status: AT_TARGET
+    notes:
+      - "2026-02-06: Added Call Readiness guidance bullets in Settings covering headset use, mic selection, and quiet environment."
+  - id: G15
+    title: Recording session integrity checks
+    status: AT_TARGET
+    notes:
+      - "2026-02-06: Validate recording artifacts on stop and surface recoverable issues in recordings list."
+  - id: G16
+    title: Data retention and bulk recording management
+    status: AT_TARGET
+    notes:
+      - "2026-02-06: Added bulk delete action with confirmation in recordings list plus storage summary coverage."
+      - "2026-02-06: Added auto-clean retention preferences with Settings guidance and cleanup on recording stop/refresh."
+  - id: G17
+    title: First-run guidance and quick-start clarity
+    status: AT_TARGET
+    notes:
+      - "2026-02-06: Added quick-start sheet after privacy disclosure with call readiness + privacy reminders; Settings can reopen it; state persists."
+  - id: G18
+    title: Self-review trends across recordings
+    status: AT_TARGET
+    notes:
+      - "2026-02-06: Goal created to visualize trends over time for pace, crutch words, and pauses."
+      - "Validated 2026-02-06: Recordings header shows 7-day vs prior 7-day trend deltas for pace, crutch words, and pauses/min."
+  - id: G19
+    title: Per-app feedback profiles for conferencing tools
+    status: AT_TARGET
+    notes:
+      - "2026-02-06: Goal created to address per-app configuration in PRD open questions."
+      - "Validated 2026-02-06: Settings now includes per-app profile manager with list/detail editor, bundle ID guidance, and store-backed normalization."
+  - id: G20
+    title: Apply per-app feedback profiles based on active conferencing app
+    status: AT_TARGET
+    notes:
+      - "2026-02-06: Identify the frontmost conferencing app, apply matching per-app profile settings, and surface active profile state in session UI."
+      - "Validated 2026-02-06: ActiveAnalysisPreferencesStore resolves frontmost app profiles while recording; Session + overlay show active profile label with defaults."
