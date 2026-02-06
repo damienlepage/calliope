@@ -133,6 +133,17 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 VStack(alignment: .leading, spacing: 8) {
+                    Text("Call Readiness")
+                        .font(.headline)
+                    ForEach(CallReadinessTips.items, id: \.self) { tip in
+                        Text("• \(tip)")
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                VStack(alignment: .leading, spacing: 8) {
                     Text("Speech Recognition")
                         .font(.headline)
                     Text(speechPermission.state.description)

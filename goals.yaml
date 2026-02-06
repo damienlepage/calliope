@@ -65,3 +65,18 @@ goals:
     status: AT_TARGET
     notes:
       - "2026-02-06: Added keyboard shortcuts for recordings actions plus accessibility labels for core controls."
+  - id: G13
+    title: Session resilience to system interruptions
+    status: AT_TARGET
+    notes:
+      - "2026-02-06: Added app focus change interruptions; sleep/wake and input route handling already present."
+  - id: G14
+    title: Conferencing readiness guidance
+    status: AT_TARGET
+    notes:
+      - "2026-02-06: Added Call Readiness guidance bullets in Settings covering headset use, mic selection, and quiet environment."
+  - id: G15
+    title: Recording session integrity checks
+    status: BELOW_TARGET
+    notes:
+      - "Next: Validate recording artifacts on stop and surface recoverable issues."
