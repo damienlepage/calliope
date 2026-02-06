@@ -306,6 +306,23 @@ final class RecordingManagerTests: XCTestCase {
         XCTAssertEqual(readBack, metadata)
     }
 
+    func testWriteMetadataFallsBackToDefaultTitleWhenEmpty() throws {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let recordingsDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
+        let recordingURL = recordingsDirectory.appendingPathComponent("session.m4a")
+
+        FileManager.default.createFile(atPath: recordingURL.path, contents: Data([0x1]))
+        let createdAt = Date(timeIntervalSince1970: 1_700_000_000)
+        let metadata = RecordingMetadata(title: "  \n\t ", createdAt: createdAt)
+
+        try manager.writeMetadata(metadata, for: recordingURL)
+
+        let readBack = manager.readMetadata(for: recordingURL)
+        XCTAssertEqual(readBack?.title, RecordingMetadata.defaultSessionTitle(for: createdAt))
+    }
+
     func testReadMetadataRemovesInvalidJSON() {
         let tempDir = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)

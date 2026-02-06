@@ -237,7 +237,14 @@ extension RecordingManager {
 
     func writeMetadata(_ metadata: RecordingMetadata, for recordingURL: URL) throws {
         let url = metadataURL(for: recordingURL)
-        let data = try metadataEncoder().encode(metadata)
+        guard let normalizedTitle = RecordingMetadata.resolvedTitle(
+            metadata.title,
+            createdAt: metadata.createdAt
+        ) else {
+            return
+        }
+        let normalized = RecordingMetadata(title: normalizedTitle, createdAt: metadata.createdAt)
+        let data = try metadataEncoder().encode(normalized)
         try data.write(to: url, options: [.atomic])
     }
 

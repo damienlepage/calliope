@@ -50,6 +50,14 @@ struct RecordingMetadata: Codable, Equatable {
         normalizedTitleInfo(title)?.normalized
     }
 
+    static func resolvedTitle(_ title: String, createdAt: Date?) -> String? {
+        if let normalized = normalizedTitle(title) {
+            return normalized
+        }
+        guard let createdAt else { return nil }
+        return normalizedTitle(defaultSessionTitle(for: createdAt))
+    }
+
     static func defaultSessionTitle(for date: Date) -> String {
         "Session \(defaultNameFormatter.string(from: date))"
     }
