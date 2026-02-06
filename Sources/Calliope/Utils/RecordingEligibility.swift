@@ -47,7 +47,7 @@ struct RecordingEligibility {
                 break
             }
         }
-        if !hasMicrophoneInput {
+        if microphonePermission == .authorized, !hasMicrophoneInput {
             reasons.append(.microphoneUnavailable)
         }
         if !privacyState.hasAcceptedDisclosure {

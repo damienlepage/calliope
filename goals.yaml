@@ -1,0 +1,16 @@
+goals:
+  - id: G1
+    title: Real-time session feedback (pace, crutch words, pauses)
+    status: BELOW_TARGET
+    notes:
+      - "Live feedback pipeline exists; validate UX meets PRD expectations."
+  - id: G2
+    title: Privacy and permissions UX guardrails
+    status: BELOW_TARGET
+    notes:
+      - "Disclosure flow and permissions exist; ensure session screen stays minimal."
+  - id: G3
+    title: Local recordings management
+    status: BELOW_TARGET
+    notes:
+      - "Recordings list and storage exist; confirm actions and storage cues."

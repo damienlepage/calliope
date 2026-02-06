@@ -93,6 +93,20 @@ final class RecordingEligibilityTests: XCTestCase {
         XCTAssertEqual(reasons, [.microphoneUnavailable])
     }
 
+    func testBlockingReasonsIgnoreMicrophoneUnavailableWithoutPermission() {
+        let privacySatisfied = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        let reasons = RecordingEligibility.blockingReasons(
+            privacyState: privacySatisfied,
+            microphonePermission: .denied,
+            hasMicrophoneInput: false
+        )
+
+        XCTAssertEqual(reasons, [.microphonePermissionDenied])
+    }
+
     func testBlockingReasonsEmptyWhenAllRequirementsMet() {
         let privacySatisfied = PrivacyGuardrails.State(
             hasAcceptedDisclosure: true
