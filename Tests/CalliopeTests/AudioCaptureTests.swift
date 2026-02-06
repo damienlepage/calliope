@@ -25,6 +25,10 @@ final class AudioCaptureTests: XCTestCase {
 
         capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
 
+        XCTAssertFalse(capture.isRecording)
+        XCTAssertEqual(capture.status, .idle)
+        backend.simulateBuffer()
+
         XCTAssertTrue(capture.isRecording)
         XCTAssertEqual(capture.status, .recording)
         XCTAssertTrue(backend.isStarted)
@@ -83,6 +87,7 @@ final class AudioCaptureTests: XCTestCase {
 
         capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
 
+        backend.simulateBuffer()
         XCTAssertTrue(capture.isRecording)
         XCTAssertEqual(capture.backendStatus, .voiceIsolationUnavailable)
     }
@@ -226,6 +231,7 @@ final class AudioCaptureTests: XCTestCase {
                 privacyState: privacyState,
                 microphonePermissionProvider: provider
             )
+            backend.simulateBuffer()
             XCTAssertTrue(capture.isRecording)
             XCTAssertEqual(capture.status, .recording)
         }
@@ -421,6 +427,7 @@ final class AudioCaptureTests: XCTestCase {
         )
 
         capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+        backend.simulateBuffer()
 
         let timeoutHandled = expectation(description: "start timeout not fired")
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -432,6 +439,32 @@ final class AudioCaptureTests: XCTestCase {
         XCTAssertEqual(capture.status, .recording)
         XCTAssertTrue(backend.isStarted)
         XCTAssertFalse(backend.removeTapCalled)
+    }
+
+    func testStartRecordingConfirmationMarksRecordingWithoutBuffer() {
+        let backend = FakeAudioCaptureBackend()
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let capture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() },
+            recordingStartConfirmation: { true }
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+
+        XCTAssertTrue(capture.isRecording)
+        XCTAssertEqual(capture.status, .recording)
+        XCTAssertTrue(backend.isStarted)
+
+        capture.stopRecording()
     }
 
     func testCaptureStartValidationStopsWhenInputLevelMissing() {
@@ -582,6 +615,7 @@ final class AudioCaptureTests: XCTestCase {
         )
 
         capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+        backend.simulateBuffer()
 
         XCTAssertTrue(capture.isRecording)
         XCTAssertEqual(capture.status, .recording)
@@ -616,6 +650,7 @@ final class AudioCaptureTests: XCTestCase {
         )
 
         capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+        backend.simulateBuffer()
         backend.inputDeviceName = "Secondary Mic"
         backend.simulateConfigurationChange()
 

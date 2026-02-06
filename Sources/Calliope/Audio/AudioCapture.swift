@@ -337,6 +337,7 @@ class AudioCapture: NSObject, ObservableObject {
     private let captureStartValidationThreshold: Double
     private var captureStartValidationWorkItem: DispatchWorkItem?
     private var didReceiveMeaningfulInput = false
+    private var awaitingRecordingStart = false
 
     var statusText: String {
         switch status {
@@ -358,7 +359,7 @@ class AudioCapture: NSObject, ObservableObject {
         },
         recordingStartTimeout: TimeInterval = 1.0,
         recordingStartTimeoutQueue: DispatchQueue = .main,
-        recordingStartConfirmation: @escaping () -> Bool = { true },
+        recordingStartConfirmation: @escaping () -> Bool = { false },
         captureStartValidationTimeout: TimeInterval = 2.0,
         captureStartValidationQueue: DispatchQueue = .main,
         captureStartValidationThreshold: Double = InputLevelMeter.meaningfulThreshold,
@@ -508,6 +509,7 @@ class AudioCapture: NSObject, ObservableObject {
 
         tapFrameCounter = 0
         didReceiveMeaningfulInput = false
+        awaitingRecordingStart = true
         cancelCaptureStartValidation()
 
         // Install tap to capture audio
@@ -516,6 +518,10 @@ class AudioCapture: NSObject, ObservableObject {
 
             if let copiedBuffer = AudioBufferCopy.copy(buffer) {
                 self.bufferSubject.send(copiedBuffer)
+            }
+
+            if self.awaitingRecordingStart {
+                self.confirmRecordingStartIfNeeded()
             }
 
             let level = self.inputLevelProvider(buffer)
@@ -538,13 +544,14 @@ class AudioCapture: NSObject, ObservableObject {
         scheduleRecordingStartTimeout()
 
         if recordingStartConfirmation() {
-            markRecordingStarted()
+            confirmRecordingStartIfNeeded()
         }
 
         do {
             try backend.start()
         } catch {
             cancelRecordingStartTimeout()
+            awaitingRecordingStart = false
             isRecording = false
             stopRecordingInternal(statusOverride: .error(.engineStartFailed))
         }
@@ -628,7 +635,7 @@ class AudioCapture: NSObject, ObservableObject {
     }
 
     func stopRecording() {
-        if isRecording {
+        if isRecording || awaitingRecordingStart {
             stopRecordingInternal(statusOverride: .idle)
             return
         }
@@ -641,6 +648,7 @@ class AudioCapture: NSObject, ObservableObject {
         let wasRecording = isRecording
         cancelRecordingStartTimeout()
         cancelCaptureStartValidation()
+        awaitingRecordingStart = false
         backend?.clearConfigurationChangeHandler()
         backend?.removeTap()
         backend?.stop()
@@ -765,6 +773,15 @@ class AudioCapture: NSObject, ObservableObject {
         isRecording = true
         updateStatus(.recording)
         scheduleCaptureStartValidation()
+    }
+
+    private func confirmRecordingStartIfNeeded() {
+        guard !isRecording else { return }
+        if case .error = status {
+            return
+        }
+        awaitingRecordingStart = false
+        markRecordingStarted()
     }
 
     private func scheduleRecordingStartTimeout() {
