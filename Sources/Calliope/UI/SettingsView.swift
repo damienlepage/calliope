@@ -5,6 +5,7 @@
 //  Created on [Date]
 //
 
+import AppKit
 import SwiftUI
 
 struct SettingsView: View {
@@ -187,6 +188,17 @@ struct SettingsView: View {
                                 }
                             }
                         }
+                    }
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Verification Log")
+                            .font(.subheadline)
+                        Text("Copy a markdown template to document your compatibility checks.")
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                        Button("Copy Verification Log") {
+                            copyCompatibilityLogTemplate()
+                        }
+                        .buttonStyle(.bordered)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -516,6 +528,13 @@ struct SettingsView: View {
             get: { conferencingVerificationStore.isVerified(platform) },
             set: { conferencingVerificationStore.setVerified(platform, isVerified: $0) }
         )
+    }
+
+    private func copyCompatibilityLogTemplate() {
+        let template = ConferencingCompatibilityLogTemplate.make()
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(template, forType: .string)
     }
 
     private func segmentDurationLabel(hours: Double) -> String {

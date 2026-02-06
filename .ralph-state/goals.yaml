@@ -141,6 +141,7 @@ goals:
       - "Validated 2026-02-06: Settings includes performance validation checklist with targets and step-by-step guidance."
   - id: G26
     title: Conferencing compatibility verification
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "2026-02-06: Goal created to confirm compatibility with common conferencing tools and document mitigations."
+      - "Validated 2026-02-06: Settings now includes checklist, per-platform verification status, and a copyable verification log template."
