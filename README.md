@@ -63,6 +63,21 @@ swift build
 swift run
 ```
 
+## Testing
+
+Use the provided scripts to run tests with local cache directories, which avoids permission issues in shared system cache locations.
+
+```bash
+# Run unit tests with local caches
+./scripts/swift-test.sh
+
+# Run tests with coverage enforcement (default 80% threshold)
+./scripts/coverage.sh
+
+# Optional: override the coverage threshold
+COVERAGE_THRESHOLD=85 ./scripts/coverage.sh
+```
+
 ### Development Workflow
 
 1. **Write code in Cursor** - All source files are in `Sources/Calliope/`
