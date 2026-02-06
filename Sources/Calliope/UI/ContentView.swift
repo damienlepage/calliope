@@ -19,6 +19,8 @@ struct ContentView: View {
     @StateObject private var audioCapturePreferencesStore: AudioCapturePreferencesStore
     @StateObject private var recordingPreferencesStore: RecordingRetentionPreferencesStore
     @StateObject private var preferencesStore = AnalysisPreferencesStore()
+    @StateObject private var activePreferencesStore: ActiveAnalysisPreferencesStore
+    @StateObject private var frontmostAppMonitor: FrontmostAppMonitor
     @StateObject private var recordingsViewModel: RecordingListViewModel
     @StateObject private var overlayPreferencesStore: OverlayPreferencesStore
     @StateObject private var perAppProfileStore: PerAppFeedbackProfileStore
@@ -45,15 +47,27 @@ struct ContentView: View {
         speechSettingsActionModel: SpeechSettingsActionModel = SpeechSettingsActionModel(),
         recordingsFolderActionModel: RecordingsFolderActionModel = RecordingsFolderActionModel()
     ) {
+        let basePreferencesStore = AnalysisPreferencesStore()
+        let frontmostAppMonitor = FrontmostAppMonitor()
+        let audioCapture = AudioCapture(
+            capturePreferencesStore: audioCapturePreferencesStore
+        )
+        let activePreferencesStore = ActiveAnalysisPreferencesStore(
+            basePreferencesStore: basePreferencesStore,
+            perAppProfileStore: perAppProfileStore,
+            frontmostAppPublisher: frontmostAppMonitor.$frontmostAppIdentifier.eraseToAnyPublisher(),
+            recordingPublisher: audioCapture.$isRecording.eraseToAnyPublisher()
+        )
         _privacyDisclosureStore = State(initialValue: privacyDisclosureStore)
         _quickStartStore = State(initialValue: quickStartStore)
         _overlayPreferencesStore = StateObject(wrappedValue: overlayPreferencesStore)
         _audioCapturePreferencesStore = StateObject(wrappedValue: audioCapturePreferencesStore)
         _recordingPreferencesStore = StateObject(wrappedValue: recordingPreferencesStore)
         _perAppProfileStore = StateObject(wrappedValue: perAppProfileStore)
-        _audioCapture = StateObject(wrappedValue: AudioCapture(
-            capturePreferencesStore: audioCapturePreferencesStore
-        ))
+        _preferencesStore = StateObject(wrappedValue: basePreferencesStore)
+        _frontmostAppMonitor = StateObject(wrappedValue: frontmostAppMonitor)
+        _activePreferencesStore = StateObject(wrappedValue: activePreferencesStore)
+        _audioCapture = StateObject(wrappedValue: audioCapture)
         _recordingsViewModel = StateObject(wrappedValue: RecordingListViewModel(
             recordingPreferencesStore: recordingPreferencesStore
         ))
@@ -186,7 +200,7 @@ struct ContentView: View {
         .onAppear {
             audioAnalyzer.setup(
                 audioCapture: audioCapture,
-                preferencesStore: preferencesStore,
+                preferencesStore: activePreferencesStore,
                 speechPermission: speechPermission
             )
             feedbackViewModel.bind(
@@ -199,6 +213,7 @@ struct ContentView: View {
             microphonePermission.refresh()
             speechPermission.refresh()
             microphoneDevices.refresh()
+            frontmostAppMonitor.refresh()
             WindowLevelController.apply(alwaysOnTop: overlayPreferencesStore.alwaysOnTop)
         }
         .onChange(of: preferencesStore.paceMin) { newValue in

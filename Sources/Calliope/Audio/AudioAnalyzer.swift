@@ -63,6 +63,7 @@ class AudioAnalyzer: ObservableObject {
     private var checkpointTimer: RepeatingTimer?
     private var isRecording = false
     private let summaryWriter: AnalysisSummaryWriting
+    private let integrityValidator: RecordingIntegrityValidating
     private let now: () -> Date
     private let checkpointInterval: TimeInterval
     private let checkpointTimerFactory: () -> RepeatingTimer
@@ -80,12 +81,14 @@ class AudioAnalyzer: ObservableObject {
 
     init(
         summaryWriter: AnalysisSummaryWriting = RecordingManager.shared,
+        integrityValidator: RecordingIntegrityValidating = RecordingIntegrityValidator(),
         now: @escaping () -> Date = Date.init,
         speechTranscriberFactory: @escaping () -> SpeechTranscribing = { SpeechTranscriber() },
         checkpointInterval: TimeInterval = Constants.analysisCheckpointInterval,
         checkpointTimerFactory: @escaping () -> RepeatingTimer = { DispatchRepeatingTimer() }
     ) {
         self.summaryWriter = summaryWriter
+        self.integrityValidator = integrityValidator
         self.now = now
         self.speechTranscriberFactory = speechTranscriberFactory
         self.checkpointInterval = checkpointInterval
@@ -94,7 +97,7 @@ class AudioAnalyzer: ObservableObject {
 
     func setup(
         audioCapture: AudioCapture,
-        preferencesStore: AnalysisPreferencesStore,
+        preferencesStore: AnalysisPreferencesProviding,
         speechPermission: SpeechPermissionStateProviding? = nil
     ) {
         speechPermissionProvider = speechPermission
@@ -150,6 +153,7 @@ class AudioAnalyzer: ObservableObject {
                     } else {
                         self.stopCheckpointTimer()
                         self.writeSummaryIfNeeded()
+                        self.integrityValidator.validate(recordingURLs: self.recordingURLs)
                         self.stopSilenceTimer()
                         self.speechTranscriber?.stopTranscription()
                         self.paceAnalyzer?.reset()

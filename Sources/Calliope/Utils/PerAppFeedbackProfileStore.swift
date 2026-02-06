@@ -133,10 +133,18 @@ final class PerAppFeedbackProfileStore: ObservableObject {
         )
     }
 
-    private static func normalizeAppIdentifier(_ appIdentifier: String) -> String {
+    static func normalizeAppIdentifier(_ appIdentifier: String) -> String {
         appIdentifier
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased()
+    }
+
+    static func normalizeAppIdentifier(_ appIdentifier: String?) -> String? {
+        guard let appIdentifier else {
+            return nil
+        }
+        let normalized = normalizeAppIdentifier(appIdentifier)
+        return normalized.isEmpty ? nil : normalized
     }
 
     private func persist(_ profiles: [PerAppFeedbackProfile]) {
