@@ -15,6 +15,7 @@ struct SettingsView: View {
     @ObservedObject var overlayPreferencesStore: OverlayPreferencesStore
     @ObservedObject var audioCapturePreferencesStore: AudioCapturePreferencesStore
     @ObservedObject var recordingPreferencesStore: RecordingRetentionPreferencesStore
+    @ObservedObject var perAppProfileStore: PerAppFeedbackProfileStore
     @ObservedObject var audioCapture: AudioCapture
     let hasAcceptedDisclosure: Bool
     let recordingsPath: String
@@ -304,6 +305,29 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 VStack(alignment: .leading, spacing: 8) {
+                    Text("Per-App Profiles")
+                        .font(.headline)
+                    Text("Create custom pace, pause, and crutch-word targets for each conferencing app.")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                    if perAppProfileStore.profiles.isEmpty {
+                        Text("No profiles yet. Per-app profiles are coming soon.")
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                    } else {
+                        ForEach(perAppProfileStore.profiles) { profile in
+                            Text(profile.appIdentifier)
+                                .font(.footnote)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    Button("Manage Profiles") {}
+                        .buttonStyle(.bordered)
+                        .disabled(true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                VStack(alignment: .leading, spacing: 8) {
                     Text("Overlay")
                         .font(.headline)
                     Toggle("Show compact overlay", isOn: $overlayPreferencesStore.showCompactOverlay)
@@ -411,6 +435,7 @@ struct SettingsView: View {
         overlayPreferencesStore: OverlayPreferencesStore(),
         audioCapturePreferencesStore: AudioCapturePreferencesStore(),
         recordingPreferencesStore: RecordingRetentionPreferencesStore(),
+        perAppProfileStore: PerAppFeedbackProfileStore(),
         audioCapture: AudioCapture(capturePreferencesStore: AudioCapturePreferencesStore()),
         hasAcceptedDisclosure: true,
         recordingsPath: "/Users/you/Recordings",

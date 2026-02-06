@@ -1,6 +1,6 @@
 ---
 id: cal-rj9d
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-06T18:35:16Z
@@ -17,3 +17,9 @@ Introduce a model and storage plan for per-app feedback profiles (Zoom/Meet/Team
 
 - Document a lightweight profile model (app identifier, pace/pause/crutch settings).\n- Add placeholder Settings UI section (disabled or TODO) explaining upcoming per-app profiles.\n- Include unit coverage for profile storage model when implemented.
 
+
+## Notes
+
+**2026-02-06T18:41:30Z**
+
+Added per-app profile model/store with persistence + Settings placeholder section and tests. Ran ./scripts/swift-test.sh (warnings about deprecated APIs in AudioBufferCopy/RecordingsListViewModel).

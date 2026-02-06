@@ -21,6 +21,7 @@ struct ContentView: View {
     @StateObject private var preferencesStore = AnalysisPreferencesStore()
     @StateObject private var recordingsViewModel: RecordingListViewModel
     @StateObject private var overlayPreferencesStore: OverlayPreferencesStore
+    @StateObject private var perAppProfileStore: PerAppFeedbackProfileStore
     @State private var privacyDisclosureStore: PrivacyDisclosureStore
     @State private var quickStartStore: QuickStartStore
     @State private var hasAcceptedDisclosure: Bool
@@ -36,6 +37,7 @@ struct ContentView: View {
         audioCapturePreferencesStore: AudioCapturePreferencesStore = AudioCapturePreferencesStore(),
         recordingPreferencesStore: RecordingRetentionPreferencesStore = RecordingRetentionPreferencesStore(),
         overlayPreferencesStore: OverlayPreferencesStore = OverlayPreferencesStore(),
+        perAppProfileStore: PerAppFeedbackProfileStore = PerAppFeedbackProfileStore(),
         privacyDisclosureStore: PrivacyDisclosureStore = PrivacyDisclosureStore(),
         quickStartStore: QuickStartStore = QuickStartStore(),
         settingsActionModel: MicrophoneSettingsActionModel = MicrophoneSettingsActionModel(),
@@ -48,6 +50,7 @@ struct ContentView: View {
         _overlayPreferencesStore = StateObject(wrappedValue: overlayPreferencesStore)
         _audioCapturePreferencesStore = StateObject(wrappedValue: audioCapturePreferencesStore)
         _recordingPreferencesStore = StateObject(wrappedValue: recordingPreferencesStore)
+        _perAppProfileStore = StateObject(wrappedValue: perAppProfileStore)
         _audioCapture = StateObject(wrappedValue: AudioCapture(
             capturePreferencesStore: audioCapturePreferencesStore
         ))
@@ -117,6 +120,7 @@ struct ContentView: View {
                         overlayPreferencesStore: overlayPreferencesStore,
                         audioCapturePreferencesStore: audioCapturePreferencesStore,
                         recordingPreferencesStore: recordingPreferencesStore,
+                        perAppProfileStore: perAppProfileStore,
                         audioCapture: audioCapture,
                         hasAcceptedDisclosure: hasAcceptedDisclosure,
                         recordingsPath: PathDisplayFormatter.displayPath(
