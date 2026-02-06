@@ -18,6 +18,7 @@ struct SessionView: View {
     let storageStatus: RecordingStorageStatus
     let activeProfileLabel: String?
     let showTitlePrompt: Bool
+    let defaultSessionTitle: String?
     @Binding var sessionTitleDraft: String
     let onSaveSessionTitle: () -> Void
     let onSkipSessionTitle: () -> Void
@@ -30,7 +31,10 @@ struct SessionView: View {
             hasBlockingReasons: blockingReasonsText != nil,
             activeProfileLabel: activeProfileLabel
         )
-        let titlePromptState = SessionTitlePromptState(draft: sessionTitleDraft)
+        let titlePromptState = SessionTitlePromptState(
+            draft: sessionTitleDraft,
+            defaultTitle: defaultSessionTitle
+        )
         let titleHintColor: Color = titlePromptState.helperTone == .warning ? .orange : .secondary
         let captureStatusText = CaptureStatusFormatter.statusText(
             inputDeviceName: audioCapture.inputDeviceName,
@@ -190,6 +194,7 @@ private struct SessionViewPreview: View {
             storageStatus: .ok,
             activeProfileLabel: "Profile: Default",
             showTitlePrompt: true,
+            defaultSessionTitle: "Session Jan 1, 2026 at 9:00 AM",
             sessionTitleDraft: $sessionTitle,
             onSaveSessionTitle: {},
             onSkipSessionTitle: {},

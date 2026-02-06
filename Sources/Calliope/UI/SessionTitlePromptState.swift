@@ -16,22 +16,27 @@ struct SessionTitlePromptState: Equatable {
     let helperTone: HelperTone
     let wasTruncated: Bool
 
-    init(draft: String) {
+    init(draft: String, defaultTitle: String? = nil) {
         if let titleInfo = RecordingMetadata.normalizedTitleInfo(draft) {
             isValid = true
             wasTruncated = titleInfo.wasTruncated
             if titleInfo.wasTruncated {
-                helperText = "Titles longer than \(RecordingMetadata.maxTitleLength) characters will be shortened."
+                helperText = "Will save as \"\(titleInfo.normalized)\". Titles longer than \(RecordingMetadata.maxTitleLength) characters will be shortened."
                 helperTone = .warning
             } else {
-                helperText = "Max \(RecordingMetadata.maxTitleLength) characters."
+                helperText = "Will save as \"\(titleInfo.normalized)\"."
                 helperTone = .standard
             }
         } else {
             isValid = false
             wasTruncated = false
-            helperText = "Enter a title or choose Skip."
-            helperTone = .warning
+            if let defaultTitle, !defaultTitle.isEmpty {
+                helperText = "Will save as \"\(defaultTitle)\". Enter a title or choose Skip."
+                helperTone = .standard
+            } else {
+                helperText = "Enter a title or choose Skip."
+                helperTone = .warning
+            }
         }
     }
 }

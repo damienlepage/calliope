@@ -102,6 +102,9 @@ struct ContentView: View {
             isRecording: audioCapture.isRecording,
             profile: activePreferencesStore.activeProfile
         )
+        let defaultSessionTitle = pendingSessionForTitle.map {
+            RecordingMetadata.defaultSessionTitle(for: $0.createdAt)
+        }
         let blockingReasons = RecordingEligibility.blockingReasons(
             privacyState: privacyState,
             microphonePermission: microphonePermission.state,
@@ -129,6 +132,7 @@ struct ContentView: View {
                         storageStatus: audioCapture.storageStatus,
                         activeProfileLabel: activeProfileLabel,
                         showTitlePrompt: pendingSessionForTitle != nil,
+                        defaultSessionTitle: defaultSessionTitle,
                         sessionTitleDraft: $sessionTitleDraft,
                         onSaveSessionTitle: saveSessionTitle,
                         onSkipSessionTitle: skipSessionTitle,
