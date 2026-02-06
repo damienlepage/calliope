@@ -255,7 +255,8 @@ final class RecordingManagerTests: XCTestCase {
         let recordingURL = recordingsDirectory.appendingPathComponent("session.m4a")
 
         FileManager.default.createFile(atPath: recordingURL.path, contents: Data([0x1]))
-        let metadata = RecordingMetadata(title: "Weekly Sync")
+        let createdAt = Date(timeIntervalSince1970: 1_700_000_000)
+        let metadata = RecordingMetadata(title: "Weekly Sync", createdAt: createdAt)
 
         try manager.writeMetadata(metadata, for: recordingURL)
 

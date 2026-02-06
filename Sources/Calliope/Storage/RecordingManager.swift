@@ -216,6 +216,19 @@ extension RecordingManager: RecordingIntegrityWriting {
 }
 
 extension RecordingManager {
+    private func metadataEncoder() -> JSONEncoder {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        encoder.dateEncodingStrategy = .iso8601
+        return encoder
+    }
+
+    private func metadataDecoder() -> JSONDecoder {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return decoder
+    }
+
     func metadataURL(for recordingURL: URL) -> URL {
         recordingURL
             .deletingPathExtension()
@@ -224,9 +237,7 @@ extension RecordingManager {
 
     func writeMetadata(_ metadata: RecordingMetadata, for recordingURL: URL) throws {
         let url = metadataURL(for: recordingURL)
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        let data = try encoder.encode(metadata)
+        let data = try metadataEncoder().encode(metadata)
         try data.write(to: url, options: [.atomic])
     }
 
@@ -243,7 +254,7 @@ extension RecordingManager {
             return nil
         }
         do {
-            let metadata = try JSONDecoder().decode(RecordingMetadata.self, from: data)
+            let metadata = try metadataDecoder().decode(RecordingMetadata.self, from: data)
             guard let normalizedTitle = RecordingMetadata.normalizedTitle(metadata.title) else {
                 try? fileManager.removeItem(at: url)
                 return nil
@@ -251,7 +262,10 @@ extension RecordingManager {
             if normalizedTitle == metadata.title {
                 return metadata
             }
-            let normalizedMetadata = RecordingMetadata(title: normalizedTitle)
+            let normalizedMetadata = RecordingMetadata(
+                title: normalizedTitle,
+                createdAt: metadata.createdAt
+            )
             try? writeMetadata(normalizedMetadata, for: recordingURL)
             return normalizedMetadata
         } catch {

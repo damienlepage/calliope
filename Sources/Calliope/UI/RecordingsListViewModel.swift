@@ -167,7 +167,8 @@ struct RecordingItem: Identifiable, Equatable {
     }
 
     var detailMetadataText: String {
-        let dateText = modifiedAt.formatted(date: .abbreviated, time: .shortened)
+        let sessionDate = metadata?.createdAt ?? modifiedAt
+        let dateText = sessionDate.formatted(date: .abbreviated, time: .shortened)
         let details = [
             RecordingItem.formatDuration(duration),
             RecordingItem.formatFileSize(fileSizeBytes)
@@ -282,7 +283,7 @@ struct RecordingItem: Identifiable, Equatable {
             }
             return normalizedTitle
         }
-        if let sessionDate = timestampDate(from: name) ?? modifiedAt {
+        if let sessionDate = timestampDate(from: name) ?? metadata?.createdAt ?? modifiedAt {
             let sessionTitle = defaultSessionTitle(for: sessionDate)
             if let segmentInfo = segmentInfo(from: name) {
                 return "\(sessionTitle) (Part \(segmentInfo.partLabel))"

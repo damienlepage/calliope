@@ -17,6 +17,47 @@ A macOS app that acts as a real-time communication coach during conference calls
 - Calliope only processes microphone input on-device and does not transmit audio or transcripts.
 - Use headphones or a headset to avoid capturing other participants through speaker bleed.
 
+## Conferencing Compatibility Notes
+
+These steps help validate mic capture, ensure Calliope isolates your voice, and confirm your call audio is unaffected.
+
+### Zoom
+
+1. Join a Zoom call with a headset connected.
+2. Start Calliope and begin a session while the call is live.
+3. Confirm the Session screen shows a live input level and capture status while you speak.
+4. Speak a few sentences; verify pace, crutch words, and pauses update in real time.
+5. Ask another participant to speak while you stay silent; ensure Calliope does not register their speech and the input level remains near idle.
+6. Verify the call audio sounds normal to others and that your Zoom mic behaves the same with Calliope running.
+
+### Google Meet (Chrome)
+
+1. Join a Google Meet call in Chrome with a headset connected.
+2. Start Calliope and begin a session.
+3. Confirm the input level moves only when you speak and that pace/pauses update.
+4. Keep silent while another participant speaks; Calliope should stay idle.
+5. Toggle Meet mute/unmute and confirm Calliope remains responsive to your microphone.
+
+### Microsoft Teams
+
+1. Join a Teams call with a headset connected.
+2. Start Calliope and begin a session.
+3. Confirm the Session screen input level and capture status update as you speak.
+4. Speak briefly, then stay silent while another participant speaks; Calliope should not react to them.
+5. Ask a participant to confirm your call audio is unaffected.
+
+### Troubleshooting Tips
+
+- Confirm microphone permission is granted in System Settings for Calliope.
+- Verify the input device shown in the Session screen matches your active microphone.
+- Use a headset to reduce speaker bleed and avoid capturing other participants.
+- If levels are flat, quit and relaunch Calliope, then restart the call.
+- If the call audio changes, check that no virtual audio device or system-wide audio enhancer is enabled.
+
+### Adding Future App IDs for Per-App Profiles
+
+Per-app profiles are managed in Settings > Per-App Profiles. Add a new profile by entering the conferencing app bundle identifier (shown in Activity Monitor or System Settings), then customize pace, pause, and crutch-word targets. Example bundle IDs: `us.zoom.xos`, `com.microsoft.teams`, `com.google.Chrome`.
+
 ## Project Structure
 
 ```

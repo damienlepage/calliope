@@ -339,7 +339,10 @@ struct ContentView: View {
             skipSessionTitle()
             return
         }
-        let metadata = RecordingMetadata(title: titleInfo.normalized)
+        let metadata = RecordingMetadata(
+            title: titleInfo.normalized,
+            createdAt: pendingSession.createdAt
+        )
         for url in pendingSession.recordingURLs {
             try? RecordingManager.shared.writeMetadata(metadata, for: url)
         }

@@ -1,6 +1,6 @@
 ---
 id: cal-20ei
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-06T21:59:36Z

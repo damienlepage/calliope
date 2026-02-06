@@ -126,6 +126,7 @@ enum AudioCaptureBackendStatus: Equatable {
 struct CompletedRecordingSession: Equatable {
     let sessionID: String
     let recordingURLs: [URL]
+    let createdAt: Date
 }
 
 enum AudioInputSource: Equatable {
@@ -386,6 +387,7 @@ class AudioCapture: NSObject, ObservableObject {
     private var recordingSessionID: String?
     private var recordingSegmentIndex: Int = 0
     private var recordingSegmentStart: Date?
+    private var recordingSessionStart: Date?
     private var recordingFileSettings: [String: Any]?
     private var recordedSegmentURLs: [URL] = []
     private var maxSegmentDuration: TimeInterval = 0
@@ -573,6 +575,7 @@ class AudioCapture: NSObject, ObservableObject {
         recordingSessionID = UUID().uuidString
         recordingSegmentIndex = 0
         recordingSegmentStart = nil
+        recordingSessionStart = nil
         recordingFileSettings = recordingFormat.settings
         maxSegmentDuration = max(0, preferences.maxSegmentDuration)
         recordedSegmentURLs = []
@@ -729,6 +732,7 @@ class AudioCapture: NSObject, ObservableObject {
     ) {
         let wasRecording = isRecording
         let completedSessionID = recordingSessionID
+        let completedSessionStart = recordingSessionStart ?? now()
         let completedSegmentURLs = recordedSegmentURLs
         cancelRecordingStartTimeout()
         cancelCaptureStartValidation()
@@ -742,6 +746,7 @@ class AudioCapture: NSObject, ObservableObject {
         recordingSessionID = nil
         recordingSegmentIndex = 0
         recordingSegmentStart = nil
+        recordingSessionStart = nil
         recordingFileSettings = nil
         maxSegmentDuration = 0
         recordedSegmentURLs = []
@@ -758,7 +763,8 @@ class AudioCapture: NSObject, ObservableObject {
            !completedSegmentURLs.isEmpty {
             completedRecordingSession = CompletedRecordingSession(
                 sessionID: completedSessionID,
-                recordingURLs: completedSegmentURLs
+                recordingURLs: completedSegmentURLs,
+                createdAt: completedSessionStart
             )
         }
         cleanupFailedRecordingIfNeeded(wasRecording: wasRecording)
@@ -1056,7 +1062,11 @@ class AudioCapture: NSObject, ObservableObject {
         do {
             audioFile = try audioFileFactory(url, recordingFileSettings)
             currentRecordingURL = url
-            recordingSegmentStart = now()
+            let segmentStart = now()
+            if recordingSessionStart == nil {
+                recordingSessionStart = segmentStart
+            }
+            recordingSegmentStart = segmentStart
             recordedSegmentURLs.append(url)
             return true
         } catch {

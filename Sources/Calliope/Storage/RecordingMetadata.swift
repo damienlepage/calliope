@@ -9,8 +9,14 @@ import Foundation
 
 struct RecordingMetadata: Codable, Equatable {
     let title: String
+    let createdAt: Date?
 
     static let maxTitleLength = 80
+
+    init(title: String, createdAt: Date? = nil) {
+        self.title = title
+        self.createdAt = createdAt
+    }
 
     struct TitleInfo: Equatable {
         let normalized: String
