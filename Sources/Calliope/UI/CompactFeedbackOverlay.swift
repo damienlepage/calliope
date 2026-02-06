@@ -17,6 +17,7 @@ struct CompactFeedbackOverlay: View {
     let showSilenceWarning: Bool
     let showWaitingForSpeech: Bool
     let processingLatencyStatus: ProcessingLatencyStatus
+    let processingLatencyAverage: TimeInterval
     let paceMin: Double
     let paceMax: Double
     let sessionDurationText: String?
@@ -58,7 +59,10 @@ struct CompactFeedbackOverlay: View {
                 Text("Processing:")
                     .font(.caption)
                     .foregroundColor(.secondary)
-                Text(processingLatencyStatus.rawValue)
+                Text(ProcessingLatencyFormatter.statusText(
+                    status: processingLatencyStatus,
+                    average: processingLatencyAverage
+                ))
                     .font(.caption)
                     .foregroundColor(processingStatusColor(processingLatencyStatus))
             }
@@ -143,6 +147,7 @@ struct CompactFeedbackOverlay_Previews: PreviewProvider {
             showSilenceWarning: false,
             showWaitingForSpeech: false,
             processingLatencyStatus: .ok,
+            processingLatencyAverage: 0.009,
             paceMin: Constants.targetPaceMin,
             paceMax: Constants.targetPaceMax,
             sessionDurationText: "00:42",

@@ -117,6 +117,7 @@ struct ContentView: View {
                     showSilenceWarning: feedbackViewModel.state.showSilenceWarning,
                     showWaitingForSpeech: feedbackViewModel.showWaitingForSpeech,
                     processingLatencyStatus: feedbackViewModel.state.processingLatencyStatus,
+                    processingLatencyAverage: feedbackViewModel.state.processingLatencyAverage,
                     paceMin: preferencesStore.paceMin,
                     paceMax: preferencesStore.paceMax,
                     sessionDurationText: sessionDurationText,

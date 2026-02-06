@@ -16,6 +16,7 @@ class AudioAnalyzer: ObservableObject {
     @Published var inputLevel: Double = 0.0
     @Published var silenceWarning: Bool = false
     @Published var processingLatencyStatus: ProcessingLatencyStatus = .ok
+    @Published var processingLatencyAverage: TimeInterval = 0
 
     var feedbackPublisher: AnyPublisher<FeedbackState, Never> {
         let metricsPublisher = Publishers.CombineLatest4(
@@ -26,8 +27,8 @@ class AudioAnalyzer: ObservableObject {
         )
 
         return Publishers.CombineLatest3(metricsPublisher, $inputLevel, $silenceWarning)
-            .combineLatest($processingLatencyStatus)
-            .map { combined, latencyStatus in
+            .combineLatest($processingLatencyStatus, $processingLatencyAverage)
+            .map { combined, latencyStatus, latencyAverage in
                 let metrics = combined.0
                 let inputLevel = combined.1
                 let warning = combined.2
@@ -38,7 +39,8 @@ class AudioAnalyzer: ObservableObject {
                     pauseAverageDuration: metrics.3,
                     inputLevel: inputLevel,
                     showSilenceWarning: warning,
-                    processingLatencyStatus: latencyStatus
+                    processingLatencyStatus: latencyStatus,
+                    processingLatencyAverage: latencyAverage
                 )
             }
             .eraseToAnyPublisher()
@@ -101,6 +103,7 @@ class AudioAnalyzer: ObservableObject {
                         self.inputLevel = 0.0
                         self.silenceWarning = false
                         self.processingLatencyStatus = .ok
+                        self.processingLatencyAverage = 0
                         self.silenceMonitor.reset()
                         self.paceStats.reset()
                         self.processingLatencyTracker.reset()
@@ -124,6 +127,7 @@ class AudioAnalyzer: ObservableObject {
                         self.inputLevel = 0.0
                         self.silenceWarning = false
                         self.processingLatencyStatus = .ok
+                        self.processingLatencyAverage = 0
                         self.recordingStart = nil
                         self.recordingURLForSession = nil
                         self.processingLatencyTracker.reset()
@@ -187,9 +191,15 @@ class AudioAnalyzer: ObservableObject {
         }
         let duration = CFAbsoluteTimeGetCurrent() - startTime
         let status = processingLatencyTracker.record(duration: duration)
+        let average = processingLatencyTracker.average
         if status != processingLatencyStatus {
             DispatchQueue.main.async { [weak self] in
                 self?.processingLatencyStatus = status
+            }
+        }
+        if abs(average - processingLatencyAverage) >= 0.001 {
+            DispatchQueue.main.async { [weak self] in
+                self?.processingLatencyAverage = average
             }
         }
     }

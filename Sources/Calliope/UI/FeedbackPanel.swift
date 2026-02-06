@@ -17,6 +17,7 @@ struct FeedbackPanel: View {
     let showSilenceWarning: Bool
     let showWaitingForSpeech: Bool
     let processingLatencyStatus: ProcessingLatencyStatus
+    let processingLatencyAverage: TimeInterval
     let paceMin: Double
     let paceMax: Double
     let sessionDurationText: String?
@@ -92,7 +93,10 @@ struct FeedbackPanel: View {
                     Text("Processing:")
                         .font(.footnote)
                         .foregroundColor(.secondary)
-                    Text(processingLatencyStatus.rawValue)
+                    Text(ProcessingLatencyFormatter.statusText(
+                        status: processingLatencyStatus,
+                        average: processingLatencyAverage
+                    ))
                         .font(.footnote)
                         .foregroundColor(processingStatusColor(processingLatencyStatus))
                 }
@@ -156,6 +160,7 @@ struct FeedbackPanel_Previews: PreviewProvider {
             showSilenceWarning: false,
             showWaitingForSpeech: false,
             processingLatencyStatus: .ok,
+            processingLatencyAverage: 0.012,
             paceMin: Constants.targetPaceMin,
             paceMax: Constants.targetPaceMax,
             sessionDurationText: "02:15",

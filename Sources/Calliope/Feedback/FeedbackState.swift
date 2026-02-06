@@ -15,6 +15,7 @@ struct FeedbackState: Equatable {
     let inputLevel: Double
     let showSilenceWarning: Bool
     let processingLatencyStatus: ProcessingLatencyStatus
+    let processingLatencyAverage: TimeInterval
 
     init(
         pace: Double,
@@ -23,7 +24,8 @@ struct FeedbackState: Equatable {
         pauseAverageDuration: TimeInterval = 0,
         inputLevel: Double = 0.0,
         showSilenceWarning: Bool = false,
-        processingLatencyStatus: ProcessingLatencyStatus = .ok
+        processingLatencyStatus: ProcessingLatencyStatus = .ok,
+        processingLatencyAverage: TimeInterval = 0
     ) {
         self.pace = pace
         self.crutchWords = crutchWords
@@ -32,6 +34,7 @@ struct FeedbackState: Equatable {
         self.inputLevel = inputLevel
         self.showSilenceWarning = showSilenceWarning
         self.processingLatencyStatus = processingLatencyStatus
+        self.processingLatencyAverage = processingLatencyAverage
     }
 
     static let zero = FeedbackState(
@@ -41,6 +44,7 @@ struct FeedbackState: Equatable {
         pauseAverageDuration: 0,
         inputLevel: 0.0,
         showSilenceWarning: false,
-        processingLatencyStatus: .ok
+        processingLatencyStatus: .ok,
+        processingLatencyAverage: 0
     )
 }
