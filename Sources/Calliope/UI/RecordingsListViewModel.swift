@@ -264,12 +264,17 @@ final class RecordingListViewModel: ObservableObject {
                 summary: summaryProvider(url)
             )
         }
-        recordings = items.sorted { left, right in
+        let sortedItems = items.sorted { left, right in
             if left.modifiedAt != right.modifiedAt {
                 return left.modifiedAt > right.modifiedAt
             }
             return left.url.absoluteString < right.url.absoluteString
         }
+        if let activePlaybackURL,
+           !sortedItems.contains(where: { $0.url == activePlaybackURL }) {
+            stopPlayback()
+        }
+        recordings = sortedItems
     }
 
     func refreshRecordings() {

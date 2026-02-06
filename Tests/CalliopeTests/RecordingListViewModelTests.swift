@@ -586,6 +586,24 @@ final class RecordingListViewModelTests: XCTestCase {
         XCTAssertEqual(store.players[urlB]?.playCount, 1)
     }
 
+    func testLoadRecordingsStopsPlaybackWhenActiveItemMissing() {
+        let url = URL(fileURLWithPath: "/tmp/missing.m4a")
+        let (viewModel, manager, store) = makeViewModelWithPlayback(recordings: [url])
+
+        viewModel.loadRecordings()
+        let item = viewModel.recordings[0]
+        viewModel.togglePlayPause(item)
+
+        XCTAssertEqual(viewModel.activePlaybackURL, url)
+
+        manager.recordings = []
+        viewModel.loadRecordings()
+
+        XCTAssertNil(viewModel.activePlaybackURL)
+        XCTAssertFalse(viewModel.isPlaybackPaused)
+        XCTAssertEqual(store.players[url]?.stopCount, 1)
+    }
+
     func testPlaybackEndClearsIndicator() {
         let url = URL(fileURLWithPath: "/tmp/end.m4a")
         let (viewModel, _, store) = makeViewModelWithPlayback(recordings: [url])
