@@ -36,8 +36,13 @@ struct FeedbackPanel: View {
             
             // Pace indicator
             HStack {
-                Text("Pace:")
-                    .font(.subheadline)
+                HStack(spacing: 6) {
+                    Text("Pace:")
+                        .font(.subheadline)
+                    Text(PaceFeedback.targetRangeText(minPace: paceMin, maxPace: paceMax))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
                 Spacer()
                 HStack(spacing: 6) {
                     Text(paceValueText(pace))

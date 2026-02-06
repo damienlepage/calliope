@@ -1,6 +1,6 @@
 ---
 id: cal-q0a9
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-06T06:54:02Z

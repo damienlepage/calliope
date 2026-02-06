@@ -48,4 +48,13 @@ enum PaceFeedback {
             return "Fast"
         }
     }
+
+    static func targetRangeText(
+        minPace: Double = Constants.targetPaceMin,
+        maxPace: Double = Constants.targetPaceMax
+    ) -> String {
+        let lower = min(minPace, maxPace)
+        let upper = max(minPace, maxPace)
+        return "\(Int(lower))-\(Int(upper)) WPM"
+    }
 }
