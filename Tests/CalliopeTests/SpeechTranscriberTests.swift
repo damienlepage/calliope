@@ -25,6 +25,56 @@ final class SpeechTranscriberTests: XCTestCase {
         XCTAssertFalse(didRequestAuthorization)
     }
 
+    func testStartTranscriptionFailsWhenRecognizerUnavailable() {
+        let recognizer = FakeSpeechRecognizer(
+            isAvailable: false,
+            supportsOnDeviceRecognition: true
+        )
+        var didRequestAuthorization = false
+        let transcriber = SpeechTranscriber(
+            speechRecognizer: recognizer,
+            requestAuthorization: { _ in
+                didRequestAuthorization = true
+            },
+            logger: NoOpSpeechTranscriberLogger()
+        )
+        var observedStates: [SpeechTranscriberState] = []
+        transcriber.onStateChange = { observedStates.append($0) }
+
+        transcriber.startTranscription()
+
+        XCTAssertEqual(observedStates.last, .error)
+        XCTAssertFalse(didRequestAuthorization)
+    }
+
+    func testStartTranscriptionFailsWhenAuthorizationDenied() {
+        let recognizer = FakeSpeechRecognizer(
+            isAvailable: true,
+            supportsOnDeviceRecognition: true
+        )
+        let transcriber = SpeechTranscriber(
+            speechRecognizer: recognizer,
+            requestAuthorization: { completion in
+                completion(.denied)
+            },
+            logger: NoOpSpeechTranscriberLogger()
+        )
+        var observedStates: [SpeechTranscriberState] = []
+
+        let expectation = expectation(description: "Updates to error state")
+        transcriber.onStateChange = { state in
+            observedStates.append(state)
+            if state == .error {
+                expectation.fulfill()
+            }
+        }
+
+        transcriber.startTranscription()
+
+        wait(for: [expectation], timeout: 1.0)
+        XCTAssertEqual(observedStates.last, .error)
+    }
+
     func testNoSpeechErrorMapsToStoppedState() {
         let transcriber = SpeechTranscriber(logger: NoOpSpeechTranscriberLogger())
         var observedStates: [SpeechTranscriberState] = []
@@ -50,6 +100,17 @@ final class SpeechTranscriberTests: XCTestCase {
             code: SFSpeechRecognizerErrorCode.canceled.rawValue,
             userInfo: nil
         )
+        transcriber.handleRecognitionError(error)
+
+        XCTAssertEqual(observedStates.last, .stopped)
+    }
+
+    func testAFAssistantNoSpeechErrorMapsToStoppedState() {
+        let transcriber = SpeechTranscriber(logger: NoOpSpeechTranscriberLogger())
+        var observedStates: [SpeechTranscriberState] = []
+        transcriber.onStateChange = { observedStates.append($0) }
+
+        let error = NSError(domain: "kAFAssistantErrorDomain", code: 1110, userInfo: nil)
         transcriber.handleRecognitionError(error)
 
         XCTAssertEqual(observedStates.last, .stopped)

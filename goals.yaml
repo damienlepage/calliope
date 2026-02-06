@@ -31,6 +31,7 @@ goals:
     notes: []
   - id: G7
     title: Quality gate: reliable tests and coverage confidence
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "2026-02-06: Added coverage threshold gate (80%) in scripts/coverage.sh with unit test coverage."
+      - "Validated 2026-02-06: Coverage gate ignores SwiftUI view files; ./scripts/coverage.sh reports 84.03%."

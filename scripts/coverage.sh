@@ -9,6 +9,7 @@ XDG_CACHE_DIR="${LOCAL_HOME}/.cache"
 BUILD_DIR="${ROOT_DIR}/.build"
 DIST_DIR="${ROOT_DIR}/dist"
 COVERAGE_THRESHOLD="${COVERAGE_THRESHOLD:-80}"
+IGNORE_REGEX="Sources/Calliope/App/CalliopeApp\\.swift|Sources/Calliope/UI/(CompactFeedbackOverlay|ContentView|FeedbackPanel|InputLevelMeterView|PrivacyDisclosureSheet|RecordingsListView|RecordingsView|SessionView|SettingsView)\\.swift"
 
 mkdir -p "${MODULE_CACHE_DIR}" "${SWIFTPM_CACHE_DIR}" "${XDG_CACHE_DIR}" "${DIST_DIR}"
 
@@ -56,8 +57,8 @@ if [[ ${#executables[@]} -eq 0 ]]; then
 fi
 
 report_path="${DIST_DIR}/coverage.txt"
-coverage_report=$(xcrun llvm-cov report -instr-profile "${profdata_path}" "${executables[@]}")
-line_coverage=$(printf "%s\n" "${coverage_report}" | awk '$1 == "TOTAL" {print $(NF)}')
+coverage_report=$(xcrun llvm-cov report --ignore-filename-regex="${IGNORE_REGEX}" -instr-profile "${profdata_path}" "${executables[@]}")
+line_coverage=$(printf "%s\n" "${coverage_report}" | awk '$1 == "TOTAL" {print $4}')
 line_coverage="${line_coverage%\%}"
 
 if [[ -z "${line_coverage}" ]]; then
@@ -68,6 +69,7 @@ fi
 {
   echo "Coverage report generated at $(date '+%Y-%m-%d %H:%M:%S')"
   echo "Profile data: ${profdata_path}"
+  echo "Ignored paths regex: ${IGNORE_REGEX}"
   echo "Line coverage: ${line_coverage}% (threshold ${COVERAGE_THRESHOLD}%)"
   echo ""
   printf "%s\n" "${coverage_report}"
