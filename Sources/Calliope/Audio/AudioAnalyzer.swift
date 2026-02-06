@@ -17,15 +17,18 @@ class AudioAnalyzer: ObservableObject {
     @Published var silenceWarning: Bool = false
 
     var feedbackPublisher: AnyPublisher<FeedbackState, Never> {
-        Publishers.CombineLatest5($currentPace, $crutchWordCount, $pauseCount, $pauseAverageDuration, $inputLevel)
+        Publishers.CombineLatest4($currentPace, $crutchWordCount, $pauseCount, $pauseAverageDuration)
+            .combineLatest($inputLevel)
             .combineLatest($silenceWarning)
             .map { combined, warning in
-                FeedbackState(
-                    pace: combined.0,
-                    crutchWords: combined.1,
-                    pauseCount: combined.2,
-                    pauseAverageDuration: combined.3,
-                    inputLevel: combined.4,
+                let metrics = combined.0
+                let inputLevel = combined.1
+                return FeedbackState(
+                    pace: metrics.0,
+                    crutchWords: metrics.1,
+                    pauseCount: metrics.2,
+                    pauseAverageDuration: metrics.3,
+                    inputLevel: inputLevel,
                     showSilenceWarning: warning
                 )
             }
