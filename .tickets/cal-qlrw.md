@@ -1,6 +1,6 @@
 ---
 id: cal-qlrw
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-06T08:22:23Z
@@ -17,3 +17,8 @@ Validate live feedback panel contents and spacing against PRD expectations for p
 
 Feedback panel includes pace, crutch words, pauses, input level, and elapsed time with clear labels; idle view unaffected.
 
+## Notes
+
+**2026-02-06T08:25:30Z**
+
+Added explicit "Elapsed" label next to the session duration text in the feedback panel header to make the time label clear without changing idle behavior.

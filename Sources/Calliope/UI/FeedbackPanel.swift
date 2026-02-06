@@ -31,8 +31,8 @@ struct FeedbackPanel: View {
                 Text("Real-time Feedback")
                     .font(.headline)
                 Spacer()
-                if let sessionDurationText {
-                    Text(sessionDurationText)
+                if let elapsedText = ElapsedTimeFormatter.labelText(sessionDurationText) {
+                    Text(elapsedText)
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
