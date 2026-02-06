@@ -1,6 +1,6 @@
 ---
 id: cal-g6c1
-status: ready
+status: closed
 deps: []
 links: []
 created: 2026-02-06T18:46:00Z

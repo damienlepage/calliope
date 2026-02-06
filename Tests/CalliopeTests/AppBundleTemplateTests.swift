@@ -31,4 +31,22 @@ final class AppBundleTemplateTests: XCTestCase {
         XCTAssertNotNil(micUsage)
         XCTAssertFalse(micUsage?.isEmpty ?? true)
     }
+
+    func testPkgInfoTemplateIsPresentAndUsedByBuildScript() throws {
+        let testFileURL = URL(fileURLWithPath: #filePath)
+        let repositoryRoot = testFileURL
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let pkgInfoURL = repositoryRoot.appendingPathComponent("scripts/app/PkgInfo")
+        let buildScriptURL = repositoryRoot.appendingPathComponent("scripts/build-app.sh")
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: pkgInfoURL.path))
+
+        let contents = try String(contentsOf: pkgInfoURL, encoding: .utf8)
+        XCTAssertEqual(contents.trimmingCharacters(in: .whitespacesAndNewlines), "APPL????")
+
+        let buildScript = try String(contentsOf: buildScriptURL, encoding: .utf8)
+        XCTAssertTrue(buildScript.contains("PkgInfo"))
+    }
 }
