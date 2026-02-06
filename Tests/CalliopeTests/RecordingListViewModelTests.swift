@@ -135,6 +135,43 @@ final class RecordingListViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.recordings.map(\.fileSizeBytes), [sizes[urlA]!, sizes[urlB]!])
     }
 
+    func testRecordingsSummaryTextIncludesCountAndTotalDuration() {
+        let urlA = URL(fileURLWithPath: "/tmp/a.m4a")
+        let urlB = URL(fileURLWithPath: "/tmp/b.wav")
+        let manager = MockRecordingManager(recordings: [urlA, urlB])
+        let durations: [URL: TimeInterval] = [
+            urlA: 60,
+            urlB: 90
+        ]
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) },
+            durationProvider: { durations[$0] },
+            fileSizeProvider: { _ in nil }
+        )
+
+        viewModel.loadRecordings()
+
+        XCTAssertEqual(viewModel.recordingsSummaryText, "2 recordings • 2:30 total")
+    }
+
+    func testRecordingsSummaryTextShowsCountWhenDurationMissing() {
+        let url = URL(fileURLWithPath: "/tmp/only.m4a")
+        let manager = MockRecordingManager(recordings: [url])
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) },
+            durationProvider: { _ in nil },
+            fileSizeProvider: { _ in nil }
+        )
+
+        viewModel.loadRecordings()
+
+        XCTAssertEqual(viewModel.recordingsSummaryText, "1 recording")
+    }
+
     func testConfirmDeleteRecordingReloadsList() {
         let urlA = URL(fileURLWithPath: "/tmp/remove.m4a")
         let urlB = URL(fileURLWithPath: "/tmp/keep.wav")

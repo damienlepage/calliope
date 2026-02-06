@@ -134,6 +134,23 @@ final class RecordingListViewModel: ObservableObject {
     @Published private(set) var isPlaybackPaused = false
     @Published private(set) var isRecording = false
 
+    var recordingsSummaryText: String? {
+        let count = recordings.count
+        guard count > 0 else {
+            return nil
+        }
+        let countText = count == 1 ? "1 recording" : "\(count) recordings"
+        let totalDuration = recordings
+            .compactMap(\.duration)
+            .filter { $0 > 0 }
+            .reduce(0, +)
+        guard totalDuration > 0,
+              let durationText = Self.totalDurationFormatter.string(from: totalDuration) else {
+            return countText
+        }
+        return "\(countText) • \(durationText) total"
+    }
+
     private let manager: RecordingManaging
     private let workspace: WorkspaceOpening
     private let modificationDateProvider: @MainActor (URL) -> Date
@@ -143,6 +160,14 @@ final class RecordingListViewModel: ObservableObject {
     private let audioPlayerFactory: (URL) throws -> AudioPlaying
     private var audioPlayer: AudioPlaying?
     private var cancellables = Set<AnyCancellable>()
+
+    private static let totalDurationFormatter: DateComponentsFormatter = {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.minute, .second]
+        formatter.unitsStyle = .positional
+        formatter.zeroFormattingBehavior = .pad
+        return formatter
+    }()
 
     init(
         manager: RecordingManaging = RecordingManager.shared,

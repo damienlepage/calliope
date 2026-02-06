@@ -13,8 +13,15 @@ struct RecordingsListView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Recordings")
-                    .font(.headline)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Recordings")
+                        .font(.headline)
+                    if let summaryText = viewModel.recordingsSummaryText {
+                        Text(summaryText)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                }
                 Spacer()
                 Button("Open Folder") {
                     viewModel.openRecordingsFolder()
