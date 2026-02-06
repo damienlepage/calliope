@@ -23,6 +23,11 @@ struct SessionView: View {
             status: audioCapture.status,
             hasBlockingReasons: blockingReasonsText != nil
         )
+        let captureStatusText = CaptureStatusFormatter.statusText(
+            inputDeviceName: audioCapture.inputDeviceName,
+            backendStatus: audioCapture.backendStatus,
+            isRecording: audioCapture.isRecording
+        )
         ScrollView {
             VStack(spacing: 20) {
                 if viewState.shouldShowTitle {
@@ -39,6 +44,11 @@ struct SessionView: View {
                         Text(audioCapture.statusText)
                             .font(.headline)
                     }
+                }
+                if let captureStatusText {
+                    Text(captureStatusText)
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
                 }
                 if viewState.shouldShowIdlePrompt {
                     Text("Ready when you are. Press Start to begin coaching.")

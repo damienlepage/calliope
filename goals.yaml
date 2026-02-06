@@ -14,3 +14,12 @@ goals:
     status: AT_TARGET
     notes:
       - "Validated 2026-02-06: Recordings view includes playback/reveal/delete plus storage path and open-folder action; Settings provides storage path with open-folder access."
+  - id: G4
+    title: Capture transparency & conferencing readiness
+    status: BELOW_TARGET
+    notes:
+      - "2026-02-06: Session view now shows input device and capture backend status while recording."
+  - id: G5
+    title: Performance & latency guardrails
+    status: BELOW_TARGET
+    notes: []
