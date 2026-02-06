@@ -1,5 +1,8 @@
 import XCTest
 @testable import Calliope
+#if canImport(AVFoundation)
+import AVFoundation
+#endif
 
 final class AudioAnalyzerTests: XCTestCase {
     func testWordCountHandlesPunctuationAndCase() {
