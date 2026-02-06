@@ -27,6 +27,7 @@ struct CompactFeedbackOverlay: View {
     let sessionDurationSeconds: Int?
     let storageStatus: RecordingStorageStatus
     let interruptionMessage: String?
+    let activeProfileLabel: String?
 
     var body: some View {
         let pauseRateText = PauseRateFormatter.rateText(
@@ -42,6 +43,11 @@ struct CompactFeedbackOverlay: View {
             Text(captureStatusText)
                 .font(.caption2)
                 .foregroundColor(.secondary)
+            if let activeProfileLabel {
+                Text(activeProfileLabel)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
             HStack(spacing: 12) {
                 metric(
                     title: "Pace",
@@ -198,7 +204,8 @@ struct CompactFeedbackOverlay_Previews: PreviewProvider {
             sessionDurationText: "00:42",
             sessionDurationSeconds: 42,
             storageStatus: .ok,
-            interruptionMessage: "Audio input changed. Recording continues with the new device."
+            interruptionMessage: "Audio input changed. Recording continues with the new device.",
+            activeProfileLabel: "Profile: Default"
         )
         .padding()
     }

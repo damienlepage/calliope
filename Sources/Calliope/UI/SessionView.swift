@@ -16,13 +16,15 @@ struct SessionView: View {
     let canStartRecording: Bool
     let blockingReasonsText: String?
     let storageStatus: RecordingStorageStatus
+    let activeProfileLabel: String?
     let onToggleRecording: () -> Void
 
     var body: some View {
         let viewState = SessionViewState(
             isRecording: audioCapture.isRecording,
             status: audioCapture.status,
-            hasBlockingReasons: blockingReasonsText != nil
+            hasBlockingReasons: blockingReasonsText != nil,
+            activeProfileLabel: activeProfileLabel
         )
         let captureStatusText = CaptureStatusFormatter.statusText(
             inputDeviceName: audioCapture.inputDeviceName,
@@ -62,6 +64,13 @@ struct SessionView: View {
                         .foregroundColor(.secondary)
                         .accessibilityLabel("Capture status")
                         .accessibilityValue(captureStatusText)
+                }
+                if viewState.shouldShowActiveProfileLabel, let activeProfileLabel {
+                    Text(activeProfileLabel)
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                        .accessibilityLabel("Active profile")
+                        .accessibilityValue(activeProfileLabel)
                 }
                 if viewState.shouldShowIdlePrompt {
                     Text("Ready when you are. Press Start to begin coaching.")
@@ -137,6 +146,7 @@ struct SessionView: View {
         canStartRecording: true,
         blockingReasonsText: nil,
         storageStatus: .ok,
+        activeProfileLabel: "Profile: Default",
         onToggleRecording: {}
     )
 }

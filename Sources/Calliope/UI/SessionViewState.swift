@@ -9,6 +9,7 @@ struct SessionViewState: Equatable {
     let isRecording: Bool
     let status: AudioCaptureStatus
     let hasBlockingReasons: Bool
+    let activeProfileLabel: String?
 
     var shouldShowTitle: Bool {
         if isRecording {
@@ -45,6 +46,11 @@ struct SessionViewState: Equatable {
             return true
         }
         return false
+    }
+
+    var shouldShowActiveProfileLabel: Bool {
+        guard isRecording else { return false }
+        return activeProfileLabel != nil
     }
 
     var shouldShowBlockingReasons: Bool {

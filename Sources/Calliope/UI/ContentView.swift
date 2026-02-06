@@ -96,6 +96,10 @@ struct ContentView: View {
             inputDeviceName: audioCapture.inputDeviceName,
             backendStatus: audioCapture.backendStatus
         )
+        let activeProfileLabel = ActiveProfileLabelFormatter.labelText(
+            isRecording: audioCapture.isRecording,
+            profile: activePreferencesStore.activeProfile
+        )
         let blockingReasons = RecordingEligibility.blockingReasons(
             privacyState: privacyState,
             microphonePermission: microphonePermission.state,
@@ -121,6 +125,7 @@ struct ContentView: View {
                         canStartRecording: canStartRecording,
                         blockingReasonsText: blockingReasonsText,
                         storageStatus: audioCapture.storageStatus,
+                        activeProfileLabel: activeProfileLabel,
                         onToggleRecording: toggleRecording
                     )
                 case .recordings:
@@ -176,7 +181,8 @@ struct ContentView: View {
                     sessionDurationText: sessionDurationText,
                     sessionDurationSeconds: sessionDurationSeconds,
                     storageStatus: audioCapture.storageStatus,
-                    interruptionMessage: audioCapture.interruptionMessage
+                    interruptionMessage: audioCapture.interruptionMessage,
+                    activeProfileLabel: activeProfileLabel
                 )
                 .padding(.top, 12)
                 .padding(.trailing, 12)
