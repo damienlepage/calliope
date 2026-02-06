@@ -18,6 +18,8 @@ struct CompactFeedbackOverlay: View {
     let showWaitingForSpeech: Bool
     let processingLatencyStatus: ProcessingLatencyStatus
     let processingLatencyAverage: TimeInterval
+    let processingUtilizationStatus: ProcessingUtilizationStatus
+    let processingUtilizationAverage: Double
     let captureStatusText: String
     let paceMin: Double
     let paceMax: Double
@@ -69,6 +71,17 @@ struct CompactFeedbackOverlay: View {
                 ))
                     .font(.caption)
                     .foregroundColor(processingStatusColor(processingLatencyStatus))
+            }
+            HStack(spacing: 6) {
+                Text("Load:")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Text(ProcessingUtilizationFormatter.statusText(
+                    status: processingUtilizationStatus,
+                    average: processingUtilizationAverage
+                ))
+                    .font(.caption)
+                    .foregroundColor(utilizationStatusColor(processingUtilizationStatus))
             }
             if showSilenceWarning {
                 Text("No mic input detected")
@@ -137,6 +150,17 @@ struct CompactFeedbackOverlay: View {
             return .orange
         }
     }
+
+    private func utilizationStatusColor(_ status: ProcessingUtilizationStatus) -> Color {
+        switch status {
+        case .ok:
+            return .green
+        case .high:
+            return .orange
+        case .critical:
+            return .red
+        }
+    }
 }
 
 #if DEBUG
@@ -152,6 +176,8 @@ struct CompactFeedbackOverlay_Previews: PreviewProvider {
             showWaitingForSpeech: false,
             processingLatencyStatus: .ok,
             processingLatencyAverage: 0.009,
+            processingUtilizationStatus: .ok,
+            processingUtilizationAverage: 0.47,
             captureStatusText: "Input: Built-in Microphone · Capture: Standard mic",
             paceMin: Constants.targetPaceMin,
             paceMax: Constants.targetPaceMax,

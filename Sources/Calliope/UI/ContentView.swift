@@ -122,6 +122,8 @@ struct ContentView: View {
                     showWaitingForSpeech: feedbackViewModel.showWaitingForSpeech,
                     processingLatencyStatus: feedbackViewModel.state.processingLatencyStatus,
                     processingLatencyAverage: feedbackViewModel.state.processingLatencyAverage,
+                    processingUtilizationStatus: feedbackViewModel.state.processingUtilizationStatus,
+                    processingUtilizationAverage: feedbackViewModel.state.processingUtilizationAverage,
                     captureStatusText: overlayCaptureStatusText,
                     paceMin: preferencesStore.paceMin,
                     paceMax: preferencesStore.paceMax,

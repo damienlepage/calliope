@@ -17,6 +17,8 @@ class AudioAnalyzer: ObservableObject {
     @Published var silenceWarning: Bool = false
     @Published var processingLatencyStatus: ProcessingLatencyStatus = .ok
     @Published var processingLatencyAverage: TimeInterval = 0
+    @Published var processingUtilizationStatus: ProcessingUtilizationStatus = .ok
+    @Published var processingUtilizationAverage: Double = 0
 
     var feedbackPublisher: AnyPublisher<FeedbackState, Never> {
         let metricsPublisher = Publishers.CombineLatest4(
@@ -26,9 +28,12 @@ class AudioAnalyzer: ObservableObject {
             $pauseAverageDuration
         )
 
+        let latencyPublisher = Publishers.CombineLatest($processingLatencyStatus, $processingLatencyAverage)
+        let utilizationPublisher = Publishers.CombineLatest($processingUtilizationStatus, $processingUtilizationAverage)
+
         return Publishers.CombineLatest3(metricsPublisher, $inputLevel, $silenceWarning)
-            .combineLatest($processingLatencyStatus, $processingLatencyAverage)
-            .map { combined, latencyStatus, latencyAverage in
+            .combineLatest(latencyPublisher, utilizationPublisher)
+            .map { combined, latency, utilization in
                 let metrics = combined.0
                 let inputLevel = combined.1
                 let warning = combined.2
@@ -39,8 +44,10 @@ class AudioAnalyzer: ObservableObject {
                     pauseAverageDuration: metrics.3,
                     inputLevel: inputLevel,
                     showSilenceWarning: warning,
-                    processingLatencyStatus: latencyStatus,
-                    processingLatencyAverage: latencyAverage
+                    processingLatencyStatus: latency.0,
+                    processingLatencyAverage: latency.1,
+                    processingUtilizationStatus: utilization.0,
+                    processingUtilizationAverage: utilization.1
                 )
             }
             .eraseToAnyPublisher()
@@ -63,6 +70,7 @@ class AudioAnalyzer: ObservableObject {
     private var latestCrutchWordCounts: [String: Int] = [:]
     private var latestWordCount: Int = 0
     private var processingLatencyTracker = ProcessingLatencyTracker()
+    private var processingUtilizationTracker = ProcessingUtilizationTracker()
 
     init(
         summaryWriter: AnalysisSummaryWriting = RecordingManager.shared,
@@ -104,9 +112,12 @@ class AudioAnalyzer: ObservableObject {
                         self.silenceWarning = false
                         self.processingLatencyStatus = .ok
                         self.processingLatencyAverage = 0
+                        self.processingUtilizationStatus = .ok
+                        self.processingUtilizationAverage = 0
                         self.silenceMonitor.reset()
                         self.paceStats.reset()
                         self.processingLatencyTracker.reset()
+                        self.processingUtilizationTracker.reset()
                         self.latestCrutchWordCounts = [:]
                         self.latestWordCount = 0
                         self.recordingStart = self.now()
@@ -128,9 +139,12 @@ class AudioAnalyzer: ObservableObject {
                         self.silenceWarning = false
                         self.processingLatencyStatus = .ok
                         self.processingLatencyAverage = 0
+                        self.processingUtilizationStatus = .ok
+                        self.processingUtilizationAverage = 0
                         self.recordingStart = nil
                         self.recordingURLForSession = nil
                         self.processingLatencyTracker.reset()
+                        self.processingUtilizationTracker.reset()
                         self.latestCrutchWordCounts = [:]
                         self.latestWordCount = 0
                     }
@@ -200,6 +214,27 @@ class AudioAnalyzer: ObservableObject {
         if abs(average - processingLatencyAverage) >= 0.001 {
             DispatchQueue.main.async { [weak self] in
                 self?.processingLatencyAverage = average
+            }
+        }
+
+        let frameLength = Double(buffer.frameLength)
+        let sampleRate = buffer.format.sampleRate
+        if frameLength > 0, sampleRate > 0 {
+            let bufferDuration = frameLength / sampleRate
+            if bufferDuration > 0 {
+                let utilization = duration / bufferDuration
+                let utilizationStatus = processingUtilizationTracker.record(utilization: utilization)
+                let utilizationAverage = processingUtilizationTracker.average
+                if utilizationStatus != processingUtilizationStatus {
+                    DispatchQueue.main.async { [weak self] in
+                        self?.processingUtilizationStatus = utilizationStatus
+                    }
+                }
+                if abs(utilizationAverage - processingUtilizationAverage) >= 0.001 {
+                    DispatchQueue.main.async { [weak self] in
+                        self?.processingUtilizationAverage = utilizationAverage
+                    }
+                }
             }
         }
     }

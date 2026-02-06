@@ -18,6 +18,8 @@ struct FeedbackPanel: View {
     let showWaitingForSpeech: Bool
     let processingLatencyStatus: ProcessingLatencyStatus
     let processingLatencyAverage: TimeInterval
+    let processingUtilizationStatus: ProcessingUtilizationStatus
+    let processingUtilizationAverage: Double
     let paceMin: Double
     let paceMax: Double
     let sessionDurationText: String?
@@ -100,7 +102,23 @@ struct FeedbackPanel: View {
                         .font(.footnote)
                         .foregroundColor(processingStatusColor(processingLatencyStatus))
                 }
+                HStack(spacing: 6) {
+                    Text("Load:")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                    Text(ProcessingUtilizationFormatter.statusText(
+                        status: processingUtilizationStatus,
+                        average: processingUtilizationAverage
+                    ))
+                        .font(.footnote)
+                        .foregroundColor(utilizationStatusColor(processingUtilizationStatus))
+                }
                 if let warningText = ProcessingLatencyFormatter.warningText(status: processingLatencyStatus) {
+                    Text(warningText)
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                }
+                if let warningText = ProcessingUtilizationFormatter.warningText(status: processingUtilizationStatus) {
                     Text(warningText)
                         .font(.footnote)
                         .foregroundColor(.secondary)
@@ -151,6 +169,17 @@ struct FeedbackPanel: View {
             return .orange
         }
     }
+
+    private func utilizationStatusColor(_ status: ProcessingUtilizationStatus) -> Color {
+        switch status {
+        case .ok:
+            return .green
+        case .high:
+            return .orange
+        case .critical:
+            return .red
+        }
+    }
 }
 
 #if DEBUG
@@ -166,6 +195,8 @@ struct FeedbackPanel_Previews: PreviewProvider {
             showWaitingForSpeech: false,
             processingLatencyStatus: .ok,
             processingLatencyAverage: 0.012,
+            processingUtilizationStatus: .ok,
+            processingUtilizationAverage: 0.52,
             paceMin: Constants.targetPaceMin,
             paceMax: Constants.targetPaceMax,
             sessionDurationText: "02:15",
