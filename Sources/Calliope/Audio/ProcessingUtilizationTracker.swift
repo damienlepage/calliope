@@ -43,10 +43,13 @@ struct ProcessingUtilizationTracker {
     }
 
     var status: ProcessingUtilizationStatus {
-        if average >= criticalThreshold {
+        let value = average
+        let scale = max(abs(value), abs(criticalThreshold), abs(highThreshold), 1.0)
+        let epsilon = scale * Double.ulpOfOne * 4
+        if value + epsilon >= criticalThreshold {
             return .critical
         }
-        if average >= highThreshold {
+        if value + epsilon >= highThreshold {
             return .high
         }
         return .ok
