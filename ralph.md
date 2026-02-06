@@ -38,6 +38,7 @@ Build Calliope into a privacy-first, low-latency macOS communication coach that 
    - Architecture (component organization and interactions).
    - Existing patterns (code conventions, testing approach, error handling).
    - Current state (what works, what's incomplete, technical debt).
+   - Goals must be high-level and outcome-oriented at the feature/UX capability level (avoid task-level phrasing, single-screen tweaks, or test-only goals).
 8. Commit all changes in the repository with the details of the iteration.
 
 ## Stopping Conditions
