@@ -103,7 +103,7 @@ final class RecordingListViewModelTests: XCTestCase {
         return (viewModel, manager, store)
     }
 
-    func testLoadRecordingsPreservesManagerOrder() {
+    func testLoadRecordingsSortsNewestFirst() {
         let urlA = URL(fileURLWithPath: "/tmp/a.m4a")
         let urlB = URL(fileURLWithPath: "/tmp/b.wav")
         let manager = MockRecordingManager(recordings: [urlA, urlB])
@@ -129,10 +129,10 @@ final class RecordingListViewModelTests: XCTestCase {
 
         viewModel.loadRecordings()
 
-        XCTAssertEqual(viewModel.recordings.map(\.url), [urlA, urlB])
-        XCTAssertEqual(viewModel.recordings.map(\.modifiedAt), [dates[urlA]!, dates[urlB]!])
-        XCTAssertEqual(viewModel.recordings.map(\.duration), [durations[urlA]!, durations[urlB]!])
-        XCTAssertEqual(viewModel.recordings.map(\.fileSizeBytes), [sizes[urlA]!, sizes[urlB]!])
+        XCTAssertEqual(viewModel.recordings.map(\.url), [urlB, urlA])
+        XCTAssertEqual(viewModel.recordings.map(\.modifiedAt), [dates[urlB]!, dates[urlA]!])
+        XCTAssertEqual(viewModel.recordings.map(\.duration), [durations[urlB]!, durations[urlA]!])
+        XCTAssertEqual(viewModel.recordings.map(\.fileSizeBytes), [sizes[urlB]!, sizes[urlA]!])
     }
 
     func testRecordingItemDisplayNameStripsExtension() {
@@ -435,7 +435,47 @@ final class RecordingListViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.recordings.first?.summary, summary)
         XCTAssertEqual(
             viewModel.recordings.first?.summaryText,
-            "Avg 120 WPM • Pauses 2 • Avg Pause 1.6s • Crutch 3"
+            "Avg 120 WPM • Pauses 2 • Pauses/min 2.9 • Avg Pause 1.6s • Crutch 3"
+        )
+    }
+
+    func testSummaryTextOmitsPausesPerMinuteWhenDurationUnavailable() {
+        let url = URL(fileURLWithPath: "/tmp/summary-zero.m4a")
+        let manager = MockRecordingManager(recordings: [url])
+        let summary = AnalysisSummary(
+            version: 1,
+            createdAt: Date(timeIntervalSince1970: 1),
+            durationSeconds: 0,
+            pace: AnalysisSummary.PaceStats(
+                averageWPM: 110,
+                minWPM: 90,
+                maxWPM: 130,
+                totalWords: 50
+            ),
+            pauses: AnalysisSummary.PauseStats(
+                count: 1,
+                thresholdSeconds: 1.0,
+                averageDurationSeconds: 1.2
+            ),
+            crutchWords: AnalysisSummary.CrutchWordStats(
+                totalCount: 0,
+                counts: [:]
+            )
+        )
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) },
+            durationProvider: { _ in 0 },
+            fileSizeProvider: { _ in 2048 },
+            summaryProvider: { _ in summary }
+        )
+
+        viewModel.loadRecordings()
+
+        XCTAssertEqual(
+            viewModel.recordings.first?.summaryText,
+            "Avg 110 WPM • Pauses 1 • Avg Pause 1.2s • Crutch 0"
         )
     }
 

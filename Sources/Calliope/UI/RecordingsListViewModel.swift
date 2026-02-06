@@ -89,12 +89,18 @@ struct RecordingItem: Identifiable, Equatable {
         guard let summary else { return nil }
         let pace = Int(summary.pace.averageWPM.rounded())
         let averagePause = RecordingItem.formatSeconds(summary.pauses.averageDurationSeconds)
+        let durationSeconds = summary.durationSeconds > 0 ? summary.durationSeconds : duration
+        let pausesPerMinute = RecordingItem.formatPausesPerMinute(
+            count: summary.pauses.count,
+            durationSeconds: durationSeconds
+        )
         let pieces = [
             "Avg \(pace) WPM",
             "Pauses \(summary.pauses.count)",
+            pausesPerMinute.map { "Pauses/min \($0)" },
             "Avg Pause \(averagePause)",
             "Crutch \(summary.crutchWords.totalCount)"
-        ]
+        ].compactMap { $0 }
         return pieces.joined(separator: " • ")
     }
 
@@ -128,6 +134,16 @@ struct RecordingItem: Identifiable, Equatable {
 
     private static func formatSeconds(_ seconds: TimeInterval) -> String {
         String(format: "%.1fs", seconds)
+    }
+
+    private static func formatPausesPerMinute(count: Int, durationSeconds: TimeInterval?) -> String? {
+        guard let durationSeconds, durationSeconds > 0 else {
+            return nil
+        }
+        let safeDuration = max(durationSeconds, 1)
+        let minutes = safeDuration / 60
+        let rate = Double(count) / minutes
+        return String(format: "%.1f", rate)
     }
 }
 
@@ -218,7 +234,7 @@ final class RecordingListViewModel: ObservableObject {
     func loadRecordings() {
         deleteErrorMessage = nil
         let urls = manager.getAllRecordings()
-        recordings = urls.map { url in
+        let items = urls.map { url in
             RecordingItem(
                 url: url,
                 modifiedAt: modificationDateProvider(url),
@@ -226,6 +242,12 @@ final class RecordingListViewModel: ObservableObject {
                 fileSizeBytes: fileSizeProvider(url),
                 summary: summaryProvider(url)
             )
+        }
+        recordings = items.sorted { left, right in
+            if left.modifiedAt != right.modifiedAt {
+                return left.modifiedAt > right.modifiedAt
+            }
+            return left.url.absoluteString < right.url.absoluteString
         }
     }
 
