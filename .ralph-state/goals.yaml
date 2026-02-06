@@ -128,3 +128,18 @@ goals:
       - "New 2026-02-06: PRD requires tracking how often the user spoke and total duration of user speech; current summaries only include session duration and word/pace stats."
       - "2026-02-06: Added speaking activity tracker and summary fields; UI surfacing still needed."
       - "Validated 2026-02-06: Recordings list and detail sheet now show speaking time, turns, and speaking percentage."
+  - id: G24
+    title: Session metadata robustness and clarity
+    status: BELOW_TARGET
+    notes:
+      - "2026-02-06: Goal created to harden session metadata entry, normalization, and display consistency."
+  - id: G25
+    title: Performance and energy usage validation
+    status: BELOW_TARGET
+    notes:
+      - "2026-02-06: Goal created to validate low CPU/energy impact and expose actionable guardrails."
+  - id: G26
+    title: Conferencing compatibility verification
+    status: BELOW_TARGET
+    notes:
+      - "2026-02-06: Goal created to confirm compatibility with common conferencing tools and document mitigations."
