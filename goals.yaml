@@ -80,3 +80,14 @@ goals:
     status: AT_TARGET
     notes:
       - "2026-02-06: Validate recording artifacts on stop and surface recoverable issues in recordings list."
+  - id: G16
+    title: Data retention and bulk recording management
+    status: BELOW_TARGET
+    notes:
+      - "2026-02-06: Added bulk delete action with confirmation in recordings list plus storage summary coverage."
+      - "Target: Provide bulk delete and optional auto-clean controls with clear storage usage guidance."
+  - id: G17
+    title: First-run guidance and quick-start clarity
+    status: AT_TARGET
+    notes:
+      - "2026-02-06: Added quick-start sheet after privacy disclosure with call readiness + privacy reminders; Settings can reopen it; state persists."

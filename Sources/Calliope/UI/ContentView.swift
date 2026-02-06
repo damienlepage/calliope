@@ -21,8 +21,11 @@ struct ContentView: View {
     @StateObject private var recordingsViewModel = RecordingListViewModel()
     @StateObject private var overlayPreferencesStore: OverlayPreferencesStore
     @State private var privacyDisclosureStore: PrivacyDisclosureStore
+    @State private var quickStartStore: QuickStartStore
     @State private var hasAcceptedDisclosure: Bool
     @State private var isDisclosureSheetPresented: Bool
+    @State private var isQuickStartSheetPresented: Bool
+    @State private var isQuickStartPending: Bool
     private let settingsActionModel: MicrophoneSettingsActionModel
     private let soundSettingsActionModel: SoundSettingsActionModel
     private let speechSettingsActionModel: SpeechSettingsActionModel
@@ -32,22 +35,27 @@ struct ContentView: View {
         audioCapturePreferencesStore: AudioCapturePreferencesStore = AudioCapturePreferencesStore(),
         overlayPreferencesStore: OverlayPreferencesStore = OverlayPreferencesStore(),
         privacyDisclosureStore: PrivacyDisclosureStore = PrivacyDisclosureStore(),
+        quickStartStore: QuickStartStore = QuickStartStore(),
         settingsActionModel: MicrophoneSettingsActionModel = MicrophoneSettingsActionModel(),
         soundSettingsActionModel: SoundSettingsActionModel = SoundSettingsActionModel(),
         speechSettingsActionModel: SpeechSettingsActionModel = SpeechSettingsActionModel(),
         recordingsFolderActionModel: RecordingsFolderActionModel = RecordingsFolderActionModel()
     ) {
         _privacyDisclosureStore = State(initialValue: privacyDisclosureStore)
+        _quickStartStore = State(initialValue: quickStartStore)
         _overlayPreferencesStore = StateObject(wrappedValue: overlayPreferencesStore)
         _audioCapturePreferencesStore = StateObject(wrappedValue: audioCapturePreferencesStore)
         _audioCapture = StateObject(wrappedValue: AudioCapture(
             capturePreferencesStore: audioCapturePreferencesStore
         ))
         let accepted = privacyDisclosureStore.hasAcceptedDisclosure
+        let hasSeenQuickStart = quickStartStore.hasSeenQuickStart
         _hasAcceptedDisclosure = State(initialValue: accepted)
         _isDisclosureSheetPresented = State(
             initialValue: PrivacyDisclosureGate.requiresDisclosure(hasAcceptedDisclosure: accepted)
         )
+        _isQuickStartSheetPresented = State(initialValue: accepted && !hasSeenQuickStart)
+        _isQuickStartPending = State(initialValue: false)
         self.settingsActionModel = settingsActionModel
         self.soundSettingsActionModel = soundSettingsActionModel
         self.speechSettingsActionModel = speechSettingsActionModel
@@ -116,7 +124,8 @@ struct ContentView: View {
                         onOpenSoundSettings: soundSettingsActionModel.openSoundSettings,
                         onOpenSpeechSettings: speechSettingsActionModel.openSystemSettings,
                         onOpenRecordingsFolder: recordingsFolderActionModel.openRecordingsFolder,
-                        onRunMicTest: runMicTest
+                        onRunMicTest: runMicTest,
+                        onShowQuickStart: showQuickStart
                     )
                 }
             }
@@ -196,6 +205,15 @@ struct ContentView: View {
             isDisclosureSheetPresented = PrivacyDisclosureGate.requiresDisclosure(
                 hasAcceptedDisclosure: newValue
             )
+            if newValue, !quickStartStore.hasSeenQuickStart {
+                isQuickStartPending = true
+            }
+        }
+        .onChange(of: isDisclosureSheetPresented) { newValue in
+            if !newValue, isQuickStartPending {
+                isQuickStartSheetPresented = true
+                isQuickStartPending = false
+            }
         }
         .onChange(of: overlayPreferencesStore.alwaysOnTop) { newValue in
             WindowLevelController.apply(alwaysOnTop: newValue)
@@ -221,6 +239,12 @@ struct ContentView: View {
                 hasAcceptedDisclosure = true
             }
             .interactiveDismissDisabled(true)
+        }
+        .sheet(isPresented: $isQuickStartSheetPresented) {
+            QuickStartSheet {
+                quickStartStore.hasSeenQuickStart = true
+                isQuickStartSheetPresented = false
+            }
         }
     }
 
@@ -260,6 +284,10 @@ struct ContentView: View {
 
     private func openRecordingsFolder() {
         recordingsViewModel.openRecordingsFolder()
+    }
+
+    private func showQuickStart() {
+        isQuickStartSheetPresented = true
     }
 
     private func blockingReasonsText(_ reasons: [RecordingEligibility.Reason]) -> String? {

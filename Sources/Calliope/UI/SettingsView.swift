@@ -27,6 +27,7 @@ struct SettingsView: View {
     let onOpenSpeechSettings: () -> Void
     let onOpenRecordingsFolder: () -> Void
     let onRunMicTest: () -> Void
+    let onShowQuickStart: () -> Void
 
     var body: some View {
         let canRunMicTest = MicTestEligibility.canRun(
@@ -140,6 +141,19 @@ struct SettingsView: View {
                             .font(.footnote)
                             .foregroundColor(.secondary)
                     }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Quick Start")
+                        .font(.headline)
+                    Text("Reopen the quick-start checklist anytime.")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                    Button("Show Quick Start") {
+                        onShowQuickStart()
+                    }
+                    .buttonStyle(.bordered)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -385,6 +399,7 @@ struct SettingsView: View {
         onOpenSoundSettings: {},
         onOpenSpeechSettings: {},
         onOpenRecordingsFolder: {},
-        onRunMicTest: {}
+        onRunMicTest: {},
+        onShowQuickStart: {}
     )
 }
