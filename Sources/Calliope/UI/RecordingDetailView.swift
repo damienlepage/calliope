@@ -41,6 +41,9 @@ struct RecordingDetailView: View {
                 } else {
                     DetailSection(title: "Pace", lines: item.paceDetailLines)
                     DetailSection(title: "Pauses", lines: item.pauseDetailLines)
+                    if !item.speakingDetailLines.isEmpty {
+                        DetailSection(title: "Speaking Activity", lines: item.speakingDetailLines)
+                    }
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Crutch Words")

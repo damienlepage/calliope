@@ -108,16 +108,40 @@ struct RecordingItem: Identifiable, Equatable {
             average: summary.processing.utilizationAverage,
             peak: summary.processing.utilizationPeak
         )
+        let speakingText = speakingSummaryText
         let pieces = [
             "Avg \(pace) WPM",
             "Pauses \(summary.pauses.count)",
             pausesPerMinute.map { "Pauses/min \($0)" },
             "Avg Pause \(averagePause)",
             "Crutch \(summary.crutchWords.totalCount)",
+            speakingText,
             latencyText,
             utilizationText
         ].compactMap { $0 }
         return pieces.joined(separator: " • ")
+    }
+
+    var speakingDetailLines: [String] {
+        guard let summary else { return [] }
+        let speakingSeconds = summary.speaking.timeSeconds
+        let turnCount = summary.speaking.turnCount
+        guard speakingSeconds > 0 || turnCount > 0 else { return [] }
+        var lines: [String] = []
+        if let speakingText = RecordingItem.formatDuration(speakingSeconds) {
+            lines.append("Speaking time: \(speakingText)")
+        }
+        if turnCount > 0 {
+            lines.append("Speaking turns: \(turnCount)")
+        }
+        let sessionDuration = summary.durationSeconds > 0 ? summary.durationSeconds : (duration ?? 0)
+        if let percentText = RecordingItem.formatSpeakingPercent(
+            speakingSeconds: speakingSeconds,
+            durationSeconds: sessionDuration
+        ) {
+            lines.append("Speaking %: \(percentText)")
+        }
+        return lines
     }
 
     var integrityWarningText: String? {
@@ -342,6 +366,16 @@ struct RecordingItem: Identifiable, Equatable {
         return String(format: "%.1f", rate)
     }
 
+    private static func formatSpeakingPercent(
+        speakingSeconds: TimeInterval,
+        durationSeconds: TimeInterval
+    ) -> String? {
+        guard speakingSeconds > 0, durationSeconds > 0 else { return nil }
+        let rawRatio = speakingSeconds / durationSeconds
+        let clampedRatio = min(max(rawRatio, 0), 1)
+        return String(format: "%.0f%%", clampedRatio * 100)
+    }
+
     private static func formatLatencySummary(averageMs: Double, peakMs: Double) -> String? {
         guard averageMs > 0 || peakMs > 0 else {
             return nil
@@ -358,6 +392,22 @@ struct RecordingItem: Identifiable, Equatable {
         let averagePercent = average * 100
         let peakPercent = peak * 100
         return String(format: "Util %.0f/%.0f%%", averagePercent, peakPercent)
+    }
+
+    private var speakingSummaryText: String? {
+        guard let summary else { return nil }
+        let speakingSeconds = summary.speaking.timeSeconds
+        let turnCount = summary.speaking.turnCount
+        guard speakingSeconds > 0 || turnCount > 0 else { return nil }
+        var parts: [String] = []
+        if let timeText = RecordingItem.formatDuration(speakingSeconds) {
+            parts.append("Speaking \(timeText)")
+        }
+        if turnCount > 0 {
+            parts.append("Turns \(turnCount)")
+        }
+        guard !parts.isEmpty else { return nil }
+        return parts.joined(separator: " • ")
     }
 
     private struct SegmentInfo {

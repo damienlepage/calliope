@@ -85,4 +85,44 @@ final class RecordingItemTests: XCTestCase {
 
         XCTAssertNil(item.integrityWarningText)
     }
+
+    func testSpeakingDetailLinesIncludeTimeTurnsAndPercent() {
+        let summary = AnalysisSummary(
+            version: 1,
+            createdAt: Date(timeIntervalSince1970: 1),
+            durationSeconds: 300,
+            pace: AnalysisSummary.PaceStats(
+                averageWPM: 120,
+                minWPM: 100,
+                maxWPM: 140,
+                totalWords: 300
+            ),
+            pauses: AnalysisSummary.PauseStats(
+                count: 2,
+                thresholdSeconds: 1.0,
+                averageDurationSeconds: 1.2
+            ),
+            crutchWords: AnalysisSummary.CrutchWordStats(
+                totalCount: 1,
+                counts: ["um": 1]
+            ),
+            speaking: AnalysisSummary.SpeakingStats(
+                timeSeconds: 90,
+                turnCount: 4
+            )
+        )
+        let item = RecordingItem(
+            url: URL(fileURLWithPath: "/tmp/recording.m4a"),
+            modifiedAt: Date(timeIntervalSince1970: 0),
+            duration: 300,
+            fileSizeBytes: nil,
+            summary: summary,
+            integrityReport: nil
+        )
+
+        XCTAssertEqual(
+            item.speakingDetailLines,
+            ["Speaking time: 01:30", "Speaking turns: 4", "Speaking %: 30%"]
+        )
+    }
 }
