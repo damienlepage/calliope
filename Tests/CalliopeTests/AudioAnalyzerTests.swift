@@ -45,4 +45,88 @@ final class AudioAnalyzerTests: XCTestCase {
         XCTAssertEqual(analyzer.crutchWordDetector?.analyze("you know"), 1)
         XCTAssertEqual(analyzer.pauseDetector?.pauseThreshold, 2.2)
     }
+
+    func testTranscriptionIgnoredWhenNotRecording() {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            UUID().uuidString,
+            isDirectory: true
+        )
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let suiteName = "AudioAnalyzerTests.AudioCapture.\(UUID().uuidString)"
+        let captureDefaults = UserDefaults(suiteName: suiteName)!
+        captureDefaults.removePersistentDomain(forName: suiteName)
+        let preferencesStore = AudioCapturePreferencesStore(defaults: captureDefaults)
+        let audioCapture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: preferencesStore,
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: FakeAudioCaptureBackend(), status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() }
+        )
+        let analysisSuiteName = "AudioAnalyzerTests.Analysis.\(UUID().uuidString)"
+        let analysisDefaults = UserDefaults(suiteName: analysisSuiteName)!
+        analysisDefaults.removePersistentDomain(forName: analysisSuiteName)
+        let analysisPreferences = AnalysisPreferencesStore(defaults: analysisDefaults)
+        let analyzer = AudioAnalyzer(
+            summaryWriter: manager,
+            speechTranscriberFactory: { FakeSpeechTranscriber() }
+        )
+
+        analyzer.setup(audioCapture: audioCapture, preferencesStore: analysisPreferences)
+
+        analyzer.handleTranscription("um hello world")
+
+        let expectation = expectation(description: "Allow main queue to process")
+        DispatchQueue.main.async { expectation.fulfill() }
+        wait(for: [expectation], timeout: 1.0)
+
+        XCTAssertEqual(analyzer.crutchWordCount, 0)
+        XCTAssertEqual(analyzer.currentPace, 0)
+    }
+}
+
+private final class FakeSpeechTranscriber: SpeechTranscribing {
+    var onTranscription: ((String) -> Void)?
+
+    func startTranscription() {}
+
+    func appendAudioBuffer(_ buffer: AVAudioPCMBuffer) {}
+
+    func stopTranscription() {}
+}
+
+private final class FakeAudioCaptureBackend: AudioCaptureBackend {
+    let inputFormat: AVAudioFormat
+    let inputSource: AudioInputSource = .microphone
+    let inputDeviceName: String = "Test Microphone"
+    private var configurationHandler: (() -> Void)?
+
+    init() {
+        inputFormat = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 1)!
+    }
+
+    func installTap(bufferSize: AVAudioFrameCount, handler: @escaping (AVAudioPCMBuffer) -> Void) {}
+
+    func removeTap() {}
+
+    func setConfigurationChangeHandler(_ handler: @escaping () -> Void) {
+        configurationHandler = handler
+    }
+
+    func clearConfigurationChangeHandler() {
+        configurationHandler = nil
+    }
+
+    func selectInputDevice(named preferredName: String?) -> AudioInputDeviceSelectionResult {
+        return preferredName == nil ? .notRequested : .selected
+    }
+
+    func start() throws {}
+
+    func stop() {}
+}
+
+private final class FakeAudioFileWriter: AudioFileWritable {
+    func write(from buffer: AVAudioPCMBuffer) throws {}
 }

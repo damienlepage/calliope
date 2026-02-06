@@ -138,6 +138,7 @@ class AudioAnalyzer: ObservableObject {
     }
 
     func handleTranscription(_ transcript: String) {
+        guard isRecording else { return }
         let totalWords = wordCount(in: transcript)
         latestWordCount = totalWords
         paceAnalyzer?.updateWordCount(totalWords)
