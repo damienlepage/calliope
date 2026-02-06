@@ -16,5 +16,7 @@ final class ReleasePackagingScriptTests: XCTestCase {
         XCTAssertTrue(contents.contains("build-app.sh"))
         XCTAssertTrue(contents.contains("Info.plist"))
         XCTAssertTrue(contents.contains("Calliope"))
+        XCTAssertTrue(contents.contains("SIGNING_IDENTITY"))
+        XCTAssertTrue(contents.contains("codesign"))
     }
 }

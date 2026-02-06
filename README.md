@@ -106,3 +106,9 @@ To generate a distributable app bundle and a versioned zip, run:
 ```
 
 This creates `dist/Calliope.app` and a versioned zip in `dist/` (for example, `Calliope-1.0.0.zip`).
+
+Optional code signing for distribution:
+
+```bash
+SIGNING_IDENTITY="Developer ID Application: Example Corp (TEAMID)" ./scripts/package-release.sh
+```

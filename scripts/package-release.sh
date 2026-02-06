@@ -7,6 +7,8 @@ DIST_DIR="${ROOT_DIR}/dist"
 APP_DIR="${DIST_DIR}/${APP_NAME}.app"
 BUILD_SCRIPT="${ROOT_DIR}/scripts/build-app.sh"
 INFO_TEMPLATE="${ROOT_DIR}/scripts/app/Info.plist"
+SIGNING_IDENTITY="${SIGNING_IDENTITY:-}"
+SIGNING_ENTITLEMENTS="${SIGNING_ENTITLEMENTS:-}"
 
 if [[ ! -x "${BUILD_SCRIPT}" ]]; then
   echo "Missing build script at ${BUILD_SCRIPT}" >&2
@@ -23,6 +25,22 @@ fi
 if [[ ! -d "${APP_DIR}" ]]; then
   echo "App bundle not found at ${APP_DIR}" >&2
   exit 1
+fi
+
+if [[ -n "${SIGNING_IDENTITY}" ]]; then
+  echo "Signing app bundle with identity: ${SIGNING_IDENTITY}"
+  SIGNING_ARGS=(--force --options runtime --timestamp --sign "${SIGNING_IDENTITY}")
+  if [[ -n "${SIGNING_ENTITLEMENTS}" ]]; then
+    if [[ ! -f "${SIGNING_ENTITLEMENTS}" ]]; then
+      echo "Signing entitlements not found at ${SIGNING_ENTITLEMENTS}" >&2
+      exit 1
+    fi
+    SIGNING_ARGS+=(--entitlements "${SIGNING_ENTITLEMENTS}")
+  fi
+  /usr/bin/codesign --deep "${SIGNING_ARGS[@]}" "${APP_DIR}"
+  /usr/bin/codesign --verify --deep --strict --verbose=2 "${APP_DIR}"
+else
+  echo "Skipping code signing (SIGNING_IDENTITY not set)"
 fi
 
 VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "${INFO_TEMPLATE}")
