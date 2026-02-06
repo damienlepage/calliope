@@ -8,6 +8,7 @@
 struct SessionViewState: Equatable {
     let isRecording: Bool
     let status: AudioCaptureStatus
+    let hasBlockingReasons: Bool
 
     var shouldShowTitle: Bool {
         if isRecording {
@@ -20,7 +21,16 @@ struct SessionViewState: Equatable {
     }
 
     var shouldShowIdlePrompt: Bool {
-        !isRecording
+        if isRecording {
+            return false
+        }
+        if case .error = status {
+            return false
+        }
+        if hasBlockingReasons {
+            return false
+        }
+        return true
     }
 
     var shouldShowFeedbackPanel: Bool {
@@ -46,13 +56,11 @@ struct SessionViewState: Equatable {
     }
 
     var shouldShowBlockingReasons: Bool {
-        if isRecording {
-            return false
-        }
+        guard !isRecording else { return false }
         if case .error = status {
             return true
         }
-        return false
+        return hasBlockingReasons
     }
 
     var primaryButtonTitle: String {
