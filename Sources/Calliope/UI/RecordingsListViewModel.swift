@@ -173,7 +173,7 @@ final class RecordingListViewModel: ObservableObject {
             .filter { $0 > 0 }
             .reduce(0, +)
         var parts = [countText]
-        if totalDuration > 0, let durationText = Self.totalDurationFormatter.string(from: totalDuration) {
+        if totalDuration > 0, let durationText = Self.formatTotalDuration(totalDuration) {
             parts.append("\(durationText) total")
         }
         if totalSizeBytes > 0 {
@@ -205,11 +205,26 @@ final class RecordingListViewModel: ObservableObject {
         return formatter
     }()
 
+    private static let totalDurationLongFormatter: DateComponentsFormatter = {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.hour, .minute, .second]
+        formatter.unitsStyle = .positional
+        formatter.zeroFormattingBehavior = .pad
+        return formatter
+    }()
+
     private static let totalSizeFormatter: ByteCountFormatter = {
         let formatter = ByteCountFormatter()
         formatter.countStyle = .file
         return formatter
     }()
+
+    private static func formatTotalDuration(_ duration: TimeInterval) -> String? {
+        if duration >= 3600 {
+            return totalDurationLongFormatter.string(from: duration)
+        }
+        return totalDurationFormatter.string(from: duration)
+    }
 
     init(
         manager: RecordingManaging = RecordingManager.shared,

@@ -197,6 +197,27 @@ final class RecordingListViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.recordingsSummaryText, "2 recordings • 02:30 total • \(sizeText)")
     }
 
+    func testRecordingsSummaryTextUsesHoursForLongTotals() {
+        let urlA = URL(fileURLWithPath: "/tmp/a.m4a")
+        let urlB = URL(fileURLWithPath: "/tmp/b.wav")
+        let manager = MockRecordingManager(recordings: [urlA, urlB])
+        let durations: [URL: TimeInterval] = [
+            urlA: 3600,
+            urlB: 65
+        ]
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) },
+            durationProvider: { durations[$0] },
+            fileSizeProvider: { _ in nil }
+        )
+
+        viewModel.loadRecordings()
+
+        XCTAssertEqual(viewModel.recordingsSummaryText, "2 recordings • 1:01:05 total")
+    }
+
     func testRecordingsSummaryTextShowsCountWhenDurationMissing() {
         let url = URL(fileURLWithPath: "/tmp/only.m4a")
         let manager = MockRecordingManager(recordings: [url])
