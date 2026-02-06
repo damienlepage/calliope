@@ -62,6 +62,7 @@ final class LiveFeedbackViewModel: ObservableObject {
             .store(in: &cancellables)
 
         let feedbackEvents = feedbackPublisher
+            .filter { $0.inputLevel >= InputLevelMeter.meaningfulThreshold }
             .map { _ in () }
 
         let performOnQueue: (@escaping () -> Void) -> Void = { block in

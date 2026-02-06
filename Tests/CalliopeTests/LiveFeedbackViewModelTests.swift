@@ -252,7 +252,14 @@ final class LiveFeedbackViewModelTests: XCTestCase {
         recordingSubject.send(true)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
-            feedbackSubject.send(FeedbackState(pace: 130, crutchWords: 1, pauseCount: 0))
+            feedbackSubject.send(
+                FeedbackState(
+                    pace: 130,
+                    crutchWords: 1,
+                    pauseCount: 0,
+                    inputLevel: InputLevelMeter.meaningfulThreshold
+                )
+            )
         }
 
         wait(for: [expectation], timeout: 1.0)
@@ -344,7 +351,14 @@ final class LiveFeedbackViewModelTests: XCTestCase {
                     guard !sawWaiting else { return }
                     sawWaiting = true
                     waitingExpectation.fulfill()
-                    feedbackSubject.send(FeedbackState(pace: 120, crutchWords: 1, pauseCount: 0))
+                    feedbackSubject.send(
+                        FeedbackState(
+                            pace: 120,
+                            crutchWords: 1,
+                            pauseCount: 0,
+                            inputLevel: InputLevelMeter.meaningfulThreshold
+                        )
+                    )
                 } else if sawWaiting {
                     guard !didClear else { return }
                     didClear = true
@@ -357,5 +371,44 @@ final class LiveFeedbackViewModelTests: XCTestCase {
         recordingSubject.send(true)
 
         wait(for: [waitingExpectation, clearedExpectation], timeout: 1.0)
+    }
+
+    func testWaitingForSpeechIgnoresLowInputUpdates() {
+        let feedbackSubject = PassthroughSubject<FeedbackState, Never>()
+        let recordingSubject = CurrentValueSubject<Bool, Never>(false)
+        let viewModel = LiveFeedbackViewModel()
+
+        viewModel.bind(
+            feedbackPublisher: feedbackSubject.eraseToAnyPublisher(),
+            recordingPublisher: recordingSubject.eraseToAnyPublisher(),
+            receiveOn: .main,
+            throttleInterval: .milliseconds(0),
+            staleFeedbackDelay: .milliseconds(50)
+        )
+
+        let expectation = expectation(description: "Waiting for speech still becomes true")
+
+        viewModel.$showWaitingForSpeech
+            .dropFirst()
+            .filter { $0 }
+            .sink { _ in
+                expectation.fulfill()
+            }
+            .store(in: &cancellables)
+
+        recordingSubject.send(true)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.02) {
+            feedbackSubject.send(
+                FeedbackState(
+                    pace: 0,
+                    crutchWords: 0,
+                    pauseCount: 0,
+                    inputLevel: InputLevelMeter.meaningfulThreshold * 0.5
+                )
+            )
+        }
+
+        wait(for: [expectation], timeout: 1.0)
     }
 }
