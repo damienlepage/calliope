@@ -242,6 +242,15 @@ extension RecordingManager {
         guard let data = try? Data(contentsOf: url) else {
             return nil
         }
-        return try? JSONDecoder().decode(RecordingMetadata.self, from: data)
+        guard let metadata = try? JSONDecoder().decode(RecordingMetadata.self, from: data) else {
+            return nil
+        }
+        guard let normalizedTitle = RecordingMetadata.normalizedTitle(metadata.title) else {
+            return nil
+        }
+        if normalizedTitle == metadata.title {
+            return metadata
+        }
+        return RecordingMetadata(title: normalizedTitle)
     }
 }

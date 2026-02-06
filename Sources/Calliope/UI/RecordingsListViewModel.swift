@@ -163,8 +163,7 @@ struct RecordingItem: Identifiable, Equatable {
 
     var title: String? {
         guard let title = metadata?.title else { return nil }
-        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? nil : trimmed
+        return RecordingMetadata.normalizedTitle(title)
     }
 
     var detailMetadataText: String {
@@ -276,12 +275,12 @@ struct RecordingItem: Identifiable, Equatable {
         modifiedAt: Date? = nil
     ) -> String {
         let name = url.deletingPathExtension().lastPathComponent
-        if let title = metadata?.title.trimmingCharacters(in: .whitespacesAndNewlines),
-           !title.isEmpty {
+        if let title = metadata?.title,
+           let normalizedTitle = RecordingMetadata.normalizedTitle(title) {
             if let segmentInfo = segmentInfo(from: name) {
-                return "\(title) (Part \(segmentInfo.partLabel))"
+                return "\(normalizedTitle) (Part \(segmentInfo.partLabel))"
             }
-            return title
+            return normalizedTitle
         }
         if let sessionDate = timestampDate(from: name) ?? modifiedAt {
             let sessionTitle = defaultSessionTitle(for: sessionDate)

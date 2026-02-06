@@ -44,6 +44,15 @@ final class RecordingItemTests: XCTestCase {
         XCTAssertEqual(displayName, "Team Sync")
     }
 
+    func testDisplayNameNormalizesMetadataTitle() {
+        let url = URL(fileURLWithPath: "/tmp/recording_123_ABC.m4a")
+        let metadata = RecordingMetadata(title: "  Weekly \n Review  ")
+
+        let displayName = RecordingItem.displayName(for: url, metadata: metadata)
+
+        XCTAssertEqual(displayName, "Weekly Review")
+    }
+
     func testDisplayNameUsesMetadataTitleWithPartLabelForSegments() {
         let url = URL(fileURLWithPath: "/tmp/recording_123_ABC_session-1234567890abcdef_part-02.m4a")
         let metadata = RecordingMetadata(title: "Weekly Review")
