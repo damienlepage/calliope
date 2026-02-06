@@ -1,6 +1,6 @@
 ---
 id: cal-k5xn
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-06T09:10:03Z

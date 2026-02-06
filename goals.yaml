@@ -22,4 +22,5 @@ goals:
   - id: G5
     title: Performance & latency guardrails
     status: BELOW_TARGET
-    notes: []
+    notes:
+      - "2026-02-06: Added rolling processing-latency status (OK/High) during recording."

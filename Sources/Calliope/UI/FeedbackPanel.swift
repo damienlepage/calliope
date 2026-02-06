@@ -16,6 +16,7 @@ struct FeedbackPanel: View {
     let inputLevel: Double
     let showSilenceWarning: Bool
     let showWaitingForSpeech: Bool
+    let processingLatencyStatus: ProcessingLatencyStatus
     let paceMin: Double
     let paceMax: Double
     let sessionDurationText: String?
@@ -87,6 +88,14 @@ struct FeedbackPanel: View {
                 Text("Input Level")
                     .font(.subheadline)
                 InputLevelMeterView(level: inputLevel)
+                HStack(spacing: 6) {
+                    Text("Processing:")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                    Text(processingLatencyStatus.rawValue)
+                        .font(.footnote)
+                        .foregroundColor(processingStatusColor(processingLatencyStatus))
+                }
                 if showSilenceWarning {
                     Text("No mic input detected")
                         .font(.footnote)
@@ -124,6 +133,15 @@ struct FeedbackPanel: View {
             rateText: rateText
         )
     }
+
+    private func processingStatusColor(_ status: ProcessingLatencyStatus) -> Color {
+        switch status {
+        case .ok:
+            return .green
+        case .high:
+            return .orange
+        }
+    }
 }
 
 #if DEBUG
@@ -137,6 +155,7 @@ struct FeedbackPanel_Previews: PreviewProvider {
             inputLevel: 0.4,
             showSilenceWarning: false,
             showWaitingForSpeech: false,
+            processingLatencyStatus: .ok,
             paceMin: Constants.targetPaceMin,
             paceMax: Constants.targetPaceMax,
             sessionDurationText: "02:15",

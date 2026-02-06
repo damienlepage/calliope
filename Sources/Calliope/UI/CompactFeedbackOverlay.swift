@@ -16,6 +16,7 @@ struct CompactFeedbackOverlay: View {
     let inputLevel: Double
     let showSilenceWarning: Bool
     let showWaitingForSpeech: Bool
+    let processingLatencyStatus: ProcessingLatencyStatus
     let paceMin: Double
     let paceMax: Double
     let sessionDurationText: String?
@@ -53,6 +54,14 @@ struct CompactFeedbackOverlay: View {
             }
             InputLevelMeterView(level: inputLevel)
                 .frame(width: 180)
+            HStack(spacing: 6) {
+                Text("Processing:")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Text(processingLatencyStatus.rawValue)
+                    .font(.caption)
+                    .foregroundColor(processingStatusColor(processingLatencyStatus))
+            }
             if showSilenceWarning {
                 Text("No mic input detected")
                     .font(.caption)
@@ -111,6 +120,15 @@ struct CompactFeedbackOverlay: View {
             rateText: rateText
         )
     }
+
+    private func processingStatusColor(_ status: ProcessingLatencyStatus) -> Color {
+        switch status {
+        case .ok:
+            return .green
+        case .high:
+            return .orange
+        }
+    }
 }
 
 #if DEBUG
@@ -124,6 +142,7 @@ struct CompactFeedbackOverlay_Previews: PreviewProvider {
             inputLevel: 0.6,
             showSilenceWarning: false,
             showWaitingForSpeech: false,
+            processingLatencyStatus: .ok,
             paceMin: Constants.targetPaceMin,
             paceMax: Constants.targetPaceMax,
             sessionDurationText: "00:42",

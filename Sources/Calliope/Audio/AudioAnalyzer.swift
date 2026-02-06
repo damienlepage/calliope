@@ -15,21 +15,30 @@ class AudioAnalyzer: ObservableObject {
     @Published var pauseAverageDuration: TimeInterval = 0
     @Published var inputLevel: Double = 0.0
     @Published var silenceWarning: Bool = false
+    @Published var processingLatencyStatus: ProcessingLatencyStatus = .ok
 
     var feedbackPublisher: AnyPublisher<FeedbackState, Never> {
-        Publishers.CombineLatest4($currentPace, $crutchWordCount, $pauseCount, $pauseAverageDuration)
-            .combineLatest($inputLevel)
-            .combineLatest($silenceWarning)
-            .map { combined, warning in
+        let metricsPublisher = Publishers.CombineLatest4(
+            $currentPace,
+            $crutchWordCount,
+            $pauseCount,
+            $pauseAverageDuration
+        )
+
+        return Publishers.CombineLatest3(metricsPublisher, $inputLevel, $silenceWarning)
+            .combineLatest($processingLatencyStatus)
+            .map { combined, latencyStatus in
                 let metrics = combined.0
                 let inputLevel = combined.1
+                let warning = combined.2
                 return FeedbackState(
                     pace: metrics.0,
                     crutchWords: metrics.1,
                     pauseCount: metrics.2,
                     pauseAverageDuration: metrics.3,
                     inputLevel: inputLevel,
-                    showSilenceWarning: warning
+                    showSilenceWarning: warning,
+                    processingLatencyStatus: latencyStatus
                 )
             }
             .eraseToAnyPublisher()
@@ -51,6 +60,7 @@ class AudioAnalyzer: ObservableObject {
     private var paceStats = PaceStatsTracker()
     private var latestCrutchWordCounts: [String: Int] = [:]
     private var latestWordCount: Int = 0
+    private var processingLatencyTracker = ProcessingLatencyTracker()
 
     init(
         summaryWriter: AnalysisSummaryWriting = RecordingManager.shared,
@@ -90,8 +100,10 @@ class AudioAnalyzer: ObservableObject {
                         self.pauseAverageDuration = 0
                         self.inputLevel = 0.0
                         self.silenceWarning = false
+                        self.processingLatencyStatus = .ok
                         self.silenceMonitor.reset()
                         self.paceStats.reset()
+                        self.processingLatencyTracker.reset()
                         self.latestCrutchWordCounts = [:]
                         self.latestWordCount = 0
                         self.recordingStart = self.now()
@@ -111,8 +123,10 @@ class AudioAnalyzer: ObservableObject {
                         self.pauseAverageDuration = 0
                         self.inputLevel = 0.0
                         self.silenceWarning = false
+                        self.processingLatencyStatus = .ok
                         self.recordingStart = nil
                         self.recordingURLForSession = nil
+                        self.processingLatencyTracker.reset()
                         self.latestCrutchWordCounts = [:]
                         self.latestWordCount = 0
                     }
@@ -155,6 +169,7 @@ class AudioAnalyzer: ObservableObject {
 
     func processAudioBuffer(_ buffer: AVAudioPCMBuffer) {
         guard isRecording else { return }
+        let startTime = CFAbsoluteTimeGetCurrent()
         // Process audio buffer for real-time analysis
         // This will be called continuously during recording
         speechTranscriber?.appendAudioBuffer(buffer)
@@ -168,6 +183,13 @@ class AudioAnalyzer: ObservableObject {
                     self?.pauseCount = updatedCount
                 }
                 self?.pauseAverageDuration = averageDuration
+            }
+        }
+        let duration = CFAbsoluteTimeGetCurrent() - startTime
+        let status = processingLatencyTracker.record(duration: duration)
+        if status != processingLatencyStatus {
+            DispatchQueue.main.async { [weak self] in
+                self?.processingLatencyStatus = status
             }
         }
     }
