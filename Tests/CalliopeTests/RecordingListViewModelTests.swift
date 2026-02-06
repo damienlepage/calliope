@@ -21,6 +21,8 @@ final class RecordingListViewModelTests: XCTestCase {
         var backfillTargets: [[URL]] = []
         var deleteOlderCount = 0
         var deleteOlderCutoff: Date?
+        var cleanupCount = 0
+        var cleanupTargets: [[URL]] = []
         var recordingsDirectory = URL(fileURLWithPath: "/tmp/CalliopeRecordings")
         var deleteError: Error?
         var deleteAllError: Error?
@@ -37,6 +39,11 @@ final class RecordingListViewModelTests: XCTestCase {
         func backfillMetadataIfNeeded(for recordings: [URL]) {
             backfillCount += 1
             backfillTargets.append(recordings)
+        }
+
+        func cleanupOrphanedMetadata(for recordings: [URL]) {
+            cleanupCount += 1
+            cleanupTargets.append(recordings)
         }
 
         func deleteRecording(at url: URL) throws {

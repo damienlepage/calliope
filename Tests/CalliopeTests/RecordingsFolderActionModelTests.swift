@@ -14,6 +14,8 @@ final class RecordingsFolderActionModelTests: XCTestCase {
             []
         }
 
+        func cleanupOrphanedMetadata(for recordings: [URL]) {}
+
         func backfillMetadataIfNeeded(for recordings: [URL]) {}
 
         func deleteRecording(at url: URL) throws {}

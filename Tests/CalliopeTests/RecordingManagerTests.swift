@@ -300,6 +300,42 @@ final class RecordingManagerTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: metadataURL.path))
     }
 
+    func testCleanupOrphanedMetadataRemovesMetadataWithoutRecording() throws {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let recordingsDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
+        let metadataURL = recordingsDirectory.appendingPathComponent("orphan.metadata.json")
+        let metadata = RecordingMetadata(title: "Orphaned Session")
+        let data = try JSONEncoder().encode(metadata)
+
+        try data.write(to: metadataURL)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: metadataURL.path))
+
+        manager.cleanupOrphanedMetadata(for: [])
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: metadataURL.path))
+    }
+
+    func testCleanupOrphanedMetadataRemovesInvalidMetadataForRecording() throws {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let recordingsDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
+        let recordingURL = recordingsDirectory.appendingPathComponent("session.m4a")
+        let metadataURL = recordingsDirectory.appendingPathComponent("session.metadata.json")
+
+        FileManager.default.createFile(atPath: recordingURL.path, contents: Data([0x1]))
+        let metadata = RecordingMetadata(title: "   \n ")
+        let data = try JSONEncoder().encode(metadata)
+        try data.write(to: metadataURL)
+
+        manager.cleanupOrphanedMetadata(for: [recordingURL])
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: metadataURL.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: recordingURL.path))
+    }
+
     func testReadMetadataRepairsNormalizedTitle() throws {
         let tempDir = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)

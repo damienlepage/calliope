@@ -296,4 +296,34 @@ extension RecordingManager {
             try? writeMetadata(backfilled, for: recordingURL)
         }
     }
+
+    func cleanupOrphanedMetadata(for recordings: [URL]) {
+        ensureDirectoryExists()
+        var recordingByBaseName: [String: URL] = [:]
+        for recordingURL in recordings {
+            let baseName = recordingURL.deletingPathExtension().lastPathComponent
+            if recordingByBaseName[baseName] == nil {
+                recordingByBaseName[baseName] = recordingURL
+            }
+        }
+        let urls = (try? fileManager.contentsOfDirectory(
+            at: recordingsDirectory,
+            includingPropertiesForKeys: [.isRegularFileKey],
+            options: [.skipsHiddenFiles]
+        )) ?? []
+        for url in urls {
+            guard url.path.lowercased().hasSuffix(".metadata.json") else {
+                continue
+            }
+            let baseName = url
+                .deletingPathExtension()
+                .deletingPathExtension()
+                .lastPathComponent
+            guard let recordingURL = recordingByBaseName[baseName] else {
+                try? fileManager.removeItem(at: url)
+                continue
+            }
+            _ = readMetadata(for: recordingURL)
+        }
+    }
 }

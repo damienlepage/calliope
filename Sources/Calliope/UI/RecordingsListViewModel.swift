@@ -12,6 +12,7 @@ import Foundation
 
 protocol RecordingManaging {
     func getAllRecordings() -> [URL]
+    func cleanupOrphanedMetadata(for recordings: [URL])
     func backfillMetadataIfNeeded(for recordings: [URL])
     func deleteRecording(at url: URL) throws
     func deleteAllRecordings() throws
@@ -846,6 +847,7 @@ final class RecordingListViewModel: ObservableObject {
         guard !isRecording else { return }
         autoCleanIfNeeded()
         let urls = manager.getAllRecordings()
+        manager.cleanupOrphanedMetadata(for: urls)
         manager.backfillMetadataIfNeeded(for: urls)
         loadRecordings(from: urls)
     }
@@ -860,7 +862,10 @@ final class RecordingListViewModel: ObservableObject {
                     self.stopPlayback()
                 } else {
                     self.autoCleanIfNeeded()
-                    self.loadRecordings()
+                    let urls = self.manager.getAllRecordings()
+                    self.manager.cleanupOrphanedMetadata(for: urls)
+                    self.manager.backfillMetadataIfNeeded(for: urls)
+                    self.loadRecordings(from: urls)
                 }
             }
             .store(in: &cancellables)
