@@ -1,8 +1,11 @@
 import AVFoundation
+import Combine
 import XCTest
 @testable import Calliope
 
 final class AudioCaptureTests: XCTestCase {
+    private var cancellables = Set<AnyCancellable>()
+
     func testStartStopUpdatesStatus() {
         let backend = FakeAudioCaptureBackend()
         let fileWriter = FakeAudioFileWriter()
@@ -764,6 +767,43 @@ final class AudioCaptureTests: XCTestCase {
         XCTAssertTrue(backend.removeTapCalled)
         XCTAssertFalse(backend.isStarted)
     }
+
+    func testRecordingPublishesBuffersAndWritesToFile() {
+        let backend = FakeAudioCaptureBackend()
+        let fileWriter = FakeAudioFileWriter()
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let capture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
+            audioFileFactory: { _, _ in fileWriter },
+            captureStartValidationTimeout: 0.2,
+            inputLevelProvider: { _ in 1.0 },
+            fileSizeProvider: { _ in 1 }
+        )
+
+        let bufferExpectation = expectation(description: "buffer published")
+        capture.audioBufferPublisher
+            .sink { _ in
+                bufferExpectation.fulfill()
+            }
+            .store(in: &cancellables)
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+        backend.simulateBuffer()
+
+        wait(for: [bufferExpectation], timeout: 1.0)
+
+        XCTAssertGreaterThan(fileWriter.writeCount, 0)
+        XCTAssertTrue(capture.isRecording)
+        capture.stopRecording()
+    }
 }
 
 private enum TestError: Error {
@@ -859,7 +899,11 @@ private final class FakeAudioCaptureBackend: AudioCaptureBackend {
 }
 
 private final class FakeAudioFileWriter: AudioFileWritable {
+    private(set) var writeCount = 0
+    var onWrite: ((AVAudioPCMBuffer) -> Void)?
+
     func write(from buffer: AVAudioPCMBuffer) throws {
-        return
+        writeCount += 1
+        onWrite?(buffer)
     }
 }
