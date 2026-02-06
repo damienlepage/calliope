@@ -78,6 +78,7 @@ class AudioAnalyzer: ObservableObject {
     private var processingUtilizationTracker = ProcessingUtilizationTracker()
     private var processingLatencyStats = SessionMetricTracker()
     private var processingUtilizationStats = SessionMetricTracker()
+    private var speakingActivityTracker = SpeakingActivityTracker()
 
     init(
         summaryWriter: AnalysisSummaryWriting = RecordingManager.shared,
@@ -138,6 +139,7 @@ class AudioAnalyzer: ObservableObject {
                         self.processingUtilizationTracker.reset()
                         self.processingLatencyStats.reset()
                         self.processingUtilizationStats.reset()
+                        self.speakingActivityTracker.reset()
                         self.latestCrutchWordCounts = [:]
                         self.latestWordCount = 0
                         self.recordingStart = self.now()
@@ -175,6 +177,7 @@ class AudioAnalyzer: ObservableObject {
                         self.processingUtilizationTracker.reset()
                         self.processingLatencyStats.reset()
                         self.processingUtilizationStats.reset()
+                        self.speakingActivityTracker.reset()
                         self.latestCrutchWordCounts = [:]
                         self.latestWordCount = 0
                     }
@@ -239,6 +242,7 @@ class AudioAnalyzer: ObservableObject {
         // This will be called continuously during recording
         speechTranscriber?.appendAudioBuffer(buffer)
         updateInputLevel(from: buffer)
+        speakingActivityTracker.process(buffer)
         if let pauseDetector = pauseDetector {
             let didDetectPause = pauseDetector.detectPause(in: buffer)
             let updatedCount = pauseDetector.getPauseCount()
@@ -395,6 +399,7 @@ class AudioAnalyzer: ObservableObject {
         let paceSummary = paceStats.summary(totalWords: latestWordCount)
         let crutchCounts = latestCrutchWordCounts
         let crutchTotal = crutchCounts.values.reduce(0, +)
+        let speaking = speakingActivityTracker.summary()
         let processing = AnalysisSummary.ProcessingStats(
             latencyAverageMs: processingLatencyStats.average,
             latencyPeakMs: processingLatencyStats.peak,
@@ -415,6 +420,7 @@ class AudioAnalyzer: ObservableObject {
                 totalCount: crutchTotal,
                 counts: crutchCounts
             ),
+            speaking: speaking,
             processing: processing
         )
         for recordingURL in recordingURLs {

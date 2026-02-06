@@ -94,12 +94,40 @@ struct AnalysisSummary: Codable, Equatable {
         let counts: [String: Int]
     }
 
+    struct SpeakingStats: Codable, Equatable {
+        let timeSeconds: Double
+        let turnCount: Int
+
+        init(timeSeconds: Double = 0, turnCount: Int = 0) {
+            self.timeSeconds = timeSeconds
+            self.turnCount = turnCount
+        }
+
+        private enum CodingKeys: String, CodingKey {
+            case timeSeconds
+            case turnCount
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            timeSeconds = try container.decodeIfPresent(Double.self, forKey: .timeSeconds) ?? 0
+            turnCount = try container.decodeIfPresent(Int.self, forKey: .turnCount) ?? 0
+        }
+
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(timeSeconds, forKey: .timeSeconds)
+            try container.encode(turnCount, forKey: .turnCount)
+        }
+    }
+
     let version: Int
     let createdAt: Date
     let durationSeconds: Double
     let pace: PaceStats
     let pauses: PauseStats
     let crutchWords: CrutchWordStats
+    let speaking: SpeakingStats
     let processing: ProcessingStats
 
     init(
@@ -109,6 +137,7 @@ struct AnalysisSummary: Codable, Equatable {
         pace: PaceStats,
         pauses: PauseStats,
         crutchWords: CrutchWordStats,
+        speaking: SpeakingStats = SpeakingStats(),
         processing: ProcessingStats = ProcessingStats()
     ) {
         self.version = version
@@ -117,6 +146,7 @@ struct AnalysisSummary: Codable, Equatable {
         self.pace = pace
         self.pauses = pauses
         self.crutchWords = crutchWords
+        self.speaking = speaking
         self.processing = processing
     }
 
@@ -127,6 +157,7 @@ struct AnalysisSummary: Codable, Equatable {
         case pace
         case pauses
         case crutchWords
+        case speaking
         case processing
     }
 
@@ -138,6 +169,7 @@ struct AnalysisSummary: Codable, Equatable {
         pace = try container.decode(PaceStats.self, forKey: .pace)
         pauses = try container.decode(PauseStats.self, forKey: .pauses)
         crutchWords = try container.decode(CrutchWordStats.self, forKey: .crutchWords)
+        speaking = try container.decodeIfPresent(SpeakingStats.self, forKey: .speaking) ?? SpeakingStats()
         processing = try container.decodeIfPresent(ProcessingStats.self, forKey: .processing) ?? ProcessingStats()
     }
 
@@ -149,6 +181,7 @@ struct AnalysisSummary: Codable, Equatable {
         try container.encode(pace, forKey: .pace)
         try container.encode(pauses, forKey: .pauses)
         try container.encode(crutchWords, forKey: .crutchWords)
+        try container.encode(speaking, forKey: .speaking)
         try container.encode(processing, forKey: .processing)
     }
 }

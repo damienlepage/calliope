@@ -62,6 +62,8 @@ final class AnalysisSummaryTests: XCTestCase {
         )
         XCTAssertEqual(writer.lastSummary?.crutchWords.totalCount, 1)
         XCTAssertEqual(writer.lastSummary?.crutchWords.counts["um"], 1)
+        XCTAssertEqual(writer.lastSummary?.speaking.timeSeconds, 0)
+        XCTAssertEqual(writer.lastSummary?.speaking.turnCount, 0)
         XCTAssertEqual(writer.lastSummary?.processing.latencyAverageMs, 0)
         XCTAssertEqual(writer.lastSummary?.processing.latencyPeakMs, 0)
         XCTAssertEqual(writer.lastSummary?.processing.utilizationAverage, 0)
@@ -93,6 +95,10 @@ final class AnalysisSummaryTests: XCTestCase {
             crutchWords: AnalysisSummary.CrutchWordStats(
                 totalCount: 3,
                 counts: ["um": 2, "you know": 1]
+            ),
+            speaking: AnalysisSummary.SpeakingStats(
+                timeSeconds: 18,
+                turnCount: 4
             ),
             processing: AnalysisSummary.ProcessingStats(
                 latencyAverageMs: 12,
@@ -137,6 +143,10 @@ final class AnalysisSummaryTests: XCTestCase {
             crutchWords: AnalysisSummary.CrutchWordStats(
                 totalCount: 1,
                 counts: ["um": 1]
+            ),
+            speaking: AnalysisSummary.SpeakingStats(
+                timeSeconds: 4,
+                turnCount: 2
             ),
             processing: AnalysisSummary.ProcessingStats(
                 latencyAverageMs: 5,
@@ -187,6 +197,37 @@ final class AnalysisSummaryTests: XCTestCase {
         XCTAssertEqual(decoded.processing.latencyPeakMs, 0)
         XCTAssertEqual(decoded.processing.utilizationAverage, 0)
         XCTAssertEqual(decoded.processing.utilizationPeak, 0)
+    }
+
+    func testSummaryDefaultsSpeakingStatsWhenMissing() throws {
+        let json = """
+        {
+          "version": 1,
+          "createdAt": 1700000000,
+          "durationSeconds": 30,
+          "pace": {
+            "averageWPM": 120,
+            "minWPM": 100,
+            "maxWPM": 140,
+            "totalWords": 60
+          },
+          "pauses": {
+            "count": 2,
+            "thresholdSeconds": 1.2,
+            "averageDurationSeconds": 0.8
+          },
+          "crutchWords": {
+            "totalCount": 1,
+            "counts": {
+              "um": 1
+            }
+          }
+        }
+        """
+        let data = Data(json.utf8)
+        let decoded = try JSONDecoder().decode(AnalysisSummary.self, from: data)
+        XCTAssertEqual(decoded.speaking.timeSeconds, 0)
+        XCTAssertEqual(decoded.speaking.turnCount, 0)
     }
 
     func testSummaryIncludesProcessingMetricsWhenBuffersProcessed() {
