@@ -72,8 +72,12 @@ swift run
 
 ### Creating a macOS App Bundle
 
-For a proper macOS app (with icon, proper app bundle), you can:
-- Use the build script (to be added) to create an app bundle
-- Or use Xcode once to create the project structure, then continue in Cursor
+For a proper macOS app (with icon and bundle metadata), run:
+
+```bash
+./scripts/build-app.sh
+```
+
+The bundle will be created at `dist/Calliope.app`.
 
 The code structure is designed to work with both SPM and Xcode projects.
