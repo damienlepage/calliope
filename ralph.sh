@@ -47,13 +47,6 @@ notes: "Updated by ralph.sh"
 EOF_STATUS
 }
 
-goals_achieved() {
-  if grep -q 'status: "BELOW_TARGET"' "$STATE_DIR/goals.yaml"; then
-    return 1
-  fi
-  return 0
-}
-
 build_prompt() {
   local session_file="$1"
   {
@@ -142,11 +135,6 @@ main_loop() {
     if [[ -f "$STOP_FILE" ]]; then
       log "STOP file detected, exiting"
       rm -f "$STOP_FILE"
-      exit 0
-    fi
-
-    if goals_achieved; then
-      log "All goals achieved, exiting"
       exit 0
     fi
 

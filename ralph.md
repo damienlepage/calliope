@@ -22,21 +22,27 @@ Build Calliope into a privacy-first, low-latency macOS communication coach that 
 - Product requirements are defined in PRD.md.
 
 ## Workflow
-1. Read PRD.md, goals.yaml, status.yaml, lessons-learned.yaml
+1. Read PRD.md, goals.yaml, status.yaml, lessons-learned.yaml.
 2. Use Ticket (`tk`) to decide the best next step:
    - Run `tk ready` to see unblocked work.
    - If multiple are ready, prefer lowest priority number (highest priority), then pick the oldest ready ticket.
-   - If none are ready, use `tk create` to generate the next batch of tasks from PRD.md and goals with clear acceptance criteria, priorities, and dependencies.
+   - If none are ready, and only then:
+     - Analyze `goals.yaml` and identify the next goal with `BELOW_TARGET` status to focus on.
+     - Create the next batch of tickets with clear acceptance criteria, priorities, and dependencies that will move that goal toward `AT_TARGET`.
 3. Pick ONE ready ticket, read it with `tk show <id>`, and complete it end-to-end.
 4. Make minimal changes, update tests or add small verification steps.
 5. Run `swift test` when feasible.
 6. Update ticket status with `tk status <id> <status>` and note any new lessons.
 7. Update goals/status only if meaningfully changed.
-8. Commit all changes in the repository with the details of the iteration.
+8. If (and only if) all goals are `AT_TARGET`, analyze PRD.md and the current project to create the next goals in `goals.yaml` that move the project toward completion. Evaluate:
+   - Project structure (directory layout, key files, entry points).
+   - Architecture (component organization and interactions).
+   - Existing patterns (code conventions, testing approach, error handling).
+   - Current state (what works, what's incomplete, technical debt).
+9. Commit all changes in the repository with the details of the iteration.
 
 ## Stopping Conditions
-- No ready tickets and no clear next task.
-- All goals are at target.
+- PRD is fully implemented.
 - Build is broken and needs human guidance.
 - New permissions or risky changes are required.
 
