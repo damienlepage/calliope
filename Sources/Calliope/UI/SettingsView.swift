@@ -30,6 +30,17 @@ struct SettingsView: View {
             hasMicrophoneInput: microphoneDevices.hasMicrophoneInput
         )
         let availableDevices = microphoneDevices.availableMicrophoneDevices
+        let selectedInputLabel = CaptureDiagnosticsFormatter.selectedInputLabel(
+            preferredName: audioCapturePreferencesStore.preferredMicrophoneName,
+            availableNames: microphoneDevices.availableMicrophoneNames,
+            defaultName: microphoneDevices.defaultMicrophoneName
+        )
+        let inputFormatLabel = audioCapture.inputFormatSnapshot.map {
+            CaptureDiagnosticsFormatter.inputFormatLabel(
+                sampleRate: $0.sampleRate,
+                channelCount: $0.channelCount
+            )
+        } ?? "Unknown"
         let preferredName = audioCapturePreferencesStore.preferredMicrophoneName
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
@@ -210,6 +221,15 @@ struct SettingsView: View {
                         "Enable voice isolation (if supported)",
                         isOn: $audioCapturePreferencesStore.voiceIsolationEnabled
                     )
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Capture Diagnostics")
+                            .font(.subheadline)
+                        Text("Backend: \(audioCapture.backendStatus.message)")
+                        Text("Selected Input: \(selectedInputLabel)")
+                        Text("Format: \(inputFormatLabel)")
+                    }
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
                     Button("Test Mic") {
                         onRunMicTest()
                     }
@@ -226,6 +246,24 @@ struct SettingsView: View {
             .padding()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .onAppear {
+            audioCapture.refreshDiagnostics()
+        }
+        .onChange(of: audioCapturePreferencesStore.voiceIsolationEnabled) { _ in
+            audioCapture.refreshDiagnostics()
+        }
+        .onChange(of: audioCapturePreferencesStore.preferredMicrophoneName) { _ in
+            audioCapture.refreshDiagnostics()
+        }
+        .onChange(of: microphoneDevices.availableMicrophoneNames) { _ in
+            audioCapture.refreshDiagnostics()
+        }
+        .onChange(of: audioCapture.isRecording) { _ in
+            audioCapture.refreshDiagnostics()
+        }
+        .onChange(of: audioCapture.isTestingMic) { _ in
+            audioCapture.refreshDiagnostics()
+        }
     }
 
     private func crutchWordsBinding() -> Binding<String> {

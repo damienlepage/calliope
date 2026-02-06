@@ -310,6 +310,7 @@ class AudioCapture: NSObject, ObservableObject {
     @Published private(set) var inputDeviceName: String = "Unknown Microphone"
     @Published private(set) var backendStatus: AudioCaptureBackendStatus = .standard
     @Published private(set) var deviceSelectionMessage: String?
+    @Published private(set) var inputFormatSnapshot: AudioInputFormatSnapshot?
 
     private let bufferSubject = PassthroughSubject<AVAudioPCMBuffer, Never>()
     var audioBufferPublisher: AnyPublisher<AVAudioPCMBuffer, Never> {
@@ -490,6 +491,7 @@ class AudioCapture: NSObject, ObservableObject {
             backend: backend
         )
         refreshInputDeviceName(from: backend)
+        refreshInputFormat(from: backend)
         let recordingFormat = backend.inputFormat
         backend.setConfigurationChangeHandler { [weak self] in
             self?.handleConfigurationChange()
@@ -595,6 +597,7 @@ class AudioCapture: NSObject, ObservableObject {
             backend: backend
         )
         refreshInputDeviceName(from: backend)
+        refreshInputFormat(from: backend)
         backend.setConfigurationChangeHandler { [weak self] in
             self?.handleMicTestConfigurationChange()
         }
@@ -739,6 +742,22 @@ class AudioCapture: NSObject, ObservableObject {
         }
     }
 
+    private func refreshInputFormat(from backend: AudioCaptureBackend?) {
+        guard let backend else { return }
+        let format = backend.inputFormat
+        let snapshot = AudioInputFormatSnapshot(
+            sampleRate: format.sampleRate,
+            channelCount: Int(format.channelCount)
+        )
+        if Thread.isMainThread {
+            inputFormatSnapshot = snapshot
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                self?.inputFormatSnapshot = snapshot
+            }
+        }
+    }
+
     private func applyPreferredInputDeviceSelection(
         preferredName: String?,
         backend: AudioCaptureBackend
@@ -748,6 +767,31 @@ class AudioCapture: NSObject, ObservableObject {
         if case .fallbackToDefault = result, let preferredName {
             deviceSelectionMessage = "Preferred microphone \"\(preferredName)\" not available. Using system default."
         }
+    }
+
+    func refreshDiagnostics() {
+        if isRecording, let backend {
+            refreshInputDeviceName(from: backend)
+            refreshInputFormat(from: backend)
+            return
+        }
+
+        if isTestingMic, let micTestBackend {
+            refreshInputDeviceName(from: micTestBackend)
+            refreshInputFormat(from: micTestBackend)
+            return
+        }
+
+        let preferences = capturePreferencesStore.current
+        let selection = backendSelector(preferences)
+        backendStatus = selection.status
+        let backend = selection.backend
+        applyPreferredInputDeviceSelection(
+            preferredName: preferences.preferredMicrophoneName,
+            backend: backend
+        )
+        refreshInputDeviceName(from: backend)
+        refreshInputFormat(from: backend)
     }
 
     private func error(for reason: RecordingEligibility.Reason) -> AudioCaptureError {
