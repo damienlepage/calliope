@@ -241,6 +241,20 @@ extension RecordingManager {
         try data.write(to: url, options: [.atomic])
     }
 
+    func writeDefaultMetadataIfNeeded(for recordingURLs: [URL], createdAt: Date) {
+        let defaultTitle = RecordingMetadata.defaultSessionTitle(for: createdAt)
+        guard let normalizedTitle = RecordingMetadata.normalizedTitle(defaultTitle) else {
+            return
+        }
+        let metadata = RecordingMetadata(title: normalizedTitle, createdAt: createdAt)
+        for recordingURL in recordingURLs {
+            if let existing = readMetadata(for: recordingURL), existing.createdAt != nil {
+                continue
+            }
+            try? writeMetadata(metadata, for: recordingURL)
+        }
+    }
+
     func deleteMetadata(for recordingURL: URL) throws {
         let url = metadataURL(for: recordingURL)
         if fileManager.fileExists(atPath: url.path) {

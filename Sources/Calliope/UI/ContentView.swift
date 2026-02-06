@@ -255,6 +255,7 @@ struct ContentView: View {
         }
         .onChange(of: audioCapture.completedRecordingSession) { newValue in
             guard let newValue else { return }
+            writeDefaultMetadata(for: newValue)
             pendingSessionForTitle = newValue
             sessionTitleDraft = ""
         }
@@ -354,6 +355,13 @@ struct ContentView: View {
     private func skipSessionTitle() {
         pendingSessionForTitle = nil
         sessionTitleDraft = ""
+    }
+
+    private func writeDefaultMetadata(for session: CompletedRecordingSession) {
+        RecordingManager.shared.writeDefaultMetadataIfNeeded(
+            for: session.recordingURLs,
+            createdAt: session.createdAt
+        )
     }
 
     private func blockingReasonsText(_ reasons: [RecordingEligibility.Reason]) -> String? {

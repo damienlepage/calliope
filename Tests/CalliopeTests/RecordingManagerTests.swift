@@ -247,6 +247,48 @@ final class RecordingManagerTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: newURL.path))
     }
 
+    func testWriteDefaultMetadataIfNeededCreatesMetadataForSessionURLs() {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let recordingsDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
+
+        let firstURL = recordingsDirectory.appendingPathComponent("recording_1.m4a")
+        let secondURL = recordingsDirectory.appendingPathComponent("recording_2.m4a")
+        FileManager.default.createFile(atPath: firstURL.path, contents: Data([0x1]))
+        FileManager.default.createFile(atPath: secondURL.path, contents: Data([0x1]))
+
+        let createdAt = Date(timeIntervalSince1970: 1234)
+        manager.writeDefaultMetadataIfNeeded(for: [firstURL, secondURL], createdAt: createdAt)
+
+        let expectedTitle = RecordingMetadata.defaultSessionTitle(for: createdAt)
+        let firstMetadata = manager.readMetadata(for: firstURL)
+        let secondMetadata = manager.readMetadata(for: secondURL)
+
+        XCTAssertEqual(firstMetadata?.title, expectedTitle)
+        XCTAssertEqual(firstMetadata?.createdAt, createdAt)
+        XCTAssertEqual(secondMetadata?.title, expectedTitle)
+        XCTAssertEqual(secondMetadata?.createdAt, createdAt)
+    }
+
+    func testWriteDefaultMetadataIfNeededDoesNotOverrideExistingMetadata() throws {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let recordingsDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
+
+        let recordingURL = recordingsDirectory.appendingPathComponent("recording_1.m4a")
+        FileManager.default.createFile(atPath: recordingURL.path, contents: Data([0x1]))
+        let originalCreatedAt = Date(timeIntervalSince1970: 500)
+        let originalMetadata = RecordingMetadata(title: "Team Sync", createdAt: originalCreatedAt)
+        try manager.writeMetadata(originalMetadata, for: recordingURL)
+
+        manager.writeDefaultMetadataIfNeeded(for: [recordingURL], createdAt: Date(timeIntervalSince1970: 999))
+
+        let persisted = manager.readMetadata(for: recordingURL)
+        XCTAssertEqual(persisted, originalMetadata)
+    }
+
     func testWriteAndReadMetadata() throws {
         let tempDir = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)

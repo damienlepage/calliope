@@ -1,6 +1,6 @@
 ---
 id: cal-nizh
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-06T22:39:25Z
