@@ -290,4 +290,69 @@ final class LiveFeedbackViewModelTests: XCTestCase {
 
         wait(for: [expectation], timeout: 1.0)
     }
+
+    func testShowsWaitingForSpeechAfterStaleDelay() {
+        let feedbackSubject = PassthroughSubject<FeedbackState, Never>()
+        let recordingSubject = CurrentValueSubject<Bool, Never>(false)
+        let viewModel = LiveFeedbackViewModel()
+
+        viewModel.bind(
+            feedbackPublisher: feedbackSubject.eraseToAnyPublisher(),
+            recordingPublisher: recordingSubject.eraseToAnyPublisher(),
+            receiveOn: .main,
+            throttleInterval: .milliseconds(0),
+            staleFeedbackDelay: .milliseconds(50)
+        )
+
+        let expectation = expectation(description: "Waiting for speech becomes true")
+
+        viewModel.$showWaitingForSpeech
+            .dropFirst()
+            .filter { $0 }
+            .sink { _ in
+                expectation.fulfill()
+            }
+            .store(in: &cancellables)
+
+        recordingSubject.send(true)
+
+        wait(for: [expectation], timeout: 1.0)
+    }
+
+    func testWaitingForSpeechClearsOnFeedback() {
+        let feedbackSubject = PassthroughSubject<FeedbackState, Never>()
+        let recordingSubject = CurrentValueSubject<Bool, Never>(false)
+        let viewModel = LiveFeedbackViewModel()
+
+        viewModel.bind(
+            feedbackPublisher: feedbackSubject.eraseToAnyPublisher(),
+            recordingPublisher: recordingSubject.eraseToAnyPublisher(),
+            receiveOn: .main,
+            throttleInterval: .milliseconds(0),
+            staleFeedbackDelay: .milliseconds(50)
+        )
+
+        let waitingExpectation = expectation(description: "Waiting for speech becomes true")
+        let clearedExpectation = expectation(description: "Waiting for speech clears on feedback")
+        var sawWaiting = false
+
+        viewModel.$showWaitingForSpeech
+            .dropFirst()
+            .sink { value in
+                if value {
+                    guard !sawWaiting else { return }
+                    sawWaiting = true
+                    waitingExpectation.fulfill()
+                    feedbackSubject.send(FeedbackState(pace: 120, crutchWords: 1, pauseCount: 0))
+                } else if sawWaiting {
+                    clearedExpectation.fulfill()
+                    recordingSubject.send(false)
+                }
+            }
+            .store(in: &cancellables)
+
+        recordingSubject.send(true)
+
+        wait(for: [waitingExpectation, clearedExpectation], timeout: 1.0)
+    }
 }
