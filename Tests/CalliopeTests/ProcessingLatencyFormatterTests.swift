@@ -19,4 +19,16 @@ final class ProcessingLatencyFormatterTests: XCTestCase {
 
         XCTAssertEqual(result, "OK (0 ms avg)")
     }
+
+    func testWarningTextWhenHigh() {
+        let result = ProcessingLatencyFormatter.warningText(status: .high)
+
+        XCTAssertEqual(result, "High processing latency. Feedback may lag.")
+    }
+
+    func testWarningTextWhenOk() {
+        let result = ProcessingLatencyFormatter.warningText(status: .ok)
+
+        XCTAssertNil(result)
+    }
 }

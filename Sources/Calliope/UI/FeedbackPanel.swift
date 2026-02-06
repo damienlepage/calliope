@@ -100,6 +100,11 @@ struct FeedbackPanel: View {
                         .font(.footnote)
                         .foregroundColor(processingStatusColor(processingLatencyStatus))
                 }
+                if let warningText = ProcessingLatencyFormatter.warningText(status: processingLatencyStatus) {
+                    Text(warningText)
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                }
                 if showSilenceWarning {
                     Text("No mic input detected")
                         .font(.footnote)

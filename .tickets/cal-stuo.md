@@ -1,6 +1,6 @@
 ---
 id: cal-stuo
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-06T09:30:00Z
