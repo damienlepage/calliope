@@ -30,6 +30,11 @@ struct SessionView: View {
             hasBlockingReasons: blockingReasonsText != nil,
             activeProfileLabel: activeProfileLabel
         )
+        let titleInfo = RecordingMetadata.normalizedTitleInfo(sessionTitleDraft)
+        let isTitleValid = titleInfo != nil
+        let titleHint = titleInfo?.wasTruncated == true
+            ? "Titles longer than \(RecordingMetadata.maxTitleLength) characters will be shortened."
+            : "Max \(RecordingMetadata.maxTitleLength) characters."
         let captureStatusText = CaptureStatusFormatter.statusText(
             inputDeviceName: audioCapture.inputDeviceName,
             backendStatus: audioCapture.backendStatus,
@@ -110,9 +115,13 @@ struct SessionView: View {
                             .font(.headline)
                         TextField("Optional title", text: $sessionTitleDraft)
                             .textFieldStyle(.roundedBorder)
+                        Text(titleHint)
+                            .font(.footnote)
+                            .foregroundColor(titleInfo?.wasTruncated == true ? .orange : .secondary)
                         HStack(spacing: 12) {
                             Button("Save", action: onSaveSessionTitle)
                                 .buttonStyle(.borderedProminent)
+                                .disabled(!isTitleValid)
                             Button("Skip", action: onSkipSessionTitle)
                                 .buttonStyle(.bordered)
                         }

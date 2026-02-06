@@ -26,4 +26,20 @@ final class RecordingMetadataTests: XCTestCase {
 
         XCTAssertEqual(title?.count, 80)
     }
+
+    func testNormalizedTitleInfoReportsTruncation() {
+        let longTitle = String(repeating: "B", count: 120)
+
+        let info = RecordingMetadata.normalizedTitleInfo(longTitle)
+
+        XCTAssertEqual(info?.normalized.count, RecordingMetadata.maxTitleLength)
+        XCTAssertEqual(info?.wasTruncated, true)
+    }
+
+    func testNormalizedTitleInfoReportsValidInput() {
+        let info = RecordingMetadata.normalizedTitleInfo("Weekly Review")
+
+        XCTAssertEqual(info?.normalized, "Weekly Review")
+        XCTAssertEqual(info?.wasTruncated, false)
+    }
 }

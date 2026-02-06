@@ -335,11 +335,11 @@ struct ContentView: View {
 
     private func saveSessionTitle() {
         guard let pendingSession = pendingSessionForTitle else { return }
-        guard let normalizedTitle = RecordingMetadata.normalizedTitle(sessionTitleDraft) else {
+        guard let titleInfo = RecordingMetadata.normalizedTitleInfo(sessionTitleDraft) else {
             skipSessionTitle()
             return
         }
-        let metadata = RecordingMetadata(title: normalizedTitle)
+        let metadata = RecordingMetadata(title: titleInfo.normalized)
         for url in pendingSession.recordingURLs {
             try? RecordingManager.shared.writeMetadata(metadata, for: url)
         }

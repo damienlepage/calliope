@@ -10,9 +10,14 @@ import Foundation
 struct RecordingMetadata: Codable, Equatable {
     let title: String
 
-    private static let maxTitleLength = 80
+    static let maxTitleLength = 80
 
-    static func normalizedTitle(_ title: String) -> String? {
+    struct TitleInfo: Equatable {
+        let normalized: String
+        let wasTruncated: Bool
+    }
+
+    static func normalizedTitleInfo(_ title: String) -> TitleInfo? {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
         let filteredScalars = trimmed.unicodeScalars.filter {
@@ -21,7 +26,12 @@ struct RecordingMetadata: Codable, Equatable {
         guard !filteredScalars.isEmpty else { return nil }
         let filtered = String(String.UnicodeScalarView(filteredScalars))
         let collapsed = filtered.split(whereSeparator: { $0.isWhitespace }).joined(separator: " ")
+        let wasTruncated = collapsed.count > maxTitleLength
         let limited = String(collapsed.prefix(maxTitleLength))
-        return limited.isEmpty ? nil : limited
+        return limited.isEmpty ? nil : TitleInfo(normalized: limited, wasTruncated: wasTruncated)
+    }
+
+    static func normalizedTitle(_ title: String) -> String? {
+        normalizedTitleInfo(title)?.normalized
     }
 }
