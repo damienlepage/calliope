@@ -72,6 +72,41 @@ final class RecordingItemTests: XCTestCase {
         XCTAssertEqual(displayName, "Weekly Review (Part 02)")
     }
 
+    func testSessionDatePrefersMetadataCreatedAt() {
+        let createdAt = Date(timeIntervalSince1970: 1_700_000_000)
+        let modifiedAt = Date(timeIntervalSince1970: 1_800_000_000)
+        let url = URL(fileURLWithPath: "/tmp/recording.m4a")
+        let metadata = RecordingMetadata(title: "Weekly Review", createdAt: createdAt)
+        let item = RecordingItem(
+            url: url,
+            modifiedAt: modifiedAt,
+            duration: nil,
+            fileSizeBytes: nil,
+            summary: nil,
+            integrityReport: nil,
+            metadata: metadata
+        )
+
+        XCTAssertEqual(item.sessionDate, createdAt)
+    }
+
+    func testSessionDateFallsBackToInferredDate() {
+        let timestampMs = 1_700_000_000_000.0
+        let inferred = Date(timeIntervalSince1970: timestampMs / 1000)
+        let url = URL(fileURLWithPath: "/tmp/recording_\(Int(timestampMs))_ABC.m4a")
+        let modifiedAt = Date(timeIntervalSince1970: 1_800_000_000)
+        let item = RecordingItem(
+            url: url,
+            modifiedAt: modifiedAt,
+            duration: nil,
+            fileSizeBytes: nil,
+            summary: nil,
+            integrityReport: nil
+        )
+
+        XCTAssertEqual(item.sessionDate, inferred)
+    }
+
     func testIntegrityWarningTextUsesMissingSummaryMessage() {
         let report = RecordingIntegrityReport(
             createdAt: Date(timeIntervalSince1970: 0),

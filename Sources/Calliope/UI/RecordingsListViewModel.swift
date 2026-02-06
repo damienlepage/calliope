@@ -82,8 +82,13 @@ struct RecordingItem: Identifiable, Equatable {
     var displayName: String {
         RecordingItem.displayName(for: url, metadata: metadata, modifiedAt: modifiedAt)
     }
+    var sessionDate: Date {
+        metadata?.createdAt
+            ?? RecordingMetadata.inferredCreatedAt(from: url)
+            ?? modifiedAt
+    }
     var detailText: String {
-        let dateText = modifiedAt.formatted(date: .abbreviated, time: .shortened)
+        let dateText = sessionDate.formatted(date: .abbreviated, time: .shortened)
         let details = [
             RecordingItem.formatDuration(duration),
             RecordingItem.formatFileSize(fileSizeBytes)
@@ -169,7 +174,6 @@ struct RecordingItem: Identifiable, Equatable {
     }
 
     var detailMetadataText: String {
-        let sessionDate = metadata?.createdAt ?? modifiedAt
         let dateText = sessionDate.formatted(date: .abbreviated, time: .shortened)
         let details = [
             RecordingItem.formatDuration(duration),
@@ -758,12 +762,12 @@ final class RecordingListViewModel: ObservableObject {
         items.sorted { left, right in
             switch sortOption {
             case .dateNewest:
-                if left.modifiedAt != right.modifiedAt {
-                    return left.modifiedAt > right.modifiedAt
+                if left.sessionDate != right.sessionDate {
+                    return left.sessionDate > right.sessionDate
                 }
             case .dateOldest:
-                if left.modifiedAt != right.modifiedAt {
-                    return left.modifiedAt < right.modifiedAt
+                if left.sessionDate != right.sessionDate {
+                    return left.sessionDate < right.sessionDate
                 }
             case .durationLongest:
                 let leftDuration = left.duration ?? -1
