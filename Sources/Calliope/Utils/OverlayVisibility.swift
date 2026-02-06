@@ -6,7 +6,7 @@
 //
 
 enum OverlayVisibility {
-    static func shouldShowCompactOverlay(isEnabled: Bool) -> Bool {
-        isEnabled
+    static func shouldShowCompactOverlay(isEnabled: Bool, isRecording: Bool) -> Bool {
+        isEnabled && isRecording
     }
 }

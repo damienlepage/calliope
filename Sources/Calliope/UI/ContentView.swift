@@ -99,7 +99,8 @@ struct ContentView: View {
                 }
             }
             if OverlayVisibility.shouldShowCompactOverlay(
-                isEnabled: overlayPreferencesStore.showCompactOverlay
+                isEnabled: overlayPreferencesStore.showCompactOverlay,
+                isRecording: audioCapture.isRecording
             ) {
                 CompactFeedbackOverlay(
                     pace: feedbackViewModel.state.pace,
