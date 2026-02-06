@@ -21,6 +21,19 @@ struct RecordingDetailView: View {
                         .foregroundColor(.secondary)
                 }
 
+                if let warningText = item.integrityWarningText {
+                    HStack(alignment: .top, spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.orange)
+                        Text(warningText)
+                            .font(.subheadline)
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.orange.opacity(0.12))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+
                 if item.summary == nil {
                     Text("No analysis summary available for this recording.")
                         .font(.subheadline)
@@ -110,7 +123,11 @@ private struct DetailSection: View {
         modifiedAt: Date(),
         duration: 180,
         fileSizeBytes: 2048,
-        summary: summary
+        summary: summary,
+        integrityReport: RecordingIntegrityReport(
+            createdAt: Date(),
+            issues: [.missingSummary]
+        )
     )
     RecordingDetailView(item: item)
 }

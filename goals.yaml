@@ -105,6 +105,7 @@ goals:
       - "Validated 2026-02-06: Settings now includes per-app profile manager with list/detail editor, bundle ID guidance, and store-backed normalization."
   - id: G20
     title: Apply per-app feedback profiles based on active conferencing app
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "2026-02-06: Identify the frontmost conferencing app, apply matching per-app profile settings, and surface active profile state in session UI."
+      - "Validated 2026-02-06: ActiveAnalysisPreferencesStore resolves frontmost app profiles while recording; Session + overlay show active profile label with defaults."

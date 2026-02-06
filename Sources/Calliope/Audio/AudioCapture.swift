@@ -63,6 +63,7 @@ enum AudioCaptureStatus: Equatable {
 enum AudioCaptureInterruption: Equatable {
     case systemSleep
     case systemWake
+    case appInactive
     case inputRouteChanged
     case inputDisconnected
     case inputConnected
@@ -73,6 +74,8 @@ enum AudioCaptureInterruption: Equatable {
             return "Recording stopped due to system sleep."
         case .systemWake:
             return "System woke. Press Start to resume."
+        case .appInactive:
+            return "Calliope is inactive. Recording continues in the background."
         case .inputRouteChanged:
             return "Audio input changed. Recording continues with the new device."
         case .inputDisconnected:
@@ -1078,6 +1081,20 @@ class AudioCapture: NSObject, ObservableObject {
                 queue: .main
             ) { [weak self] _ in
                 self?.handleInputConnected()
+            },
+            notificationCenter.addObserver(
+                forName: NSApplication.willResignActiveNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                self?.handleAppWillResignActive()
+            },
+            notificationCenter.addObserver(
+                forName: NSApplication.didBecomeActiveNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                self?.handleAppDidBecomeActive()
             }
         ]
     }
@@ -1104,6 +1121,16 @@ class AudioCapture: NSObject, ObservableObject {
         guard isRecording else { return }
         refreshInputDeviceName(from: backend)
         noteInterruption(.inputConnected)
+    }
+
+    private func handleAppWillResignActive() {
+        guard isRecording || awaitingRecordingStart else { return }
+        noteInterruption(.appInactive)
+    }
+
+    private func handleAppDidBecomeActive() {
+        guard interruption == .appInactive else { return }
+        clearInterruption()
     }
     deinit {
         notificationObservers.forEach(notificationCenter.removeObserver)

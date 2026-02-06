@@ -18,4 +18,37 @@ final class RecordingItemTests: XCTestCase {
 
         XCTAssertEqual(displayName, "recording_123_ABC")
     }
+
+    func testIntegrityWarningTextUsesMissingSummaryMessage() {
+        let report = RecordingIntegrityReport(
+            createdAt: Date(timeIntervalSince1970: 0),
+            issues: [.missingSummary]
+        )
+        let item = RecordingItem(
+            url: URL(fileURLWithPath: "/tmp/recording.m4a"),
+            modifiedAt: Date(timeIntervalSince1970: 0),
+            duration: nil,
+            fileSizeBytes: nil,
+            summary: nil,
+            integrityReport: report
+        )
+
+        XCTAssertEqual(
+            item.integrityWarningText,
+            "Analysis summary is missing. Try recording again to capture full insights."
+        )
+    }
+
+    func testIntegrityWarningTextIsNilWhenNoReport() {
+        let item = RecordingItem(
+            url: URL(fileURLWithPath: "/tmp/recording.m4a"),
+            modifiedAt: Date(timeIntervalSince1970: 0),
+            duration: nil,
+            fileSizeBytes: nil,
+            summary: nil,
+            integrityReport: nil
+        )
+
+        XCTAssertNil(item.integrityWarningText)
+    }
 }

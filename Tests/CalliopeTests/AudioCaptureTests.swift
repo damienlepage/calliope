@@ -837,6 +837,75 @@ final class AudioCaptureTests: XCTestCase {
         XCTAssertEqual(capture.interruption, .systemWake)
     }
 
+    func testAppResignActiveSetsInterruptionWithoutStoppingRecording() {
+        let backend = FakeAudioCaptureBackend()
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let notificationCenter = NotificationCenter()
+        let capture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() },
+            notificationCenter: notificationCenter
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+        backend.simulateBuffer()
+
+        notificationCenter.post(name: NSApplication.willResignActiveNotification, object: nil)
+
+        let resignHandled = expectation(description: "resign active handled")
+        DispatchQueue.main.async {
+            resignHandled.fulfill()
+        }
+        wait(for: [resignHandled], timeout: 1.0)
+
+        XCTAssertTrue(capture.isRecording)
+        XCTAssertEqual(capture.status, .recording)
+        XCTAssertEqual(capture.interruption, .appInactive)
+    }
+
+    func testAppBecomeActiveClearsInactiveInterruption() {
+        let backend = FakeAudioCaptureBackend()
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let notificationCenter = NotificationCenter()
+        let capture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: makePreferencesStore(),
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() },
+            notificationCenter: notificationCenter
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+        backend.simulateBuffer()
+
+        notificationCenter.post(name: NSApplication.willResignActiveNotification, object: nil)
+        notificationCenter.post(name: NSApplication.didBecomeActiveNotification, object: nil)
+
+        let becomeHandled = expectation(description: "become active handled")
+        DispatchQueue.main.async {
+            becomeHandled.fulfill()
+        }
+        wait(for: [becomeHandled], timeout: 1.0)
+
+        XCTAssertTrue(capture.isRecording)
+        XCTAssertEqual(capture.status, .recording)
+        XCTAssertNil(capture.interruption)
+    }
+
     func testInputDisconnectSetsNonBlockingInterruption() {
         let backend = FakeAudioCaptureBackend()
         let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)

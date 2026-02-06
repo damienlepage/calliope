@@ -1,2 +1,2 @@
 last_reviewed: 2026-02-06
-summary: "Added per-app feedback profile manager in Settings with list/detail editor and store-backed normalization."
+summary: "Validated per-app feedback profiles apply during recording with active profile surfaced in session/overlay."
