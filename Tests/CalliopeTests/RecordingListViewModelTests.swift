@@ -213,7 +213,7 @@ final class RecordingListViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.recordingsSummaryText, "1 recording")
     }
 
-    func testConfirmDeleteRecordingReloadsList() {
+    func testConfirmDeleteRecordingReloadsList() throws {
         let urlA = URL(fileURLWithPath: "/tmp/remove.m4a")
         let urlB = URL(fileURLWithPath: "/tmp/keep.wav")
         let manager = MockRecordingManager(recordings: [urlA, urlB])
@@ -228,7 +228,7 @@ final class RecordingListViewModelTests: XCTestCase {
         viewModel.loadRecordings()
         XCTAssertEqual(viewModel.recordings.count, 2)
 
-        let target = viewModel.recordings[0]
+        let target = try XCTUnwrap(viewModel.recordings.first { $0.url == urlA })
         viewModel.requestDelete(target)
         viewModel.confirmDelete(target)
 

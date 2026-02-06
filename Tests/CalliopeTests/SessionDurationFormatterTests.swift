@@ -25,4 +25,9 @@ final class SessionDurationFormatterTests: XCTestCase {
     func testClampsNegativeSecondsToZero() {
         XCTAssertEqual(SessionDurationFormatter.format(seconds: -3), "00:00")
     }
+
+    func testFormatsShortAndLongSessions() {
+        XCTAssertEqual(SessionDurationFormatter.format(seconds: 42), "00:42")
+        XCTAssertEqual(SessionDurationFormatter.format(seconds: 5400), "01:30:00")
+    }
 }

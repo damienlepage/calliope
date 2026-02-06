@@ -57,4 +57,11 @@ enum PaceFeedback {
         let upper = max(minPace, maxPace)
         return "\(Int(lower))-\(Int(upper)) WPM"
     }
+
+    static func valueText(for pace: Double) -> String {
+        guard pace > 0 else {
+            return "—"
+        }
+        return "\(Int(pace)) WPM"
+    }
 }

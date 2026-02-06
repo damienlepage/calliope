@@ -104,16 +104,11 @@ struct CompactFeedbackOverlay: View {
         }
     }
 
-    private func pauseAverageDurationText(_ duration: TimeInterval) -> String {
-        String(format: "%.1fs", duration)
-    }
-
     private func pauseSubtitleText(rateText: String?) -> String {
-        var details = [pauseAverageDurationText(pauseAverageDuration)]
-        if let rateText {
-            details.append(rateText)
-        }
-        return details.joined(separator: " • ")
+        PauseDetailsFormatter.detailsText(
+            averageDuration: pauseAverageDuration,
+            rateText: rateText
+        )
     }
 }
 

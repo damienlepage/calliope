@@ -117,16 +117,11 @@ struct FeedbackPanel: View {
         }
     }
 
-    private func pauseAverageDurationText(_ duration: TimeInterval) -> String {
-        String(format: "%.1fs", duration)
-    }
-
     private func pauseDetailsText(rateText: String?) -> String {
-        var details = ["Avg \(pauseAverageDurationText(pauseAverageDuration))"]
-        if let rateText {
-            details.append(rateText)
-        }
-        return details.joined(separator: " • ")
+        PauseDetailsFormatter.detailsText(
+            averageDuration: pauseAverageDuration,
+            rateText: rateText
+        )
     }
 }
 

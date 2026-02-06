@@ -1,6 +1,6 @@
 ---
 id: cal-ikjc
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-06T07:43:01Z

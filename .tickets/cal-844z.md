@@ -1,6 +1,6 @@
 ---
 id: cal-844z
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-06T07:51:16Z
