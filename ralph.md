@@ -22,9 +22,12 @@ Build Calliope into a privacy-first, low-latency macOS communication coach that 
 - Product requirements are defined in PRD.md.
 
 ## Workflow
-1. Read PRD.md, goals, status, lessons, and ready tickets.
-2. If no ready tickets, use 'tk create' to create the next batch of tickets based on PRD.md and goals.
-3. Pick ONE ready ticket, read it with `tk show <id>` and complete it end-to-end.
+1. Read PRD.md, goals.yaml, status.yaml, lessons-learned.yaml
+2. Use Ticket (`tk`) to decide the best next step:
+   - Run `tk ready` to see unblocked work.
+   - If multiple are ready, prefer lowest priority number (highest priority), then pick the oldest ready ticket.
+   - If none are ready, use `tk create` to generate the next batch of tasks from PRD.md and goals with clear acceptance criteria, priorities, and dependencies.
+3. Pick ONE ready ticket, read it with `tk show <id>`, and complete it end-to-end.
 4. Make minimal changes, update tests or add small verification steps.
 5. Run `swift test` when feasible.
 6. Update ticket status with `tk status <id> <status>` and note any new lessons.
@@ -39,5 +42,13 @@ Build Calliope into a privacy-first, low-latency macOS communication coach that 
 
 ## Task Selection Rules
 - Prefer highest priority ready tickets.
+- If any goals are BELOW_TARGET, prefer tickets that directly move those goals to AT_TARGET.
 - If blocked, create or refine tickets with clear acceptance criteria.
 - If tasks exceed one iteration, split into smaller tickets.
+
+## Priority Scale
+- 0: Blocking issues (build/run failures, privacy violations, critical regressions).
+- 1: Core MVP capabilities (mic capture, real-time feedback, session UI).
+- 2: Supporting UX flows (recordings, settings, permissions, storage access).
+- 3: Quality improvements and polish (visual tweaks, copy, refactors).
+- 4: Nice-to-have or experimental work.

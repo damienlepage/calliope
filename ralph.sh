@@ -59,30 +59,6 @@ build_prompt() {
   {
     echo "You are Ralph, an autonomous dev agent for the Calliope repo."
     echo "Follow ralph.md precisely."
-    echo
-    echo "## Operating Guide"
-    cat ralph.md
-    echo
-    echo "## Product Requirements (PRD.md)"
-    cat PRD.md
-    echo
-    echo "## Goals"
-    cat "$STATE_DIR/goals.yaml"
-    echo
-    echo "## Status"
-    cat "$STATE_DIR/status.yaml"
-    echo
-    echo "## Lessons Learned"
-    cat "$STATE_DIR/lessons-learned.yaml"
-    echo
-    echo "## Ready Tickets"
-    tk ready || true
-    echo
-    echo "## Git Status"
-    git status -sb
-    echo
-    echo "## Recent Commits"
-    git --no-pager log -5 --oneline || true
   } > "$session_file"
 }
 
