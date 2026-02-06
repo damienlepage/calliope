@@ -111,6 +111,7 @@ goals:
       - "Validated 2026-02-06: ActiveAnalysisPreferencesStore resolves frontmost app profiles while recording; Session + overlay show active profile label with defaults."
   - id: G21
     title: Recordings search and sorting
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "2026-02-06: Goal created to add search + basic sorting in recordings list to meet PRD browseability requirements."
+      - "Validated 2026-02-06: Recordings list now supports search and date/duration sorting with unit coverage."
