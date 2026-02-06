@@ -48,4 +48,16 @@ final class ProcessingLatencyTrackerTests: XCTestCase {
         XCTAssertEqual(tracker.record(duration: 0.0), .ok)
         XCTAssertEqual(tracker.average, 0.0, accuracy: 0.0001)
     }
+
+    func testTransitionsThroughHighAndCriticalThresholds() {
+        var tracker = ProcessingLatencyTracker(windowSize: 2, highThreshold: 0.05, criticalThreshold: 0.1)
+
+        XCTAssertEqual(tracker.record(duration: 0.02), .ok)
+        XCTAssertEqual(tracker.record(duration: 0.08), .high)
+        XCTAssertEqual(tracker.status, .high)
+
+        XCTAssertEqual(tracker.record(duration: 0.12), .critical)
+        XCTAssertEqual(tracker.average, 0.10, accuracy: 0.0001)
+        XCTAssertEqual(tracker.status, .critical)
+    }
 }

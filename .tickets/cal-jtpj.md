@@ -1,6 +1,6 @@
 ---
 id: cal-jtpj
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-06T15:11:57Z
