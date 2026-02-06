@@ -5,7 +5,9 @@
 //  Created on [Date]
 //
 
+import AVFoundation
 import Combine
+import Foundation
 
 protocol MicrophoneDeviceProviding {
     func availableMicrophones() -> [AudioInputDevice]

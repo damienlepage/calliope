@@ -35,7 +35,9 @@ enum AudioInputDeviceLookup {
 
     static func setInputDevice(_ deviceID: AudioDeviceID, on inputNode: AVAudioInputNode) -> Bool {
         var deviceID = deviceID
-        let audioUnit = inputNode.auAudioUnit.audioUnit
+        guard let audioUnit = inputNode.audioUnit else {
+            return false
+        }
         let status = AudioUnitSetProperty(
             audioUnit,
             kAudioOutputUnitProperty_CurrentDevice,
