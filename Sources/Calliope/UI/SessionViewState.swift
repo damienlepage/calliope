@@ -9,6 +9,16 @@ struct SessionViewState: Equatable {
     let isRecording: Bool
     let status: AudioCaptureStatus
 
+    var shouldShowTitle: Bool {
+        if isRecording {
+            return true
+        }
+        if case .error = status {
+            return true
+        }
+        return false
+    }
+
     var shouldShowIdlePrompt: Bool {
         !isRecording
     }

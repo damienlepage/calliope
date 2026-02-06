@@ -12,6 +12,7 @@ final class SessionViewStateTests: XCTestCase {
     func testIdleStateShowsPromptAndStart() {
         let state = SessionViewState(isRecording: false, status: .idle)
 
+        XCTAssertFalse(state.shouldShowTitle)
         XCTAssertTrue(state.shouldShowIdlePrompt)
         XCTAssertFalse(state.shouldShowFeedbackPanel)
         XCTAssertFalse(state.shouldShowRecordingIndicators)
@@ -24,6 +25,7 @@ final class SessionViewStateTests: XCTestCase {
     func testRecordingStateShowsFeedbackAndStop() {
         let state = SessionViewState(isRecording: true, status: .recording)
 
+        XCTAssertTrue(state.shouldShowTitle)
         XCTAssertFalse(state.shouldShowIdlePrompt)
         XCTAssertTrue(state.shouldShowFeedbackPanel)
         XCTAssertTrue(state.shouldShowRecordingIndicators)
@@ -36,6 +38,7 @@ final class SessionViewStateTests: XCTestCase {
     func testErrorStateShowsStatusWhenIdle() {
         let state = SessionViewState(isRecording: false, status: .error(.engineStartFailed))
 
+        XCTAssertTrue(state.shouldShowTitle)
         XCTAssertTrue(state.shouldShowIdlePrompt)
         XCTAssertFalse(state.shouldShowFeedbackPanel)
         XCTAssertFalse(state.shouldShowRecordingIndicators)

@@ -23,9 +23,11 @@ struct SessionView: View {
         )
         ScrollView {
             VStack(spacing: 20) {
-                Text("Calliope")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
+                if viewState.shouldShowTitle {
+                    Text("Calliope")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                }
 
                 if viewState.shouldShowStatus {
                     HStack {
