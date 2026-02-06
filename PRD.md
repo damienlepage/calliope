@@ -43,10 +43,43 @@ Calliope is a macOS app that acts as a real-time communication coach during conf
 5. Works as a native macOS app using Swift/SwiftUI, AVFoundation, Speech, and Core Audio.
 
 ## UX Requirements
-- Always-on-top or easily accessible overlay for visual cues.
-- Visual indicators that are glanceable and non-intrusive.
-- Clear start/stop control with status indicator.
-- Simple preferences for sensitivity tuning (pace, crutch words, pause thresholds).
+### Experience Principles
+- Primary actions must be immediately visible without scrolling.
+- The main session screen should contain only session-relevant elements.
+- Configuration and privacy settings belong in Settings, not the main flow.
+- Respect macOS human interface patterns for navigation, Settings, and permissions.
+- The UI should feel calm, focused, and delightful with minimal cognitive load.
+
+### Information Architecture
+- Main window contains the session control and live feedback only.
+- Settings window contains all configuration and one-time permissions state.
+- Recordings are accessible via a dedicated secondary view (tab/segmented control) or separate window, not on the default session screen.
+- Privacy disclosures are shown at first launch and then live in Settings afterward.
+
+### Main Session Screen (Default)
+- Prominent Start/Stop control with clear status messaging.
+- Live feedback panel (pace, crutch words, pauses, input level, elapsed time) while recording.
+- Minimal idle state: a short, friendly prompt and a single primary CTA (Start).
+- No settings, permissions, or recordings list visible by default.
+
+### Settings & Permissions
+- Microphone permission status shown in Settings after first grant.
+- Permission recovery actions (Open System Settings, Grant Access when undetermined) live in Settings, not on the session screen.
+- Privacy guardrails and preferences presented as grouped sections with concise copy.
+- Sensitivity controls remain simple and discoverable, with Reset to Defaults.
+
+### Recordings
+- Recordings list lives in a separate view or window.
+- Only show the recordings list on demand; never block or precede the session start flow.
+- Keep “Open Folder,” playback, and delete actions in the recordings view.
+
+### Navigation & Behavior
+- Use a macOS-standard toolbar with a segmented control or sidebar for:
+  - Session
+  - Recordings
+  - Settings
+- Always default to Session when starting the app.
+- All elements on the Session screen must have a purpose for the current session.
 
 ## Data & Privacy
 - All audio and analysis remain on-device.
