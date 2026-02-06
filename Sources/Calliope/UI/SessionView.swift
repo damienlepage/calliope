@@ -40,21 +40,6 @@ struct SessionView: View {
                             .font(.headline)
                     }
                 }
-                if viewState.shouldShowDeviceSelectionMessage, let message = audioCapture.deviceSelectionMessage {
-                    Text(message)
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
-                }
-                if viewState.shouldShowRecordingIndicators {
-                    Text("Microphone: \(audioCapture.inputDeviceName)")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-                if viewState.shouldShowRecordingIndicators {
-                    Text(audioCapture.backendStatusText)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
                 if viewState.shouldShowIdlePrompt {
                     Text("Ready when you are. Press Start to begin coaching.")
                         .font(.title3)

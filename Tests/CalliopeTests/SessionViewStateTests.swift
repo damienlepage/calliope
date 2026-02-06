@@ -15,9 +15,7 @@ final class SessionViewStateTests: XCTestCase {
         XCTAssertFalse(state.shouldShowTitle)
         XCTAssertTrue(state.shouldShowIdlePrompt)
         XCTAssertFalse(state.shouldShowFeedbackPanel)
-        XCTAssertFalse(state.shouldShowRecordingIndicators)
         XCTAssertFalse(state.shouldShowStatus)
-        XCTAssertFalse(state.shouldShowDeviceSelectionMessage)
         XCTAssertFalse(state.shouldShowBlockingReasons)
         XCTAssertEqual(state.primaryButtonTitle, "Start")
     }
@@ -28,9 +26,7 @@ final class SessionViewStateTests: XCTestCase {
         XCTAssertTrue(state.shouldShowTitle)
         XCTAssertFalse(state.shouldShowIdlePrompt)
         XCTAssertTrue(state.shouldShowFeedbackPanel)
-        XCTAssertTrue(state.shouldShowRecordingIndicators)
         XCTAssertTrue(state.shouldShowStatus)
-        XCTAssertTrue(state.shouldShowDeviceSelectionMessage)
         XCTAssertFalse(state.shouldShowBlockingReasons)
         XCTAssertEqual(state.primaryButtonTitle, "Stop")
     }
@@ -45,9 +41,7 @@ final class SessionViewStateTests: XCTestCase {
         XCTAssertTrue(state.shouldShowTitle)
         XCTAssertFalse(state.shouldShowIdlePrompt)
         XCTAssertFalse(state.shouldShowFeedbackPanel)
-        XCTAssertFalse(state.shouldShowRecordingIndicators)
         XCTAssertTrue(state.shouldShowStatus)
-        XCTAssertTrue(state.shouldShowDeviceSelectionMessage)
         XCTAssertTrue(state.shouldShowBlockingReasons)
         XCTAssertEqual(state.primaryButtonTitle, "Start")
     }
@@ -58,9 +52,7 @@ final class SessionViewStateTests: XCTestCase {
         XCTAssertFalse(state.shouldShowTitle)
         XCTAssertFalse(state.shouldShowIdlePrompt)
         XCTAssertFalse(state.shouldShowFeedbackPanel)
-        XCTAssertFalse(state.shouldShowRecordingIndicators)
         XCTAssertFalse(state.shouldShowStatus)
-        XCTAssertFalse(state.shouldShowDeviceSelectionMessage)
         XCTAssertTrue(state.shouldShowBlockingReasons)
         XCTAssertEqual(state.primaryButtonTitle, "Start")
     }

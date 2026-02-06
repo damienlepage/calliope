@@ -37,10 +37,6 @@ struct SessionViewState: Equatable {
         isRecording
     }
 
-    var shouldShowRecordingIndicators: Bool {
-        isRecording
-    }
-
     var shouldShowStatus: Bool {
         if isRecording {
             return true
@@ -49,10 +45,6 @@ struct SessionViewState: Equatable {
             return true
         }
         return false
-    }
-
-    var shouldShowDeviceSelectionMessage: Bool {
-        shouldShowStatus
     }
 
     var shouldShowBlockingReasons: Bool {
