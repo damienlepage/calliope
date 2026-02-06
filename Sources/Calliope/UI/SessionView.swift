@@ -86,7 +86,7 @@ struct SessionView: View {
                     )
                 }
 
-                if let blockingReasonsText {
+                if viewState.shouldShowBlockingReasons, let blockingReasonsText {
                     Text(blockingReasonsText)
                         .font(.footnote)
                         .foregroundColor(.secondary)

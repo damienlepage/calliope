@@ -31,6 +31,10 @@ struct SessionViewState: Equatable {
         return false
     }
 
+    var shouldShowBlockingReasons: Bool {
+        !isRecording
+    }
+
     var primaryButtonTitle: String {
         isRecording ? "Stop" : "Start"
     }

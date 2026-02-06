@@ -16,6 +16,7 @@ final class SessionViewStateTests: XCTestCase {
         XCTAssertFalse(state.shouldShowFeedbackPanel)
         XCTAssertFalse(state.shouldShowRecordingIndicators)
         XCTAssertFalse(state.shouldShowStatus)
+        XCTAssertTrue(state.shouldShowBlockingReasons)
         XCTAssertEqual(state.primaryButtonTitle, "Start")
     }
 
@@ -26,6 +27,7 @@ final class SessionViewStateTests: XCTestCase {
         XCTAssertTrue(state.shouldShowFeedbackPanel)
         XCTAssertTrue(state.shouldShowRecordingIndicators)
         XCTAssertTrue(state.shouldShowStatus)
+        XCTAssertFalse(state.shouldShowBlockingReasons)
         XCTAssertEqual(state.primaryButtonTitle, "Stop")
     }
 }
