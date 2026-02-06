@@ -11,6 +11,6 @@ goals:
       - "Validated 2026-02-06: Session screen stays minimal (no permission recovery actions); Settings hosts disclosure and permission recovery actions."
   - id: G3
     title: Local recordings management
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
-      - "Recordings list and storage exist; confirm actions and storage cues."
+      - "Validated 2026-02-06: Recordings view includes playback/reveal/delete plus storage path and open-folder action; Settings provides storage path with open-folder access."

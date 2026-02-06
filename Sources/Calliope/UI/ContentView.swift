@@ -24,13 +24,15 @@ struct ContentView: View {
     @State private var isDisclosureSheetPresented: Bool
     private let settingsActionModel: MicrophoneSettingsActionModel
     private let soundSettingsActionModel: SoundSettingsActionModel
+    private let recordingsFolderActionModel: RecordingsFolderActionModel
 
     init(
         audioCapturePreferencesStore: AudioCapturePreferencesStore = AudioCapturePreferencesStore(),
         overlayPreferencesStore: OverlayPreferencesStore = OverlayPreferencesStore(),
         privacyDisclosureStore: PrivacyDisclosureStore = PrivacyDisclosureStore(),
         settingsActionModel: MicrophoneSettingsActionModel = MicrophoneSettingsActionModel(),
-        soundSettingsActionModel: SoundSettingsActionModel = SoundSettingsActionModel()
+        soundSettingsActionModel: SoundSettingsActionModel = SoundSettingsActionModel(),
+        recordingsFolderActionModel: RecordingsFolderActionModel = RecordingsFolderActionModel()
     ) {
         _privacyDisclosureStore = State(initialValue: privacyDisclosureStore)
         _overlayPreferencesStore = StateObject(wrappedValue: overlayPreferencesStore)
@@ -45,6 +47,7 @@ struct ContentView: View {
         )
         self.settingsActionModel = settingsActionModel
         self.soundSettingsActionModel = soundSettingsActionModel
+        self.recordingsFolderActionModel = recordingsFolderActionModel
     }
 
     var body: some View {
@@ -96,6 +99,7 @@ struct ContentView: View {
                         onRequestMicAccess: microphonePermission.requestAccess,
                         onOpenSystemSettings: settingsActionModel.openSystemSettings,
                         onOpenSoundSettings: soundSettingsActionModel.openSoundSettings,
+                        onOpenRecordingsFolder: recordingsFolderActionModel.openRecordingsFolder,
                         onRunMicTest: runMicTest
                     )
                 }

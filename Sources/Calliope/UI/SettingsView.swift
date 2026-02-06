@@ -21,6 +21,7 @@ struct SettingsView: View {
     let onRequestMicAccess: () -> Void
     let onOpenSystemSettings: () -> Void
     let onOpenSoundSettings: () -> Void
+    let onOpenRecordingsFolder: () -> Void
     let onRunMicTest: () -> Void
 
     var body: some View {
@@ -125,6 +126,10 @@ struct SettingsView: View {
                     Text("Recordings are stored locally at \(recordingsPath)")
                         .font(.footnote)
                         .foregroundColor(.secondary)
+                    Button("Open Recordings Folder") {
+                        onOpenRecordingsFolder()
+                    }
+                    .buttonStyle(.bordered)
                     Text(
                         hasAcceptedDisclosure
                             ? "Disclosure accepted."
@@ -259,6 +264,7 @@ struct SettingsView: View {
         onRequestMicAccess: {},
         onOpenSystemSettings: {},
         onOpenSoundSettings: {},
+        onOpenRecordingsFolder: {},
         onRunMicTest: {}
     )
 }
