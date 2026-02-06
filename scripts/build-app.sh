@@ -11,6 +11,7 @@ MACOS_DIR="${CONTENTS_DIR}/MacOS"
 RESOURCES_DIR="${CONTENTS_DIR}/Resources"
 INFO_TEMPLATE="${ROOT_DIR}/scripts/app/Info.plist"
 PKGINFO_TEMPLATE="${ROOT_DIR}/scripts/app/PkgInfo"
+ICON_TEMPLATE="${ROOT_DIR}/scripts/app/AppIcon.icns"
 
 if [[ ! -f "${INFO_TEMPLATE}" ]]; then
   echo "Missing Info.plist template at ${INFO_TEMPLATE}" >&2
@@ -19,6 +20,11 @@ fi
 
 if [[ ! -f "${PKGINFO_TEMPLATE}" ]]; then
   echo "Missing PkgInfo template at ${PKGINFO_TEMPLATE}" >&2
+  exit 1
+fi
+
+if [[ ! -f "${ICON_TEMPLATE}" ]]; then
+  echo "Missing AppIcon.icns at ${ICON_TEMPLATE}" >&2
   exit 1
 fi
 
@@ -35,5 +41,6 @@ mkdir -p "${MACOS_DIR}" "${RESOURCES_DIR}"
 cp "${BUILD_DIR}/${APP_NAME}" "${MACOS_DIR}/${APP_NAME}"
 cp "${INFO_TEMPLATE}" "${CONTENTS_DIR}/Info.plist"
 cp "${PKGINFO_TEMPLATE}" "${CONTENTS_DIR}/PkgInfo"
+cp "${ICON_TEMPLATE}" "${RESOURCES_DIR}/AppIcon.icns"
 
 echo "App bundle created at ${APP_DIR}"

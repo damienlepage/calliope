@@ -10,6 +10,8 @@
     <string>com.calliope.app</string>
     <key>CFBundleExecutable</key>
     <string>Calliope</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
@@ -18,6 +20,8 @@
     <string>1</string>
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.productivity</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>Calliope uses your microphone to provide real-time speaking feedback during calls.</string>
 </dict>
