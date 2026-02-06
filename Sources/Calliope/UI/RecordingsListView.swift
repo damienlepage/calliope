@@ -67,6 +67,11 @@ struct RecordingsListView: View {
                                     .font(.footnote)
                                     .foregroundColor(.secondary)
                             }
+                            if let warningText = item.integrityWarningText {
+                                Text(warningText)
+                                    .font(.footnote)
+                                    .foregroundColor(.orange)
+                            }
                             if isPlaying {
                                 Text("Playing")
                                     .font(.footnote)

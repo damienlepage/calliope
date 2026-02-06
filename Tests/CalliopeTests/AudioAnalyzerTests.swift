@@ -184,6 +184,114 @@ final class AudioAnalyzerTests: XCTestCase {
         XCTAssertEqual(transcriber.startCount, 0)
     }
 
+    func testIntegrityValidationRunsOnStopForAllRecordingURLs() {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            UUID().uuidString,
+            isDirectory: true
+        )
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let suiteName = "AudioAnalyzerTests.AudioCapture.\(UUID().uuidString)"
+        let captureDefaults = UserDefaults(suiteName: suiteName)!
+        captureDefaults.removePersistentDomain(forName: suiteName)
+        let preferencesStore = AudioCapturePreferencesStore(defaults: captureDefaults)
+        let audioCapture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: preferencesStore,
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: FakeAudioCaptureBackend(), status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() },
+            recordingStartConfirmation: { true }
+        )
+        let analysisSuiteName = "AudioAnalyzerTests.Analysis.\(UUID().uuidString)"
+        let analysisDefaults = UserDefaults(suiteName: analysisSuiteName)!
+        analysisDefaults.removePersistentDomain(forName: analysisSuiteName)
+        let analysisPreferences = AnalysisPreferencesStore(defaults: analysisDefaults)
+        let validator = CapturingIntegrityValidator()
+        let analyzer = AudioAnalyzer(
+            summaryWriter: manager,
+            integrityValidator: validator,
+            speechTranscriberFactory: { FakeSpeechTranscriber() }
+        )
+
+        analyzer.setup(audioCapture: audioCapture, preferencesStore: analysisPreferences)
+
+        audioCapture.startRecording(
+            privacyState: PrivacyGuardrails.State(hasAcceptedDisclosure: true),
+            microphonePermission: .authorized,
+            hasMicrophoneInput: true
+        )
+
+        guard let firstURL = audioCapture.currentRecordingURL else {
+            XCTFail("Expected a recording URL")
+            return
+        }
+        let secondURL = tempDir.appendingPathComponent("segment_02.m4a")
+        audioCapture.setRecordingURLForTesting(secondURL)
+        let updateExpectation = expectation(description: "Allow recording URL update")
+        DispatchQueue.main.async { updateExpectation.fulfill() }
+        wait(for: [updateExpectation], timeout: 1.0)
+        audioCapture.stopRecording()
+
+        let expectation = expectation(description: "Allow main queue to process")
+        DispatchQueue.main.async { expectation.fulfill() }
+        wait(for: [expectation], timeout: 1.0)
+
+        let recordedURLs = validator.calls.last ?? []
+        XCTAssertEqual(recordedURLs, [firstURL, secondURL])
+    }
+
+    func testIntegrityValidationRunsOnErrorStop() {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            UUID().uuidString,
+            isDirectory: true
+        )
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let suiteName = "AudioAnalyzerTests.AudioCapture.\(UUID().uuidString)"
+        let captureDefaults = UserDefaults(suiteName: suiteName)!
+        captureDefaults.removePersistentDomain(forName: suiteName)
+        let preferencesStore = AudioCapturePreferencesStore(defaults: captureDefaults)
+        let audioCapture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: preferencesStore,
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: FakeAudioCaptureBackend(), status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() },
+            recordingStartConfirmation: { true },
+            captureStartValidationTimeout: 0.01,
+            captureStartValidationQueue: .main,
+            captureStartValidationThreshold: 1.0,
+            inputLevelProvider: { _ in 0 },
+            fileSizeProvider: { _ in 0 }
+        )
+        let analysisSuiteName = "AudioAnalyzerTests.Analysis.\(UUID().uuidString)"
+        let analysisDefaults = UserDefaults(suiteName: analysisSuiteName)!
+        analysisDefaults.removePersistentDomain(forName: analysisSuiteName)
+        let analysisPreferences = AnalysisPreferencesStore(defaults: analysisDefaults)
+        let validator = CapturingIntegrityValidator()
+        let analyzer = AudioAnalyzer(
+            summaryWriter: manager,
+            integrityValidator: validator,
+            speechTranscriberFactory: { FakeSpeechTranscriber() }
+        )
+
+        analyzer.setup(audioCapture: audioCapture, preferencesStore: analysisPreferences)
+
+        audioCapture.startRecording(
+            privacyState: PrivacyGuardrails.State(hasAcceptedDisclosure: true),
+            microphonePermission: .authorized,
+            hasMicrophoneInput: true
+        )
+
+        let expectation = expectation(description: "Allow error stop to process")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { expectation.fulfill() }
+        wait(for: [expectation], timeout: 1.0)
+
+        XCTAssertFalse(validator.calls.isEmpty)
+        XCTAssertEqual(validator.calls.last?.isEmpty, false)
+    }
+
     #if canImport(AVFoundation)
     func testAudioBufferIgnoredWhenNotRecording() {
         let analyzer = AudioAnalyzer()
@@ -281,4 +389,12 @@ private final class FakeAudioCaptureBackend: AudioCaptureBackend {
 
 private final class FakeAudioFileWriter: AudioFileWritable {
     func write(from buffer: AVAudioPCMBuffer) throws {}
+}
+
+private final class CapturingIntegrityValidator: RecordingIntegrityValidating {
+    private(set) var calls: [[URL]] = []
+
+    func validate(recordingURLs: [URL]) {
+        calls.append(recordingURLs)
+    }
 }

@@ -142,10 +142,34 @@ final class RecordingListViewModelTests: XCTestCase {
             modifiedAt: Date(timeIntervalSince1970: 0),
             duration: nil,
             fileSizeBytes: nil,
-            summary: nil
+            summary: nil,
+            integrityReport: nil
         )
 
         XCTAssertEqual(item.displayName, "recording_123")
+    }
+
+    func testLoadRecordingsSurfacesIntegrityWarnings() {
+        let url = URL(fileURLWithPath: "/tmp/recording_123.m4a")
+        let manager = MockRecordingManager(recordings: [url])
+        let report = RecordingIntegrityReport(
+            createdAt: Date(timeIntervalSince1970: 0),
+            issues: [.missingSummary]
+        )
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) },
+            durationProvider: { _ in nil },
+            fileSizeProvider: { _ in nil },
+            summaryProvider: { _ in nil },
+            integrityReportProvider: { _ in report }
+        )
+
+        viewModel.loadRecordings()
+
+        XCTAssertEqual(viewModel.recordings.first?.integrityWarningText,
+                       "Analysis summary is missing. Try recording again to capture full insights.")
     }
 
     func testRecordingItemFormatDurationUsesMinutesForShortSessions() {
@@ -601,7 +625,8 @@ final class RecordingListViewModelTests: XCTestCase {
             modifiedAt: Date(timeIntervalSince1970: 1),
             duration: 90,
             fileSizeBytes: nil,
-            summary: summary
+            summary: summary,
+            integrityReport: nil
         )
 
         let breakdown = item.crutchBreakdown.map { "\($0.word):\($0.count)" }
@@ -641,7 +666,8 @@ final class RecordingListViewModelTests: XCTestCase {
             modifiedAt: Date(timeIntervalSince1970: 1),
             duration: 120,
             fileSizeBytes: nil,
-            summary: summary
+            summary: summary,
+            integrityReport: nil
         )
 
         XCTAssertEqual(

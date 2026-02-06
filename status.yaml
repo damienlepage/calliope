@@ -1,2 +1,2 @@
 last_reviewed: 2026-02-06
-summary: "Added conferencing readiness guidance copy; recording integrity checks remain."
+summary: "Added stop-time recording integrity validation and list warnings for missing artifacts."
