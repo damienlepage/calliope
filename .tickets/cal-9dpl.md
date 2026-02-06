@@ -1,6 +1,6 @@
 ---
 id: cal-9dpl
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-06T23:09:21Z
