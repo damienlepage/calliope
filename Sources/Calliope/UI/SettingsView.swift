@@ -16,6 +16,7 @@ struct SettingsView: View {
     @ObservedObject var audioCapturePreferencesStore: AudioCapturePreferencesStore
     @ObservedObject var recordingPreferencesStore: RecordingRetentionPreferencesStore
     @ObservedObject var perAppProfileStore: PerAppFeedbackProfileStore
+    @ObservedObject var conferencingVerificationStore: ConferencingCompatibilityVerificationStore
     @ObservedObject var audioCapture: AudioCapture
     @ObservedObject var audioAnalyzer: AudioAnalyzer
     let hasAcceptedDisclosure: Bool
@@ -162,6 +163,28 @@ struct SettingsView: View {
                                 Text("• \(item)")
                                     .font(.footnote)
                                     .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Verification Status")
+                            .font(.subheadline)
+                        ForEach(ConferencingPlatform.allCases) { platform in
+                            VStack(alignment: .leading, spacing: 4) {
+                                Toggle(
+                                    platform.displayName,
+                                    isOn: verificationBinding(for: platform)
+                                )
+                                .toggleStyle(.switch)
+                                if let date = conferencingVerificationStore.verificationDate(for: platform) {
+                                    Text("Verified \(VerificationDateFormatter.format(date))")
+                                        .font(.footnote)
+                                        .foregroundColor(.secondary)
+                                } else {
+                                    Text("Not verified yet.")
+                                        .font(.footnote)
+                                        .foregroundColor(.secondary)
+                                }
                             }
                         }
                     }
@@ -488,6 +511,13 @@ struct SettingsView: View {
         }
     }
 
+    private func verificationBinding(for platform: ConferencingPlatform) -> Binding<Bool> {
+        Binding(
+            get: { conferencingVerificationStore.isVerified(platform) },
+            set: { conferencingVerificationStore.setVerified(platform, isVerified: $0) }
+        )
+    }
+
     private func segmentDurationLabel(hours: Double) -> String {
         let rounded = (hours * 10).rounded() / 10
         if abs(rounded - rounded.rounded()) < 0.01 {
@@ -508,6 +538,7 @@ struct SettingsView: View {
         audioCapturePreferencesStore: AudioCapturePreferencesStore(),
         recordingPreferencesStore: RecordingRetentionPreferencesStore(),
         perAppProfileStore: PerAppFeedbackProfileStore(),
+        conferencingVerificationStore: ConferencingCompatibilityVerificationStore(),
         audioCapture: AudioCapture(capturePreferencesStore: AudioCapturePreferencesStore()),
         audioAnalyzer: AudioAnalyzer(),
         hasAcceptedDisclosure: true,

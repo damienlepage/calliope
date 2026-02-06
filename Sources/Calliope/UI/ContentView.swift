@@ -24,6 +24,7 @@ struct ContentView: View {
     @StateObject private var recordingsViewModel: RecordingListViewModel
     @StateObject private var overlayPreferencesStore: OverlayPreferencesStore
     @StateObject private var perAppProfileStore: PerAppFeedbackProfileStore
+    @StateObject private var conferencingVerificationStore: ConferencingCompatibilityVerificationStore
     @State private var privacyDisclosureStore: PrivacyDisclosureStore
     @State private var quickStartStore: QuickStartStore
     @State private var hasAcceptedDisclosure: Bool
@@ -42,6 +43,7 @@ struct ContentView: View {
         recordingPreferencesStore: RecordingRetentionPreferencesStore = RecordingRetentionPreferencesStore(),
         overlayPreferencesStore: OverlayPreferencesStore = OverlayPreferencesStore(),
         perAppProfileStore: PerAppFeedbackProfileStore = PerAppFeedbackProfileStore(),
+        conferencingVerificationStore: ConferencingCompatibilityVerificationStore = ConferencingCompatibilityVerificationStore(),
         privacyDisclosureStore: PrivacyDisclosureStore = PrivacyDisclosureStore(),
         quickStartStore: QuickStartStore = QuickStartStore(),
         settingsActionModel: MicrophoneSettingsActionModel = MicrophoneSettingsActionModel(),
@@ -66,6 +68,7 @@ struct ContentView: View {
         _audioCapturePreferencesStore = StateObject(wrappedValue: audioCapturePreferencesStore)
         _recordingPreferencesStore = StateObject(wrappedValue: recordingPreferencesStore)
         _perAppProfileStore = StateObject(wrappedValue: perAppProfileStore)
+        _conferencingVerificationStore = StateObject(wrappedValue: conferencingVerificationStore)
         _preferencesStore = StateObject(wrappedValue: basePreferencesStore)
         _frontmostAppMonitor = StateObject(wrappedValue: frontmostAppMonitor)
         _activePreferencesStore = StateObject(wrappedValue: activePreferencesStore)
@@ -150,6 +153,7 @@ struct ContentView: View {
                         audioCapturePreferencesStore: audioCapturePreferencesStore,
                         recordingPreferencesStore: recordingPreferencesStore,
                         perAppProfileStore: perAppProfileStore,
+                        conferencingVerificationStore: conferencingVerificationStore,
                         audioCapture: audioCapture,
                         audioAnalyzer: audioAnalyzer,
                         hasAcceptedDisclosure: hasAcceptedDisclosure,

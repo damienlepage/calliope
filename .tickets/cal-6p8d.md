@@ -1,6 +1,6 @@
 ---
 id: cal-6p8d
-status: ready
+status: closed
 deps: []
 links: []
 created: 2026-02-06T18:10:30Z
