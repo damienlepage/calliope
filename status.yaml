@@ -1,2 +1,2 @@
 last_reviewed: 2026-02-06
-summary: "Added app bundle build script + Info.plist template and covered it with a unit test."
+summary: "Added coverage threshold gating to scripts/coverage.sh and validated it with a unit test."

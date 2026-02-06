@@ -32,4 +32,5 @@ goals:
   - id: G7
     title: Quality gate: reliable tests and coverage confidence
     status: BELOW_TARGET
-    notes: []
+    notes:
+      - "2026-02-06: Added coverage threshold gate (80%) in scripts/coverage.sh with unit test coverage."

@@ -8,6 +8,7 @@ LOCAL_HOME="${ROOT_DIR}/.swift-test-home"
 XDG_CACHE_DIR="${LOCAL_HOME}/.cache"
 BUILD_DIR="${ROOT_DIR}/.build"
 DIST_DIR="${ROOT_DIR}/dist"
+COVERAGE_THRESHOLD="${COVERAGE_THRESHOLD:-80}"
 
 mkdir -p "${MODULE_CACHE_DIR}" "${SWIFTPM_CACHE_DIR}" "${XDG_CACHE_DIR}" "${DIST_DIR}"
 
@@ -55,11 +56,26 @@ if [[ ${#executables[@]} -eq 0 ]]; then
 fi
 
 report_path="${DIST_DIR}/coverage.txt"
+coverage_report=$(xcrun llvm-cov report -instr-profile "${profdata_path}" "${executables[@]}")
+line_coverage=$(printf "%s\n" "${coverage_report}" | awk '$1 == "TOTAL" {print $(NF)}')
+line_coverage="${line_coverage%\%}"
+
+if [[ -z "${line_coverage}" ]]; then
+  echo "Unable to determine line coverage percentage from llvm-cov report." >&2
+  exit 1
+fi
+
 {
   echo "Coverage report generated at $(date '+%Y-%m-%d %H:%M:%S')"
   echo "Profile data: ${profdata_path}"
+  echo "Line coverage: ${line_coverage}% (threshold ${COVERAGE_THRESHOLD}%)"
   echo ""
-  xcrun llvm-cov report -instr-profile "${profdata_path}" "${executables[@]}"
+  printf "%s\n" "${coverage_report}"
 } | tee "${report_path}"
+
+if ! awk -v coverage="${line_coverage}" -v threshold="${COVERAGE_THRESHOLD}" 'BEGIN {exit (coverage + 0 < threshold + 0) ? 1 : 0}'; then
+  echo "Line coverage ${line_coverage}% is below threshold ${COVERAGE_THRESHOLD}%." >&2
+  exit 1
+fi
 
 echo "Wrote coverage report to ${report_path}"
