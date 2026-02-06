@@ -10,16 +10,23 @@ import Combine
 
 protocol MicrophoneDeviceProviding {
     func availableMicrophoneNames() -> [String]
+    func defaultMicrophoneName() -> String?
 }
 
 struct SystemMicrophoneDeviceProvider: MicrophoneDeviceProviding {
     func availableMicrophoneNames() -> [String] {
         AVCaptureDevice.devices(for: .audio).map(\.localizedName)
     }
+
+    func defaultMicrophoneName() -> String? {
+        AVCaptureDevice.default(for: .audio)?.localizedName
+    }
 }
 
 final class MicrophoneDeviceManager: ObservableObject {
     @Published private(set) var hasMicrophoneInput: Bool
+    @Published private(set) var availableMicrophoneNames: [String]
+    @Published private(set) var defaultMicrophoneName: String?
 
     private let provider: MicrophoneDeviceProviding
     private let notificationCenter: NotificationCenter
@@ -31,7 +38,10 @@ final class MicrophoneDeviceManager: ObservableObject {
     ) {
         self.provider = provider
         self.notificationCenter = notificationCenter
-        self.hasMicrophoneInput = !provider.availableMicrophoneNames().isEmpty
+        let names = provider.availableMicrophoneNames()
+        self.hasMicrophoneInput = !names.isEmpty
+        self.availableMicrophoneNames = names
+        self.defaultMicrophoneName = provider.defaultMicrophoneName()
         startMonitoring()
     }
 
@@ -65,12 +75,18 @@ final class MicrophoneDeviceManager: ObservableObject {
     }
 
     private func updateAvailability() {
-        let hasInput = !provider.availableMicrophoneNames().isEmpty
+        let names = provider.availableMicrophoneNames()
+        let hasInput = !names.isEmpty
+        let defaultName = provider.defaultMicrophoneName()
         if Thread.isMainThread {
             hasMicrophoneInput = hasInput
+            availableMicrophoneNames = names
+            defaultMicrophoneName = defaultName
         } else {
             DispatchQueue.main.async { [weak self] in
                 self?.hasMicrophoneInput = hasInput
+                self?.availableMicrophoneNames = names
+                self?.defaultMicrophoneName = defaultName
             }
         }
     }

@@ -58,6 +58,26 @@ struct SettingsView: View {
                         Text("No microphone input device detected.")
                             .font(.footnote)
                             .foregroundColor(.secondary)
+                    } else {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Available Inputs")
+                                .font(.subheadline)
+                            ForEach(microphoneDevices.availableMicrophoneNames, id: \.self) { name in
+                                HStack(spacing: 8) {
+                                    Text(name)
+                                        .font(.footnote)
+                                        .foregroundColor(.secondary)
+                                    if name == microphoneDevices.defaultMicrophoneName {
+                                        Text("Default")
+                                            .font(.caption2)
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 2)
+                                            .background(Color.secondary.opacity(0.15))
+                                            .clipShape(Capsule())
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
