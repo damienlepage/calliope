@@ -46,6 +46,8 @@ Calliope is a macOS app that acts as a real-time communication coach during conf
 3. Secure local storage with clear data ownership by the user.
 4. Minimal CPU usage to avoid degrading call performance.
 5. Works as a native macOS app using Swift/SwiftUI, AVFoundation, Speech, and Core Audio.
+6. Audio capture must not interfere with conferencing app input/output; Calliope can monitor the microphone in parallel without altering the user’s live call audio.
+7. Call quality for other participants must remain unchanged when Calliope is running.
 
 ## UX Requirements
 ### Experience Principles
