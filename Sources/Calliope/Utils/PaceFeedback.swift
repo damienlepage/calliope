@@ -8,6 +8,7 @@
 import Foundation
 
 enum PaceFeedbackLevel {
+    case idle
     case slow
     case target
     case fast
@@ -19,6 +20,9 @@ enum PaceFeedback {
         minPace: Double = Constants.targetPaceMin,
         maxPace: Double = Constants.targetPaceMax
     ) -> PaceFeedbackLevel {
+        if pace <= 0 {
+            return .idle
+        }
         if pace < minPace {
             return .slow
         }
@@ -34,6 +38,8 @@ enum PaceFeedback {
         maxPace: Double = Constants.targetPaceMax
     ) -> String {
         switch level(for: pace, minPace: minPace, maxPace: maxPace) {
+        case .idle:
+            return "Listening"
         case .slow:
             return "Slow"
         case .target:

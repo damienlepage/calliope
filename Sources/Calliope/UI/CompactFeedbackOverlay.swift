@@ -30,7 +30,7 @@ struct CompactFeedbackOverlay: View {
             HStack(spacing: 12) {
                 metric(
                     title: "Pace",
-                    value: "\(Int(pace))",
+                    value: paceValueText(pace),
                     color: paceColor(pace),
                     subtitle: PaceFeedback.label(for: pace, minPace: paceMin, maxPace: paceMax)
                 )
@@ -88,6 +88,8 @@ struct CompactFeedbackOverlay: View {
 
     private func paceColor(_ pace: Double) -> Color {
         switch PaceFeedback.level(for: pace, minPace: paceMin, maxPace: paceMax) {
+        case .idle:
+            return .secondary
         case .slow:
             return .blue
         case .target:
@@ -95,6 +97,13 @@ struct CompactFeedbackOverlay: View {
         case .fast:
             return .red
         }
+    }
+
+    private func paceValueText(_ pace: Double) -> String {
+        guard pace > 0 else {
+            return "—"
+        }
+        return "\(Int(pace))"
     }
 
     private func pauseAverageDurationText(_ duration: TimeInterval) -> String {

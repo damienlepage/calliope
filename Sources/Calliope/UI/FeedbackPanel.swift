@@ -40,7 +40,7 @@ struct FeedbackPanel: View {
                     .font(.subheadline)
                 Spacer()
                 HStack(spacing: 6) {
-                    Text("\(Int(pace)) WPM")
+                    Text(paceValueText(pace))
                         .font(.subheadline)
                         .foregroundColor(paceColor(pace))
                     Text(PaceFeedback.label(for: pace, minPace: paceMin, maxPace: paceMax))
@@ -96,6 +96,8 @@ struct FeedbackPanel: View {
     
     private func paceColor(_ pace: Double) -> Color {
         switch PaceFeedback.level(for: pace, minPace: paceMin, maxPace: paceMax) {
+        case .idle:
+            return .secondary
         case .slow:
             return .blue // Too slow
         case .target:
@@ -103,6 +105,13 @@ struct FeedbackPanel: View {
         case .fast:
             return .red // Too fast
         }
+    }
+
+    private func paceValueText(_ pace: Double) -> String {
+        guard pace > 0 else {
+            return "—"
+        }
+        return "\(Int(pace)) WPM"
     }
 
     private func pauseAverageDurationText(_ duration: TimeInterval) -> String {

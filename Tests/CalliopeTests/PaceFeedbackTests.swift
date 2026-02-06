@@ -2,6 +2,11 @@ import XCTest
 @testable import Calliope
 
 final class PaceFeedbackTests: XCTestCase {
+    func testLevelReturnsIdleForZeroOrNegative() {
+        XCTAssertEqual(PaceFeedback.level(for: 0), .idle)
+        XCTAssertEqual(PaceFeedback.level(for: -5), .idle)
+    }
+
     func testLevelUsesDefaultThresholds() {
         XCTAssertEqual(PaceFeedback.level(for: Constants.targetPaceMin - 1), .slow)
         XCTAssertEqual(PaceFeedback.level(for: Constants.targetPaceMin), .target)
@@ -20,6 +25,7 @@ final class PaceFeedbackTests: XCTestCase {
     }
 
     func testLabelUsesDefaultThresholds() {
+        XCTAssertEqual(PaceFeedback.label(for: 0), "Listening")
         XCTAssertEqual(PaceFeedback.label(for: Constants.targetPaceMin - 1), "Slow")
         XCTAssertEqual(PaceFeedback.label(for: Constants.targetPaceMin), "On Target")
         XCTAssertEqual(PaceFeedback.label(for: Constants.targetPaceMax), "On Target")
@@ -30,6 +36,7 @@ final class PaceFeedbackTests: XCTestCase {
         let minPace = 100.0
         let maxPace = 140.0
 
+        XCTAssertEqual(PaceFeedback.label(for: 0, minPace: minPace, maxPace: maxPace), "Listening")
         XCTAssertEqual(PaceFeedback.label(for: 99, minPace: minPace, maxPace: maxPace), "Slow")
         XCTAssertEqual(PaceFeedback.label(for: 100, minPace: minPace, maxPace: maxPace), "On Target")
         XCTAssertEqual(PaceFeedback.label(for: 140, minPace: minPace, maxPace: maxPace), "On Target")
