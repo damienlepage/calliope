@@ -115,3 +115,8 @@ goals:
     notes:
       - "2026-02-06: Goal created to add search + basic sorting in recordings list to meet PRD browseability requirements."
       - "Validated 2026-02-06: Recordings list now supports search and date/duration sorting with unit coverage."
+  - id: G22
+    title: Optional session titles and metadata
+    status: BELOW_TARGET
+    notes:
+      - "2026-02-06: Add optional session title prompt after stop and persist titles with recording metadata."

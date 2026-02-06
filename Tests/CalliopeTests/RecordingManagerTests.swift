@@ -187,12 +187,14 @@ final class RecordingManagerTests: XCTestCase {
         let wavURL = recordingsDirectory.appendingPathComponent("recording_2.wav")
         let summaryURL = recordingsDirectory.appendingPathComponent("recording_1.summary.json")
         let integrityURL = recordingsDirectory.appendingPathComponent("recording_1.integrity.json")
+        let metadataURL = recordingsDirectory.appendingPathComponent("recording_1.metadata.json")
         let keepURL = recordingsDirectory.appendingPathComponent("notes.txt")
 
         FileManager.default.createFile(atPath: audioURL.path, contents: Data([0x1]))
         FileManager.default.createFile(atPath: wavURL.path, contents: Data([0x1]))
         FileManager.default.createFile(atPath: summaryURL.path, contents: Data([0x1]))
         FileManager.default.createFile(atPath: integrityURL.path, contents: Data([0x1]))
+        FileManager.default.createFile(atPath: metadataURL.path, contents: Data([0x1]))
         FileManager.default.createFile(atPath: keepURL.path, contents: Data([0x1]))
 
         try manager.deleteAllRecordings()
@@ -201,6 +203,7 @@ final class RecordingManagerTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: wavURL.path))
         XCTAssertFalse(FileManager.default.fileExists(atPath: summaryURL.path))
         XCTAssertFalse(FileManager.default.fileExists(atPath: integrityURL.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: metadataURL.path))
         XCTAssertTrue(FileManager.default.fileExists(atPath: keepURL.path))
     }
 
@@ -214,11 +217,13 @@ final class RecordingManagerTests: XCTestCase {
         let newURL = recordingsDirectory.appendingPathComponent("new.m4a")
         let oldSummaryURL = oldURL.deletingPathExtension().appendingPathExtension("summary.json")
         let oldIntegrityURL = oldURL.deletingPathExtension().appendingPathExtension("integrity.json")
+        let oldMetadataURL = oldURL.deletingPathExtension().appendingPathExtension("metadata.json")
 
         FileManager.default.createFile(atPath: oldURL.path, contents: Data([0x1]))
         FileManager.default.createFile(atPath: newURL.path, contents: Data([0x1]))
         FileManager.default.createFile(atPath: oldSummaryURL.path, contents: Data([0x1]))
         FileManager.default.createFile(atPath: oldIntegrityURL.path, contents: Data([0x1]))
+        FileManager.default.createFile(atPath: oldMetadataURL.path, contents: Data([0x1]))
 
         let now = Date()
         try FileManager.default.setAttributes(
@@ -238,6 +243,23 @@ final class RecordingManagerTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: oldURL.path))
         XCTAssertFalse(FileManager.default.fileExists(atPath: oldSummaryURL.path))
         XCTAssertFalse(FileManager.default.fileExists(atPath: oldIntegrityURL.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: oldMetadataURL.path))
         XCTAssertTrue(FileManager.default.fileExists(atPath: newURL.path))
+    }
+
+    func testWriteAndReadMetadata() throws {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let recordingsDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
+        let recordingURL = recordingsDirectory.appendingPathComponent("session.m4a")
+
+        FileManager.default.createFile(atPath: recordingURL.path, contents: Data([0x1]))
+        let metadata = RecordingMetadata(title: "Weekly Sync")
+
+        try manager.writeMetadata(metadata, for: recordingURL)
+
+        let readBack = manager.readMetadata(for: recordingURL)
+        XCTAssertEqual(readBack, metadata)
     }
 }

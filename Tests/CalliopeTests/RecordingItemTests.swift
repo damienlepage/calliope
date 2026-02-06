@@ -19,6 +19,24 @@ final class RecordingItemTests: XCTestCase {
         XCTAssertEqual(displayName, "recording_123_ABC")
     }
 
+    func testDisplayNameUsesMetadataTitleForSingleSegment() {
+        let url = URL(fileURLWithPath: "/tmp/recording_123_ABC.m4a")
+        let metadata = RecordingMetadata(title: "Team Sync")
+
+        let displayName = RecordingItem.displayName(for: url, metadata: metadata)
+
+        XCTAssertEqual(displayName, "Team Sync")
+    }
+
+    func testDisplayNameUsesMetadataTitleWithPartLabelForSegments() {
+        let url = URL(fileURLWithPath: "/tmp/recording_123_ABC_session-1234567890abcdef_part-02.m4a")
+        let metadata = RecordingMetadata(title: "Weekly Review")
+
+        let displayName = RecordingItem.displayName(for: url, metadata: metadata)
+
+        XCTAssertEqual(displayName, "Weekly Review (Part 02)")
+    }
+
     func testIntegrityWarningTextUsesMissingSummaryMessage() {
         let report = RecordingIntegrityReport(
             createdAt: Date(timeIntervalSince1970: 0),

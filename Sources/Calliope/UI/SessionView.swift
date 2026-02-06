@@ -17,6 +17,10 @@ struct SessionView: View {
     let blockingReasonsText: String?
     let storageStatus: RecordingStorageStatus
     let activeProfileLabel: String?
+    let showTitlePrompt: Bool
+    @Binding var sessionTitleDraft: String
+    let onSaveSessionTitle: () -> Void
+    let onSkipSessionTitle: () -> Void
     let onToggleRecording: () -> Void
 
     var body: some View {
@@ -100,6 +104,31 @@ struct SessionView: View {
                     )
                 }
 
+                if showTitlePrompt {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Name this session")
+                            .font(.headline)
+                        TextField("Optional title", text: $sessionTitleDraft)
+                            .textFieldStyle(.roundedBorder)
+                        HStack(spacing: 12) {
+                            Button("Save", action: onSaveSessionTitle)
+                                .buttonStyle(.borderedProminent)
+                            Button("Skip", action: onSkipSessionTitle)
+                                .buttonStyle(.bordered)
+                        }
+                    }
+                    .frame(maxWidth: 320, alignment: .leading)
+                    .padding()
+                    .background(.thinMaterial)
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.secondary.opacity(0.2))
+                    )
+                    .accessibilityElement(children: .contain)
+                    .accessibilityLabel("Session title prompt")
+                }
+
                 HStack(spacing: 20) {
                     Button(action: onToggleRecording) {
                         Text(viewState.primaryButtonTitle)
@@ -137,16 +166,28 @@ struct SessionView: View {
 }
 
 #Preview {
-    SessionView(
-        audioCapture: AudioCapture(capturePreferencesStore: AudioCapturePreferencesStore()),
-        feedbackViewModel: LiveFeedbackViewModel(),
-        preferencesStore: AnalysisPreferencesStore(),
-        sessionDurationText: "00:32",
-        sessionDurationSeconds: 32,
-        canStartRecording: true,
-        blockingReasonsText: nil,
-        storageStatus: .ok,
-        activeProfileLabel: "Profile: Default",
-        onToggleRecording: {}
-    )
+    SessionViewPreview()
+}
+
+private struct SessionViewPreview: View {
+    @State private var sessionTitle = ""
+
+    var body: some View {
+        SessionView(
+            audioCapture: AudioCapture(capturePreferencesStore: AudioCapturePreferencesStore()),
+            feedbackViewModel: LiveFeedbackViewModel(),
+            preferencesStore: AnalysisPreferencesStore(),
+            sessionDurationText: "00:32",
+            sessionDurationSeconds: 32,
+            canStartRecording: true,
+            blockingReasonsText: nil,
+            storageStatus: .ok,
+            activeProfileLabel: "Profile: Default",
+            showTitlePrompt: true,
+            sessionTitleDraft: $sessionTitle,
+            onSaveSessionTitle: {},
+            onSkipSessionTitle: {},
+            onToggleRecording: {}
+        )
+    }
 }

@@ -30,6 +30,8 @@ struct ContentView: View {
     @State private var isDisclosureSheetPresented: Bool
     @State private var isQuickStartSheetPresented: Bool
     @State private var isQuickStartPending: Bool
+    @State private var pendingSessionForTitle: CompletedRecordingSession?
+    @State private var sessionTitleDraft: String = ""
     private let settingsActionModel: MicrophoneSettingsActionModel
     private let soundSettingsActionModel: SoundSettingsActionModel
     private let speechSettingsActionModel: SpeechSettingsActionModel
@@ -126,6 +128,10 @@ struct ContentView: View {
                         blockingReasonsText: blockingReasonsText,
                         storageStatus: audioCapture.storageStatus,
                         activeProfileLabel: activeProfileLabel,
+                        showTitlePrompt: pendingSessionForTitle != nil,
+                        sessionTitleDraft: $sessionTitleDraft,
+                        onSaveSessionTitle: saveSessionTitle,
+                        onSkipSessionTitle: skipSessionTitle,
                         onToggleRecording: toggleRecording
                     )
                 case .recordings:
@@ -247,6 +253,11 @@ struct ContentView: View {
                 isQuickStartPending = false
             }
         }
+        .onChange(of: audioCapture.completedRecordingSession) { newValue in
+            guard let newValue else { return }
+            pendingSessionForTitle = newValue
+            sessionTitleDraft = ""
+        }
         .onChange(of: overlayPreferencesStore.alwaysOnTop) { newValue in
             WindowLevelController.apply(alwaysOnTop: newValue)
         }
@@ -320,6 +331,26 @@ struct ContentView: View {
 
     private func showQuickStart() {
         isQuickStartSheetPresented = true
+    }
+
+    private func saveSessionTitle() {
+        guard let pendingSession = pendingSessionForTitle else { return }
+        guard let normalizedTitle = RecordingMetadata.normalizedTitle(sessionTitleDraft) else {
+            skipSessionTitle()
+            return
+        }
+        let metadata = RecordingMetadata(title: normalizedTitle)
+        for url in pendingSession.recordingURLs {
+            try? RecordingManager.shared.writeMetadata(metadata, for: url)
+        }
+        recordingsViewModel.refreshRecordings()
+        pendingSessionForTitle = nil
+        sessionTitleDraft = ""
+    }
+
+    private func skipSessionTitle() {
+        pendingSessionForTitle = nil
+        sessionTitleDraft = ""
     }
 
     private func blockingReasonsText(_ reasons: [RecordingEligibility.Reason]) -> String? {

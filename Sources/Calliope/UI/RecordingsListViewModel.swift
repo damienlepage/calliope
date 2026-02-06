@@ -74,9 +74,10 @@ struct RecordingItem: Identifiable, Equatable {
     let fileSizeBytes: Int?
     let summary: AnalysisSummary?
     let integrityReport: RecordingIntegrityReport?
+    let metadata: RecordingMetadata?
 
     var id: URL { url }
-    var displayName: String { RecordingItem.displayName(for: url) }
+    var displayName: String { RecordingItem.displayName(for: url, metadata: metadata) }
     var detailText: String {
         let dateText = modifiedAt.formatted(date: .abbreviated, time: .shortened)
         let details = [
@@ -132,6 +133,12 @@ struct RecordingItem: Identifiable, Equatable {
         case (false, false):
             return nil
         }
+    }
+
+    var title: String? {
+        guard let title = metadata?.title else { return nil }
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
     }
 
     var detailMetadataText: String {
@@ -219,8 +226,33 @@ struct RecordingItem: Identifiable, Equatable {
             .map { (word: $0.key, count: $0.value) }
     }
 
-    static func displayName(for url: URL) -> String {
+    init(
+        url: URL,
+        modifiedAt: Date,
+        duration: TimeInterval?,
+        fileSizeBytes: Int?,
+        summary: AnalysisSummary?,
+        integrityReport: RecordingIntegrityReport?,
+        metadata: RecordingMetadata? = nil
+    ) {
+        self.url = url
+        self.modifiedAt = modifiedAt
+        self.duration = duration
+        self.fileSizeBytes = fileSizeBytes
+        self.summary = summary
+        self.integrityReport = integrityReport
+        self.metadata = metadata
+    }
+
+    static func displayName(for url: URL, metadata: RecordingMetadata? = nil) -> String {
         let name = url.deletingPathExtension().lastPathComponent
+        if let title = metadata?.title.trimmingCharacters(in: .whitespacesAndNewlines),
+           !title.isEmpty {
+            if let segmentInfo = segmentInfo(from: name) {
+                return "\(title) (Part \(segmentInfo.partLabel))"
+            }
+            return title
+        }
         if let segmentLabel = segmentLabel(from: name) {
             return segmentLabel
         }
@@ -304,15 +336,27 @@ struct RecordingItem: Identifiable, Equatable {
         return String(format: "Util %.0f/%.0f%%", averagePercent, peakPercent)
     }
 
-    private static func segmentLabel(from name: String) -> String? {
+    private struct SegmentInfo {
+        let sessionID: String
+        let partLabel: String
+    }
+
+    private static func segmentInfo(from name: String) -> SegmentInfo? {
         guard let sessionRange = name.range(of: "_session-") else { return nil }
         let sessionPart = name[sessionRange.upperBound...]
         guard let partRange = sessionPart.range(of: "_part-") else { return nil }
         let sessionID = String(sessionPart[..<partRange.lowerBound])
         let partLabel = String(sessionPart[partRange.upperBound...])
         guard !sessionID.isEmpty, !partLabel.isEmpty else { return nil }
-        let shortSessionID = sessionID.count > 8 ? String(sessionID.prefix(8)) : sessionID
-        return "Session \(shortSessionID) Part \(partLabel)"
+        return SegmentInfo(sessionID: sessionID, partLabel: partLabel)
+    }
+
+    private static func segmentLabel(from name: String) -> String? {
+        guard let segmentInfo = segmentInfo(from: name) else { return nil }
+        let shortSessionID = segmentInfo.sessionID.count > 8
+            ? String(segmentInfo.sessionID.prefix(8))
+            : segmentInfo.sessionID
+        return "Session \(shortSessionID) Part \(segmentInfo.partLabel)"
     }
 }
 
@@ -508,6 +552,7 @@ final class RecordingListViewModel: ObservableObject {
     private let fileSizeProvider: @MainActor (URL) -> Int?
     private let summaryProvider: @MainActor (URL) -> AnalysisSummary?
     private let integrityReportProvider: @MainActor (URL) -> RecordingIntegrityReport?
+    private let metadataProvider: @MainActor (URL) -> RecordingMetadata?
     private let mostRecentDateTextProvider: @MainActor (Date) -> String
     private let audioPlayerFactory: (URL) throws -> AudioPlaying
     private var audioPlayer: AudioPlaying?
@@ -678,6 +723,7 @@ final class RecordingListViewModel: ObservableObject {
         fileSizeProvider: @escaping @MainActor (URL) -> Int? = RecordingListViewModel.defaultFileSize,
         summaryProvider: @escaping @MainActor (URL) -> AnalysisSummary? = RecordingListViewModel.defaultSummary,
         integrityReportProvider: @escaping @MainActor (URL) -> RecordingIntegrityReport? = RecordingListViewModel.defaultIntegrityReport,
+        metadataProvider: @escaping @MainActor (URL) -> RecordingMetadata? = RecordingListViewModel.defaultMetadata,
         mostRecentDateTextProvider: @escaping @MainActor (Date) -> String = RecordingListViewModel.defaultMostRecentDateText,
         recordingPreferencesStore: RecordingRetentionPreferencesStore = RecordingRetentionPreferencesStore(),
         now: @escaping () -> Date = Date.init,
@@ -694,6 +740,7 @@ final class RecordingListViewModel: ObservableObject {
         self.fileSizeProvider = fileSizeProvider
         self.summaryProvider = summaryProvider
         self.integrityReportProvider = integrityReportProvider
+        self.metadataProvider = metadataProvider
         self.mostRecentDateTextProvider = mostRecentDateTextProvider
         self.audioPlayerFactory = audioPlayerFactory
     }
@@ -709,7 +756,8 @@ final class RecordingListViewModel: ObservableObject {
                 duration: durationProvider(url),
                 fileSizeBytes: fileSizeProvider(url),
                 summary: summaryProvider(url),
-                integrityReport: integrityReportProvider(url)
+                integrityReport: integrityReportProvider(url),
+                metadata: metadataProvider(url)
             )
         }
         if let activePlaybackURL,
@@ -891,5 +939,9 @@ final class RecordingListViewModel: ObservableObject {
 
     private static func defaultIntegrityReport(_ url: URL) -> RecordingIntegrityReport? {
         RecordingManager.shared.readIntegrityReport(for: url)
+    }
+
+    private static func defaultMetadata(_ url: URL) -> RecordingMetadata? {
+        RecordingManager.shared.readMetadata(for: url)
     }
 }

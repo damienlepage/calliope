@@ -82,6 +82,7 @@ class RecordingManager {
         try fileManager.removeItem(at: url)
         try? deleteSummary(for: url)
         try? deleteIntegrityReport(for: url)
+        try? deleteMetadata(for: url)
     }
 
     func deleteAllRecordings() throws {
@@ -102,7 +103,9 @@ class RecordingManager {
                 }
                 continue
             }
-            if path.hasSuffix(".summary.json") || path.hasSuffix(".integrity.json") {
+            if path.hasSuffix(".summary.json")
+                || path.hasSuffix(".integrity.json")
+                || path.hasSuffix(".metadata.json") {
                 guard fileManager.fileExists(atPath: url.path) else {
                     continue
                 }
@@ -209,5 +212,36 @@ extension RecordingManager: RecordingIntegrityWriting {
             return nil
         }
         return try? JSONDecoder().decode(RecordingIntegrityReport.self, from: data)
+    }
+}
+
+extension RecordingManager {
+    func metadataURL(for recordingURL: URL) -> URL {
+        recordingURL
+            .deletingPathExtension()
+            .appendingPathExtension("metadata.json")
+    }
+
+    func writeMetadata(_ metadata: RecordingMetadata, for recordingURL: URL) throws {
+        let url = metadataURL(for: recordingURL)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        let data = try encoder.encode(metadata)
+        try data.write(to: url, options: [.atomic])
+    }
+
+    func deleteMetadata(for recordingURL: URL) throws {
+        let url = metadataURL(for: recordingURL)
+        if fileManager.fileExists(atPath: url.path) {
+            try fileManager.removeItem(at: url)
+        }
+    }
+
+    func readMetadata(for recordingURL: URL) -> RecordingMetadata? {
+        let url = metadataURL(for: recordingURL)
+        guard let data = try? Data(contentsOf: url) else {
+            return nil
+        }
+        return try? JSONDecoder().decode(RecordingMetadata.self, from: data)
     }
 }

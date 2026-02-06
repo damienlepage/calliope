@@ -179,6 +179,32 @@ final class RecordingListViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.recordings.map(\.url), [urlB, urlA])
     }
 
+    func testSearchMatchesMetadataTitle() {
+        let urlA = URL(fileURLWithPath: "/tmp/recording_a.m4a")
+        let urlB = URL(fileURLWithPath: "/tmp/recording_b.m4a")
+        let manager = MockRecordingManager(recordings: [urlA, urlB])
+        let dates: [URL: Date] = [
+            urlA: Date(timeIntervalSince1970: 10),
+            urlB: Date(timeIntervalSince1970: 20)
+        ]
+        let metadata: [URL: RecordingMetadata] = [
+            urlB: RecordingMetadata(title: "Weekly Review")
+        ]
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { dates[$0] ?? .distantPast },
+            durationProvider: { _ in nil },
+            fileSizeProvider: { _ in nil },
+            metadataProvider: { metadata[$0] }
+        )
+
+        viewModel.loadRecordings()
+        viewModel.searchText = "weekly"
+
+        XCTAssertEqual(viewModel.recordings.map(\.url), [urlB])
+    }
+
     func testSortOptionOrdersByDurationWithMissingDurationsLast() {
         let urlA = URL(fileURLWithPath: "/tmp/long.m4a")
         let urlB = URL(fileURLWithPath: "/tmp/short.m4a")
