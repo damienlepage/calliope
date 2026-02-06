@@ -209,7 +209,7 @@ final class RecordingListViewModel: ObservableObject {
         let formatter = DateComponentsFormatter()
         formatter.allowedUnits = [.hour, .minute, .second]
         formatter.unitsStyle = .positional
-        formatter.zeroFormattingBehavior = .pad
+        formatter.zeroFormattingBehavior = [.pad, .dropLeading]
         return formatter
     }()
 
@@ -221,7 +221,13 @@ final class RecordingListViewModel: ObservableObject {
 
     private static func formatTotalDuration(_ duration: TimeInterval) -> String? {
         if duration >= 3600 {
-            return totalDurationLongFormatter.string(from: duration)
+            guard let formatted = totalDurationLongFormatter.string(from: duration) else {
+                return nil
+            }
+            if formatted.hasPrefix("0") && formatted.count > 1 {
+                return String(formatted.dropFirst())
+            }
+            return formatted
         }
         return totalDurationFormatter.string(from: duration)
     }
