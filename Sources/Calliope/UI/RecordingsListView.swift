@@ -26,6 +26,11 @@ struct RecordingsListView: View {
                         .foregroundColor(.secondary)
                 }
                 Spacer()
+                Button("Refresh") {
+                    viewModel.refreshRecordings()
+                }
+                .buttonStyle(.bordered)
+                .disabled(viewModel.isRecording)
                 Button("Open Folder") {
                     viewModel.openRecordingsFolder()
                 }
@@ -82,6 +87,7 @@ struct RecordingsListView: View {
                             viewModel.requestDelete(item)
                         }
                         .buttonStyle(.bordered)
+                        .disabled(isRecording)
                     }
                     .padding(.vertical, 4)
                 }

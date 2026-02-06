@@ -135,6 +135,19 @@ final class RecordingListViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.recordings.map(\.fileSizeBytes), [sizes[urlA]!, sizes[urlB]!])
     }
 
+    func testRecordingItemDisplayNameStripsExtension() {
+        let url = URL(fileURLWithPath: "/tmp/recording_123.m4a")
+        let item = RecordingItem(
+            url: url,
+            modifiedAt: Date(timeIntervalSince1970: 0),
+            duration: nil,
+            fileSizeBytes: nil,
+            summary: nil
+        )
+
+        XCTAssertEqual(item.displayName, "recording_123")
+    }
+
     func testRecordingsSummaryTextIncludesCountAndTotalDuration() {
         let urlA = URL(fileURLWithPath: "/tmp/a.m4a")
         let urlB = URL(fileURLWithPath: "/tmp/b.wav")
@@ -247,6 +260,60 @@ final class RecordingListViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.recordings.map(\.url), [urlA])
     }
 
+    func testRequestDeleteWhileRecordingShowsMessageAndKeepsPendingNil() {
+        let url = URL(fileURLWithPath: "/tmp/active.m4a")
+        let manager = MockRecordingManager(recordings: [url])
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) },
+            durationProvider: { _ in nil },
+            fileSizeProvider: { _ in nil }
+        )
+        let subject = PassthroughSubject<Bool, Never>()
+
+        viewModel.bind(recordingPublisher: subject.eraseToAnyPublisher())
+        viewModel.loadRecordings()
+        subject.send(true)
+
+        let item = viewModel.recordings[0]
+        viewModel.requestDelete(item)
+
+        XCTAssertNil(viewModel.pendingDelete)
+        XCTAssertEqual(
+            viewModel.deleteErrorMessage,
+            RecordingListViewModel.deleteWhileRecordingMessage
+        )
+        XCTAssertTrue(manager.deleted.isEmpty)
+    }
+
+    func testConfirmDeleteWhileRecordingDoesNotDelete() {
+        let url = URL(fileURLWithPath: "/tmp/active-delete.m4a")
+        let manager = MockRecordingManager(recordings: [url])
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) },
+            durationProvider: { _ in nil },
+            fileSizeProvider: { _ in nil }
+        )
+        let subject = PassthroughSubject<Bool, Never>()
+
+        viewModel.bind(recordingPublisher: subject.eraseToAnyPublisher())
+        viewModel.loadRecordings()
+        subject.send(true)
+
+        let item = viewModel.recordings[0]
+        viewModel.confirmDelete(item)
+
+        XCTAssertEqual(viewModel.recordings.map(\.url), [url])
+        XCTAssertEqual(
+            viewModel.deleteErrorMessage,
+            RecordingListViewModel.deleteWhileRecordingMessage
+        )
+        XCTAssertTrue(manager.deleted.isEmpty)
+    }
+
     func testReloadsWhenRecordingStops() {
         let urlA = URL(fileURLWithPath: "/tmp/a.m4a")
         let manager = MockRecordingManager(recordings: [urlA])
@@ -271,6 +338,47 @@ final class RecordingListViewModelTests: XCTestCase {
         XCTAssertEqual(manager.loadCount, 1)
         XCTAssertEqual(viewModel.recordings.map(\.url), [urlA])
         XCTAssertFalse(viewModel.isRecording)
+    }
+
+    func testRefreshRecordingsLoadsWhenIdle() {
+        let url = URL(fileURLWithPath: "/tmp/refresh.m4a")
+        let manager = MockRecordingManager(recordings: [url])
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) },
+            durationProvider: { _ in nil },
+            fileSizeProvider: { _ in nil }
+        )
+
+        XCTAssertEqual(manager.loadCount, 0)
+
+        viewModel.refreshRecordings()
+
+        XCTAssertEqual(manager.loadCount, 1)
+        XCTAssertEqual(viewModel.recordings.map(\.url), [url])
+    }
+
+    func testRefreshRecordingsWhileRecordingDoesNotReload() {
+        let url = URL(fileURLWithPath: "/tmp/refresh-recording.m4a")
+        let manager = MockRecordingManager(recordings: [url])
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) },
+            durationProvider: { _ in nil },
+            fileSizeProvider: { _ in nil }
+        )
+        let subject = PassthroughSubject<Bool, Never>()
+
+        viewModel.bind(recordingPublisher: subject.eraseToAnyPublisher())
+        subject.send(true)
+
+        viewModel.refreshRecordings()
+
+        XCTAssertEqual(manager.loadCount, 0)
+        XCTAssertTrue(viewModel.isRecording)
+        XCTAssertTrue(viewModel.recordings.isEmpty)
     }
 
     func testOpenRecordingsFolderSelectsDirectory() {

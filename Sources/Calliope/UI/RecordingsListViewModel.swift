@@ -73,7 +73,7 @@ struct RecordingItem: Identifiable, Equatable {
     let summary: AnalysisSummary?
 
     var id: URL { url }
-    var displayName: String { url.lastPathComponent }
+    var displayName: String { url.deletingPathExtension().lastPathComponent }
     var detailText: String {
         let dateText = modifiedAt.formatted(date: .abbreviated, time: .shortened)
         let details = [
@@ -133,6 +133,8 @@ struct RecordingItem: Identifiable, Equatable {
 
 @MainActor
 final class RecordingListViewModel: ObservableObject {
+    static let deleteWhileRecordingMessage = "Stop recording before deleting recordings."
+
     @Published private(set) var recordings: [RecordingItem] = []
     @Published var pendingDelete: RecordingItem?
     @Published var deleteErrorMessage: String?
@@ -227,6 +229,11 @@ final class RecordingListViewModel: ObservableObject {
         }
     }
 
+    func refreshRecordings() {
+        guard !isRecording else { return }
+        loadRecordings()
+    }
+
     func bind(recordingPublisher: AnyPublisher<Bool, Never>) {
         recordingPublisher
             .removeDuplicates()
@@ -251,12 +258,21 @@ final class RecordingListViewModel: ObservableObject {
     }
 
     func requestDelete(_ item: RecordingItem) {
+        deleteErrorMessage = nil
+        guard !isRecording else {
+            deleteErrorMessage = Self.deleteWhileRecordingMessage
+            return
+        }
         pendingDelete = item
     }
 
     func confirmDelete(_ item: RecordingItem) {
         pendingDelete = nil
         deleteErrorMessage = nil
+        guard !isRecording else {
+            deleteErrorMessage = Self.deleteWhileRecordingMessage
+            return
+        }
         if item.url == activePlaybackURL {
             stopPlayback()
         }
