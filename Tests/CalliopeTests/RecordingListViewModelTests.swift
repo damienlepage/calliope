@@ -156,6 +156,34 @@ final class RecordingListViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.recordingsSummaryText, "2 recordings • 02:30 total")
     }
 
+    func testRecordingsSummaryTextIncludesTotalSizeWhenAvailable() {
+        let urlA = URL(fileURLWithPath: "/tmp/a.m4a")
+        let urlB = URL(fileURLWithPath: "/tmp/b.wav")
+        let manager = MockRecordingManager(recordings: [urlA, urlB])
+        let durations: [URL: TimeInterval] = [
+            urlA: 60,
+            urlB: 90
+        ]
+        let sizes: [URL: Int] = [
+            urlA: 1024,
+            urlB: 2048
+        ]
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) },
+            durationProvider: { durations[$0] },
+            fileSizeProvider: { sizes[$0] }
+        )
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .file
+        let sizeText = formatter.string(fromByteCount: 3072)
+
+        viewModel.loadRecordings()
+
+        XCTAssertEqual(viewModel.recordingsSummaryText, "2 recordings • 02:30 total • \(sizeText)")
+    }
+
     func testRecordingsSummaryTextShowsCountWhenDurationMissing() {
         let url = URL(fileURLWithPath: "/tmp/only.m4a")
         let manager = MockRecordingManager(recordings: [url])

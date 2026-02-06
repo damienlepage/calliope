@@ -21,6 +21,9 @@ struct RecordingsListView: View {
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
+                    Text("Stored in \(viewModel.recordingsPath)")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
                 }
                 Spacer()
                 Button("Open Folder") {

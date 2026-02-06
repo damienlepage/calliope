@@ -150,11 +150,23 @@ final class RecordingListViewModel: ObservableObject {
             .compactMap(\.duration)
             .filter { $0 > 0 }
             .reduce(0, +)
-        guard totalDuration > 0,
-              let durationText = Self.totalDurationFormatter.string(from: totalDuration) else {
-            return countText
+        let totalSizeBytes = recordings
+            .compactMap(\.fileSizeBytes)
+            .filter { $0 > 0 }
+            .reduce(0, +)
+        var parts = [countText]
+        if totalDuration > 0, let durationText = Self.totalDurationFormatter.string(from: totalDuration) {
+            parts.append("\(durationText) total")
         }
-        return "\(countText) • \(durationText) total"
+        if totalSizeBytes > 0 {
+            let sizeText = Self.totalSizeFormatter.string(fromByteCount: Int64(totalSizeBytes))
+            parts.append(sizeText)
+        }
+        return parts.joined(separator: " • ")
+    }
+
+    var recordingsPath: String {
+        manager.recordingsDirectoryURL().path
     }
 
     private let manager: RecordingManaging
@@ -172,6 +184,12 @@ final class RecordingListViewModel: ObservableObject {
         formatter.allowedUnits = [.minute, .second]
         formatter.unitsStyle = .positional
         formatter.zeroFormattingBehavior = .pad
+        return formatter
+    }()
+
+    private static let totalSizeFormatter: ByteCountFormatter = {
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .file
         return formatter
     }()
 
