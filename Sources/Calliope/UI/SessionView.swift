@@ -17,43 +17,59 @@ struct SessionView: View {
     let onToggleRecording: () -> Void
 
     var body: some View {
+        let viewState = SessionViewState(
+            isRecording: audioCapture.isRecording,
+            status: audioCapture.status
+        )
         ScrollView {
             VStack(spacing: 20) {
                 Text("Calliope")
                     .font(.largeTitle)
                     .fontWeight(.bold)
 
-                HStack {
-                    Circle()
-                        .fill(statusColor(for: audioCapture.status))
-                        .frame(width: 12, height: 12)
-                    Text(audioCapture.statusText)
-                        .font(.headline)
+                if viewState.shouldShowStatus {
+                    HStack {
+                        Circle()
+                            .fill(statusColor(for: audioCapture.status))
+                            .frame(width: 12, height: 12)
+                        Text(audioCapture.statusText)
+                            .font(.headline)
+                    }
                 }
-                if audioCapture.isRecording {
+                if viewState.shouldShowRecordingIndicators {
                     Text("Microphone: \(audioCapture.inputDeviceName)")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
-                Text(audioCapture.backendStatusText)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-
-                FeedbackPanel(
-                    pace: feedbackViewModel.state.pace,
-                    crutchWords: feedbackViewModel.state.crutchWords,
-                    pauseCount: feedbackViewModel.state.pauseCount,
-                    inputLevel: feedbackViewModel.state.inputLevel,
-                    showSilenceWarning: feedbackViewModel.state.showSilenceWarning,
-                    showWaitingForSpeech: feedbackViewModel.showWaitingForSpeech,
-                    paceMin: preferencesStore.paceMin,
-                    paceMax: preferencesStore.paceMax,
-                    sessionDurationText: sessionDurationText
-                )
+                if viewState.shouldShowRecordingIndicators {
+                    Text(audioCapture.backendStatusText)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                if viewState.shouldShowIdlePrompt {
+                    Text("Ready when you are. Press Start to begin coaching.")
+                        .font(.title3)
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: 320)
+                }
+                if viewState.shouldShowFeedbackPanel {
+                    FeedbackPanel(
+                        pace: feedbackViewModel.state.pace,
+                        crutchWords: feedbackViewModel.state.crutchWords,
+                        pauseCount: feedbackViewModel.state.pauseCount,
+                        inputLevel: feedbackViewModel.state.inputLevel,
+                        showSilenceWarning: feedbackViewModel.state.showSilenceWarning,
+                        showWaitingForSpeech: feedbackViewModel.showWaitingForSpeech,
+                        paceMin: preferencesStore.paceMin,
+                        paceMax: preferencesStore.paceMax,
+                        sessionDurationText: sessionDurationText
+                    )
+                }
 
                 HStack(spacing: 20) {
                     Button(action: onToggleRecording) {
-                        Text(audioCapture.isRecording ? "Stop" : "Start")
+                        Text(viewState.primaryButtonTitle)
                             .frame(width: 100, height: 40)
                     }
                     .buttonStyle(.borderedProminent)
