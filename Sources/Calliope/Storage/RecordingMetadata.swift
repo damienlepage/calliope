@@ -12,6 +12,8 @@ struct RecordingMetadata: Codable, Equatable {
     let createdAt: Date?
 
     static let maxTitleLength = 80
+    private static let earliestAllowedTimestamp: TimeInterval = 946684800 // 2000-01-01T00:00:00Z
+    private static let maxFutureSkew: TimeInterval = 60 * 60 * 24
     private static let recordingPrefix = "recording_"
     private static let defaultNameFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -50,6 +52,26 @@ struct RecordingMetadata: Codable, Equatable {
 
     static func defaultSessionTitle(for date: Date) -> String {
         "Session \(defaultNameFormatter.string(from: date))"
+    }
+
+    static func normalizedCreatedAt(
+        _ createdAt: Date?,
+        inferred: Date?,
+        now: Date
+    ) -> Date? {
+        if let createdAt, isReasonableCreatedAt(createdAt, now: now) {
+            return createdAt
+        }
+        if let inferred, isReasonableCreatedAt(inferred, now: now) {
+            return inferred
+        }
+        return nil
+    }
+
+    static func isReasonableCreatedAt(_ date: Date, now: Date) -> Bool {
+        let minDate = Date(timeIntervalSince1970: earliestAllowedTimestamp)
+        let maxDate = now.addingTimeInterval(maxFutureSkew)
+        return date >= minDate && date <= maxDate
     }
 
     static func inferredCreatedAt(from recordingURL: URL) -> Date? {

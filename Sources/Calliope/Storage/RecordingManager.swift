@@ -273,13 +273,18 @@ extension RecordingManager {
                 try? fileManager.removeItem(at: url)
                 return nil
             }
-            if normalizedTitle == metadata.title {
-                return metadata
-            }
+            let normalizedCreatedAt = RecordingMetadata.normalizedCreatedAt(
+                metadata.createdAt,
+                inferred: RecordingMetadata.inferredCreatedAt(from: recordingURL),
+                now: now()
+            )
             let normalizedMetadata = RecordingMetadata(
                 title: normalizedTitle,
-                createdAt: metadata.createdAt
+                createdAt: normalizedCreatedAt
             )
+            if normalizedMetadata == metadata {
+                return metadata
+            }
             try? writeMetadata(normalizedMetadata, for: recordingURL)
             return normalizedMetadata
         } catch {
@@ -289,24 +294,31 @@ extension RecordingManager {
     }
 
     func backfillMetadataIfNeeded(for recordings: [URL]) {
+        let currentTime = now()
         for recordingURL in recordings {
             let existingMetadata = readMetadata(for: recordingURL)
-            if existingMetadata?.createdAt != nil {
+            let normalizedCreatedAt = RecordingMetadata.normalizedCreatedAt(
+                existingMetadata?.createdAt,
+                inferred: RecordingMetadata.inferredCreatedAt(from: recordingURL),
+                now: currentTime
+            )
+            if existingMetadata?.createdAt != nil,
+               normalizedCreatedAt == existingMetadata?.createdAt {
                 continue
             }
-            guard let inferredCreatedAt = RecordingMetadata.inferredCreatedAt(from: recordingURL) else {
+            guard let normalizedCreatedAt else {
                 continue
             }
             let title: String
             if let existingMetadata {
                 title = existingMetadata.title
             } else {
-                title = RecordingMetadata.defaultSessionTitle(for: inferredCreatedAt)
+                title = RecordingMetadata.defaultSessionTitle(for: normalizedCreatedAt)
             }
             guard let normalizedTitle = RecordingMetadata.normalizedTitle(title) else {
                 continue
             }
-            let backfilled = RecordingMetadata(title: normalizedTitle, createdAt: inferredCreatedAt)
+            let backfilled = RecordingMetadata(title: normalizedTitle, createdAt: normalizedCreatedAt)
             try? writeMetadata(backfilled, for: recordingURL)
         }
     }
