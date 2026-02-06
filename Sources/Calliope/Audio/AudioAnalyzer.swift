@@ -71,6 +71,8 @@ class AudioAnalyzer: ObservableObject {
     private var latestWordCount: Int = 0
     private var processingLatencyTracker = ProcessingLatencyTracker()
     private var processingUtilizationTracker = ProcessingUtilizationTracker()
+    private var processingLatencyStats = SessionMetricTracker()
+    private var processingUtilizationStats = SessionMetricTracker()
 
     init(
         summaryWriter: AnalysisSummaryWriting = RecordingManager.shared,
@@ -118,6 +120,8 @@ class AudioAnalyzer: ObservableObject {
                         self.paceStats.reset()
                         self.processingLatencyTracker.reset()
                         self.processingUtilizationTracker.reset()
+                        self.processingLatencyStats.reset()
+                        self.processingUtilizationStats.reset()
                         self.latestCrutchWordCounts = [:]
                         self.latestWordCount = 0
                         self.recordingStart = self.now()
@@ -145,6 +149,8 @@ class AudioAnalyzer: ObservableObject {
                         self.recordingURLForSession = nil
                         self.processingLatencyTracker.reset()
                         self.processingUtilizationTracker.reset()
+                        self.processingLatencyStats.reset()
+                        self.processingUtilizationStats.reset()
                         self.latestCrutchWordCounts = [:]
                         self.latestWordCount = 0
                     }
@@ -206,6 +212,7 @@ class AudioAnalyzer: ObservableObject {
         let duration = CFAbsoluteTimeGetCurrent() - startTime
         let status = processingLatencyTracker.record(duration: duration)
         let average = processingLatencyTracker.average
+        processingLatencyStats.record(value: duration * 1000)
         if status != processingLatencyStatus {
             DispatchQueue.main.async { [weak self] in
                 self?.processingLatencyStatus = status
@@ -225,6 +232,7 @@ class AudioAnalyzer: ObservableObject {
                 let utilization = duration / bufferDuration
                 let utilizationStatus = processingUtilizationTracker.record(utilization: utilization)
                 let utilizationAverage = processingUtilizationTracker.average
+                processingUtilizationStats.record(value: utilization)
                 if utilizationStatus != processingUtilizationStatus {
                     DispatchQueue.main.async { [weak self] in
                         self?.processingUtilizationStatus = utilizationStatus
@@ -330,6 +338,12 @@ class AudioAnalyzer: ObservableObject {
         let paceSummary = paceStats.summary(totalWords: latestWordCount)
         let crutchCounts = latestCrutchWordCounts
         let crutchTotal = crutchCounts.values.reduce(0, +)
+        let processing = AnalysisSummary.ProcessingStats(
+            latencyAverageMs: processingLatencyStats.average,
+            latencyPeakMs: processingLatencyStats.peak,
+            utilizationAverage: processingUtilizationStats.average,
+            utilizationPeak: processingUtilizationStats.peak
+        )
         let summary = AnalysisSummary(
             version: 1,
             createdAt: now(),
@@ -343,7 +357,8 @@ class AudioAnalyzer: ObservableObject {
             crutchWords: AnalysisSummary.CrutchWordStats(
                 totalCount: crutchTotal,
                 counts: crutchCounts
-            )
+            ),
+            processing: processing
         )
         do {
             try summaryWriter.writeSummary(summary, for: recordingURL)
@@ -389,5 +404,29 @@ private struct PaceStatsTracker {
             maxWPM: maxValue,
             totalWords: totalWords
         )
+    }
+}
+
+private struct SessionMetricTracker {
+    private(set) var total: Double = 0
+    private(set) var count: Int = 0
+    private(set) var peak: Double = 0
+
+    var average: Double {
+        guard count > 0 else { return 0 }
+        return total / Double(count)
+    }
+
+    mutating func record(value: Double) {
+        guard value >= 0 else { return }
+        total += value
+        count += 1
+        peak = max(peak, value)
+    }
+
+    mutating func reset() {
+        total = 0
+        count = 0
+        peak = 0
     }
 }

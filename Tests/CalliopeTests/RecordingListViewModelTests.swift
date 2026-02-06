@@ -501,6 +501,12 @@ final class RecordingListViewModelTests: XCTestCase {
             crutchWords: AnalysisSummary.CrutchWordStats(
                 totalCount: 3,
                 counts: ["um": 2, "uh": 1]
+            ),
+            processing: AnalysisSummary.ProcessingStats(
+                latencyAverageMs: 12,
+                latencyPeakMs: 25,
+                utilizationAverage: 0.4,
+                utilizationPeak: 0.9
             )
         )
         let viewModel = RecordingListViewModel(
@@ -517,7 +523,7 @@ final class RecordingListViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.recordings.first?.summary, summary)
         XCTAssertEqual(
             viewModel.recordings.first?.summaryText,
-            "Avg 120 WPM • Pauses 2 • Pauses/min 2.9 • Avg Pause 1.6s • Crutch 3"
+            "Avg 120 WPM • Pauses 2 • Pauses/min 2.9 • Avg Pause 1.6s • Crutch 3 • Latency 12/25ms • Util 40/90%"
         )
     }
 

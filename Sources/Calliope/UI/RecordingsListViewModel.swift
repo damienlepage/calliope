@@ -94,12 +94,22 @@ struct RecordingItem: Identifiable, Equatable {
             count: summary.pauses.count,
             durationSeconds: durationSeconds
         )
+        let latencyText = RecordingItem.formatLatencySummary(
+            averageMs: summary.processing.latencyAverageMs,
+            peakMs: summary.processing.latencyPeakMs
+        )
+        let utilizationText = RecordingItem.formatUtilizationSummary(
+            average: summary.processing.utilizationAverage,
+            peak: summary.processing.utilizationPeak
+        )
         let pieces = [
             "Avg \(pace) WPM",
             "Pauses \(summary.pauses.count)",
             pausesPerMinute.map { "Pauses/min \($0)" },
             "Avg Pause \(averagePause)",
-            "Crutch \(summary.crutchWords.totalCount)"
+            "Crutch \(summary.crutchWords.totalCount)",
+            latencyText,
+            utilizationText
         ].compactMap { $0 }
         return pieces.joined(separator: " • ")
     }
@@ -144,6 +154,24 @@ struct RecordingItem: Identifiable, Equatable {
         let minutes = safeDuration / 60
         let rate = Double(count) / minutes
         return String(format: "%.1f", rate)
+    }
+
+    private static func formatLatencySummary(averageMs: Double, peakMs: Double) -> String? {
+        guard averageMs > 0 || peakMs > 0 else {
+            return nil
+        }
+        let averageText = String(format: "%.0f", averageMs)
+        let peakText = String(format: "%.0f", peakMs)
+        return "Latency \(averageText)/\(peakText)ms"
+    }
+
+    private static func formatUtilizationSummary(average: Double, peak: Double) -> String? {
+        guard average > 0 || peak > 0 else {
+            return nil
+        }
+        let averagePercent = average * 100
+        let peakPercent = peak * 100
+        return String(format: "Util %.0f/%.0f%%", averagePercent, peakPercent)
     }
 }
 

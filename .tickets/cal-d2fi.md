@@ -1,6 +1,6 @@
 ---
 id: cal-d2fi
-status: open
+status: closed
 deps: [cal-a9hr]
 links: []
 created: 2026-02-06T09:37:17Z

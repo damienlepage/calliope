@@ -62,6 +62,10 @@ final class AnalysisSummaryTests: XCTestCase {
         )
         XCTAssertEqual(writer.lastSummary?.crutchWords.totalCount, 1)
         XCTAssertEqual(writer.lastSummary?.crutchWords.counts["um"], 1)
+        XCTAssertEqual(writer.lastSummary?.processing.latencyAverageMs, 0)
+        XCTAssertEqual(writer.lastSummary?.processing.latencyPeakMs, 0)
+        XCTAssertEqual(writer.lastSummary?.processing.utilizationAverage, 0)
+        XCTAssertEqual(writer.lastSummary?.processing.utilizationPeak, 0)
     }
 
     func testRecordingManagerWritesSummaryJSON() throws {
@@ -89,6 +93,12 @@ final class AnalysisSummaryTests: XCTestCase {
             crutchWords: AnalysisSummary.CrutchWordStats(
                 totalCount: 3,
                 counts: ["um": 2, "you know": 1]
+            ),
+            processing: AnalysisSummary.ProcessingStats(
+                latencyAverageMs: 12,
+                latencyPeakMs: 28,
+                utilizationAverage: 0.42,
+                utilizationPeak: 0.88
             )
         )
 
@@ -127,6 +137,12 @@ final class AnalysisSummaryTests: XCTestCase {
             crutchWords: AnalysisSummary.CrutchWordStats(
                 totalCount: 1,
                 counts: ["um": 1]
+            ),
+            processing: AnalysisSummary.ProcessingStats(
+                latencyAverageMs: 5,
+                latencyPeakMs: 12,
+                utilizationAverage: 0.2,
+                utilizationPeak: 0.5
             )
         )
 
@@ -138,6 +154,102 @@ final class AnalysisSummaryTests: XCTestCase {
         try manager.deleteRecording(at: recordingURL)
 
         XCTAssertFalse(FileManager.default.fileExists(atPath: summaryURL.path))
+    }
+
+    func testSummaryDefaultsProcessingStatsWhenMissing() throws {
+        let json = """
+        {
+          "version": 1,
+          "createdAt": 1700000000,
+          "durationSeconds": 30,
+          "pace": {
+            "averageWPM": 120,
+            "minWPM": 100,
+            "maxWPM": 140,
+            "totalWords": 60
+          },
+          "pauses": {
+            "count": 2,
+            "thresholdSeconds": 1.2,
+            "averageDurationSeconds": 0.8
+          },
+          "crutchWords": {
+            "totalCount": 1,
+            "counts": {
+              "um": 1
+            }
+          }
+        }
+        """
+        let data = Data(json.utf8)
+        let decoded = try JSONDecoder().decode(AnalysisSummary.self, from: data)
+        XCTAssertEqual(decoded.processing.latencyAverageMs, 0)
+        XCTAssertEqual(decoded.processing.latencyPeakMs, 0)
+        XCTAssertEqual(decoded.processing.utilizationAverage, 0)
+        XCTAssertEqual(decoded.processing.utilizationPeak, 0)
+    }
+
+    func testSummaryIncludesProcessingMetricsWhenBuffersProcessed() {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            UUID().uuidString,
+            isDirectory: true
+        )
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let suiteName = "AnalysisSummaryTests.Processing.\(UUID().uuidString)"
+        let captureDefaults = UserDefaults(suiteName: suiteName)!
+        captureDefaults.removePersistentDomain(forName: suiteName)
+        let preferencesStore = AudioCapturePreferencesStore(defaults: captureDefaults)
+        let audioCapture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: preferencesStore,
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: FakeAudioCaptureBackend(), status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() }
+        )
+        let writer = MockSummaryWriter()
+        let start = Date(timeIntervalSince1970: 1_000)
+        let clock = TestClock([
+            start,
+            start,
+            start.addingTimeInterval(5),
+            start.addingTimeInterval(10),
+            start.addingTimeInterval(10)
+        ])
+        let analyzer = AudioAnalyzer(
+            summaryWriter: writer,
+            now: clock.now,
+            speechTranscriberFactory: { FakeSpeechTranscriber(delaySeconds: 0.005) }
+        )
+        let analysisDefaults = UserDefaults(suiteName: "AnalysisSummaryTests.Processing.Analysis")!
+        analysisDefaults.removePersistentDomain(forName: "AnalysisSummaryTests.Processing.Analysis")
+        let preferences = AnalysisPreferencesStore(defaults: analysisDefaults)
+
+        analyzer.setup(audioCapture: audioCapture, preferencesStore: preferences)
+
+        let recordingURL = manager.getNewRecordingURL()
+        audioCapture.setRecordingURLForTesting(recordingURL)
+
+        audioCapture.isRecording = true
+        let startHandled = expectation(description: "start handled")
+        DispatchQueue.main.async { startHandled.fulfill() }
+        wait(for: [startHandled], timeout: 1.0)
+
+        let format = AVAudioFormat(standardFormatWithSampleRate: 1000, channels: 1)!
+        let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 1000)!
+        buffer.frameLength = 1000
+        analyzer.processAudioBuffer(buffer)
+
+        audioCapture.isRecording = false
+        let stopHandled = expectation(description: "stop handled")
+        DispatchQueue.main.async { stopHandled.fulfill() }
+        wait(for: [stopHandled], timeout: 1.0)
+
+        XCTAssertNotNil(writer.lastSummary)
+        XCTAssertGreaterThan(writer.lastSummary?.processing.latencyAverageMs ?? 0, 0)
+        XCTAssertGreaterThan(writer.lastSummary?.processing.latencyPeakMs ?? 0, 0)
+        XCTAssertGreaterThan(writer.lastSummary?.processing.utilizationAverage ?? 0, 0)
+        XCTAssertGreaterThan(writer.lastSummary?.processing.utilizationPeak ?? 0, 0)
     }
 }
 
@@ -158,11 +270,20 @@ private final class TestClock {
 }
 
 private final class FakeSpeechTranscriber: SpeechTranscribing {
+    private let delaySeconds: TimeInterval
     var onTranscription: ((String) -> Void)?
+
+    init(delaySeconds: TimeInterval = 0) {
+        self.delaySeconds = delaySeconds
+    }
 
     func startTranscription() {}
 
-    func appendAudioBuffer(_ buffer: AVAudioPCMBuffer) {}
+    func appendAudioBuffer(_ buffer: AVAudioPCMBuffer) {
+        if delaySeconds > 0 {
+            usleep(useconds_t(delaySeconds * 1_000_000))
+        }
+    }
 
     func stopTranscription() {}
 }
