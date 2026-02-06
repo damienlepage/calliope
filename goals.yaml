@@ -62,6 +62,6 @@ goals:
       - "2026-02-06: Surface app version/build info in Settings for support and release readiness."
   - id: G12
     title: Accessibility and keyboard control
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
-      - "2026-02-06: Add keyboard shortcuts and basic accessibility labels for core controls."
+      - "2026-02-06: Added keyboard shortcuts for recordings actions plus accessibility labels for core controls."

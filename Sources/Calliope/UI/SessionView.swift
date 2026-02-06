@@ -45,11 +45,16 @@ struct SessionView: View {
                         Text(audioCapture.statusText)
                             .font(.headline)
                     }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("Session status")
+                    .accessibilityValue(audioCapture.statusText)
                 }
                 if let captureStatusText {
                     Text(captureStatusText)
                         .font(.footnote)
                         .foregroundColor(.secondary)
+                        .accessibilityLabel("Capture status")
+                        .accessibilityValue(captureStatusText)
                 }
                 if viewState.shouldShowIdlePrompt {
                     Text("Ready when you are. Press Start to begin coaching.")
@@ -88,6 +93,8 @@ struct SessionView: View {
                     .disabled(
                         audioCapture.isTestingMic || (!audioCapture.isRecording && !canStartRecording)
                     )
+                    .accessibilityLabel(viewState.primaryButtonAccessibilityLabel)
+                    .accessibilityHint(viewState.primaryButtonAccessibilityHint)
                 }
 
                 if viewState.shouldShowBlockingReasons, let blockingReasonsText {

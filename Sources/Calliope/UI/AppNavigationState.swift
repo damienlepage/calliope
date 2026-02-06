@@ -5,7 +5,7 @@
 //  Created on [Date]
 //
 
-import Foundation
+import SwiftUI
 
 enum AppSection: String, CaseIterable, Identifiable {
     case session
@@ -22,6 +22,28 @@ enum AppSection: String, CaseIterable, Identifiable {
             return "Recordings"
         case .settings:
             return "Settings"
+        }
+    }
+
+    var shortcutKey: KeyEquivalent {
+        switch self {
+        case .session:
+            return "1"
+        case .recordings:
+            return "2"
+        case .settings:
+            return "3"
+        }
+    }
+
+    var shortcutLabel: String {
+        switch self {
+        case .session:
+            return "Cmd+1"
+        case .recordings:
+            return "Cmd+2"
+        case .settings:
+            return "Cmd+3"
         }
     }
 }

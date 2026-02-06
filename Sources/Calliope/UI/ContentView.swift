@@ -9,7 +9,7 @@ import Combine
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var navigationState = AppNavigationState()
+    @EnvironmentObject private var navigationState: AppNavigationState
     @StateObject private var audioCapture: AudioCapture
     @StateObject private var audioAnalyzer = AudioAnalyzer()
     @StateObject private var feedbackViewModel = LiveFeedbackViewModel()
@@ -158,6 +158,8 @@ struct ContentView: View {
                 }
                 .pickerStyle(.segmented)
                 .frame(maxWidth: 320)
+                .accessibilityLabel("View")
+                .accessibilityHint("Switch between Session, Recordings, and Settings.")
             }
         }
         .onAppear {
@@ -197,6 +199,18 @@ struct ContentView: View {
         .onChange(of: overlayPreferencesStore.alwaysOnTop) { newValue in
             WindowLevelController.apply(alwaysOnTop: newValue)
         }
+        .focusedSceneValue(
+            \.toggleRecording,
+            navigationState.selection == .session ? toggleRecording : nil
+        )
+        .focusedSceneValue(
+            \.refreshRecordings,
+            navigationState.selection == .recordings ? refreshRecordings : nil
+        )
+        .focusedSceneValue(
+            \.openRecordingsFolder,
+            navigationState.selection == .recordings ? openRecordingsFolder : nil
+        )
         .sheet(isPresented: $isDisclosureSheetPresented) {
             PrivacyDisclosureSheet(
                 recordingsPath: PathDisplayFormatter.displayPath(
@@ -239,6 +253,14 @@ struct ContentView: View {
         )
     }
 
+    private func refreshRecordings() {
+        recordingsViewModel.refreshRecordings()
+    }
+
+    private func openRecordingsFolder() {
+        recordingsViewModel.openRecordingsFolder()
+    }
+
     private func blockingReasonsText(_ reasons: [RecordingEligibility.Reason]) -> String? {
         guard !reasons.isEmpty else {
             return nil
@@ -252,6 +274,7 @@ struct ContentView: View {
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
+            .environmentObject(AppNavigationState())
     }
 }
 #endif

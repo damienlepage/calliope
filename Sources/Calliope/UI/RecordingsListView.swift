@@ -36,10 +36,14 @@ struct RecordingsListView: View {
                 }
                 .buttonStyle(.bordered)
                 .disabled(viewModel.isRecording)
+                .accessibilityLabel("Refresh recordings")
+                .accessibilityHint("Reload the recordings list.")
                 Button("Open Folder") {
                     viewModel.openRecordingsFolder()
                 }
                 .buttonStyle(.bordered)
+                .accessibilityLabel("Open recordings folder")
+                .accessibilityHint("Open the recordings folder in Finder.")
             }
             if viewModel.recordings.isEmpty {
                 Text("No recordings yet.")
@@ -79,24 +83,34 @@ struct RecordingsListView: View {
                         }
                         .buttonStyle(.bordered)
                         .disabled(isRecording)
+                        .accessibilityLabel(isPlaying ? "Pause playback" : "Play recording")
+                        .accessibilityHint("Controls playback for \(item.displayName).")
                         Button("Stop") {
                             viewModel.stopPlayback()
                         }
                         .buttonStyle(.bordered)
                         .disabled(!isActive || isRecording)
+                        .accessibilityLabel("Stop playback")
+                        .accessibilityHint("Stops playback for \(item.displayName).")
                         Button("Reveal") {
                             viewModel.reveal(item)
                         }
                         .buttonStyle(.bordered)
+                        .accessibilityLabel("Reveal recording in Finder")
+                        .accessibilityHint("Shows \(item.displayName) in Finder.")
                         Button("Details") {
                             viewModel.detailItem = item
                         }
                         .buttonStyle(.bordered)
+                        .accessibilityLabel("Show recording details")
+                        .accessibilityHint("Opens details for \(item.displayName).")
                         Button("Delete") {
                             viewModel.requestDelete(item)
                         }
                         .buttonStyle(.bordered)
                         .disabled(isRecording)
+                        .accessibilityLabel("Delete recording")
+                        .accessibilityHint("Deletes \(item.displayName).")
                     }
                     .padding(.vertical, 4)
                 }

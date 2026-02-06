@@ -18,6 +18,8 @@ final class SessionViewStateTests: XCTestCase {
         XCTAssertFalse(state.shouldShowStatus)
         XCTAssertFalse(state.shouldShowBlockingReasons)
         XCTAssertEqual(state.primaryButtonTitle, "Start")
+        XCTAssertEqual(state.primaryButtonAccessibilityLabel, "Start recording")
+        XCTAssertEqual(state.primaryButtonAccessibilityHint, "Begins a new coaching session.")
     }
 
     func testRecordingStateShowsFeedbackAndStop() {
@@ -29,6 +31,8 @@ final class SessionViewStateTests: XCTestCase {
         XCTAssertTrue(state.shouldShowStatus)
         XCTAssertFalse(state.shouldShowBlockingReasons)
         XCTAssertEqual(state.primaryButtonTitle, "Stop")
+        XCTAssertEqual(state.primaryButtonAccessibilityLabel, "Stop recording")
+        XCTAssertEqual(state.primaryButtonAccessibilityHint, "Ends the current coaching session.")
     }
 
     func testErrorStateShowsStatusWhenIdle() {
@@ -44,6 +48,8 @@ final class SessionViewStateTests: XCTestCase {
         XCTAssertTrue(state.shouldShowStatus)
         XCTAssertTrue(state.shouldShowBlockingReasons)
         XCTAssertEqual(state.primaryButtonTitle, "Start")
+        XCTAssertEqual(state.primaryButtonAccessibilityLabel, "Start recording")
+        XCTAssertEqual(state.primaryButtonAccessibilityHint, "Begins a new coaching session.")
     }
 
     func testIdleStateShowsBlockingReasonsWhenStartDisabled() {
@@ -55,5 +61,7 @@ final class SessionViewStateTests: XCTestCase {
         XCTAssertFalse(state.shouldShowStatus)
         XCTAssertTrue(state.shouldShowBlockingReasons)
         XCTAssertEqual(state.primaryButtonTitle, "Start")
+        XCTAssertEqual(state.primaryButtonAccessibilityLabel, "Start recording")
+        XCTAssertEqual(state.primaryButtonAccessibilityHint, "Begins a new coaching session.")
     }
 }

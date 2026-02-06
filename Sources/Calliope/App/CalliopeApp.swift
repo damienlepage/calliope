@@ -11,13 +11,20 @@ import AppKit
 @main
 struct CalliopeApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    @StateObject private var navigationState = AppNavigationState()
 
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(navigationState)
         }
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
+        .commands {
+            AppNavigationCommands(navigationState: navigationState)
+            RecordingCommands()
+            RecordingsCommands()
+        }
     }
 }
 

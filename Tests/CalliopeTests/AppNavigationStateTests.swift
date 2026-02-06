@@ -13,4 +13,10 @@ final class AppNavigationStateTests: XCTestCase {
         XCTAssertEqual(AppSection.recordings.title, "Recordings")
         XCTAssertEqual(AppSection.settings.title, "Settings")
     }
+
+    func testSectionShortcutLabelsMatchDefaults() {
+        XCTAssertEqual(AppSection.session.shortcutLabel, "Cmd+1")
+        XCTAssertEqual(AppSection.recordings.shortcutLabel, "Cmd+2")
+        XCTAssertEqual(AppSection.settings.shortcutLabel, "Cmd+3")
+    }
 }
