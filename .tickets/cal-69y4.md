@@ -1,6 +1,6 @@
 ---
 id: cal-69y4
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-06T16:18:22Z

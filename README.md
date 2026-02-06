@@ -112,3 +112,25 @@ Optional code signing for distribution:
 ```bash
 SIGNING_IDENTITY="Developer ID Application: Example Corp (TEAMID)" ./scripts/package-release.sh
 ```
+
+### Optional Notarization (Release Only)
+
+Notarization is optional and is not run by default. It is only required for distribution outside the App Store.
+
+Short checklist:
+1. Create an Apple Developer API key (Issuer ID, Key ID, and a `.p8` key file).
+2. Ensure the app bundle is signed with a Developer ID Application certificate.
+3. Submit the zip for notarization:
+   ```bash
+   xcrun notarytool submit dist/Calliope-<VERSION>.zip \
+     --issuer "<ISSUER_ID>" \
+     --key "<PATH_TO_P8>" \
+     --key-id "<KEY_ID>" \
+     --wait
+   ```
+4. Staple the ticket to the app:
+   ```bash
+   xcrun stapler staple dist/Calliope.app
+   ```
+
+These release steps do not change Calliope’s privacy posture: all audio and analysis remain on-device, and the app never transmits audio or transcripts.
