@@ -113,6 +113,15 @@ Optional code signing for distribution:
 SIGNING_IDENTITY="Developer ID Application: Example Corp (TEAMID)" ./scripts/package-release.sh
 ```
 
+If `SIGNING_ENTITLEMENTS` is not set, the packaging script will use `scripts/app/Calliope.entitlements` by default.
+Override with:
+
+```bash
+SIGNING_IDENTITY="Developer ID Application: Example Corp (TEAMID)" \
+SIGNING_ENTITLEMENTS="/path/to/Your.entitlements" \
+./scripts/package-release.sh
+```
+
 ### Optional Notarization (Release Only)
 
 Notarization is optional and is not run by default. It is only required for distribution outside the App Store.

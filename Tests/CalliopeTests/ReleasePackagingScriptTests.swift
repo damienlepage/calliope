@@ -18,5 +18,6 @@ final class ReleasePackagingScriptTests: XCTestCase {
         XCTAssertTrue(contents.contains("Calliope"))
         XCTAssertTrue(contents.contains("SIGNING_IDENTITY"))
         XCTAssertTrue(contents.contains("codesign"))
+        XCTAssertTrue(contents.contains("Calliope.entitlements"))
     }
 }

@@ -27,8 +27,9 @@ goals:
       - "2026-02-06: Added critical latency threshold with warning text and red status color in session/overlay."
   - id: G6
     title: Release-ready macOS app packaging
-    status: BELOW_TARGET
-    notes: []
+    status: AT_TARGET
+    notes:
+      - "2026-02-06: Added default signing entitlements template and wired packaging script to use it; documented override in README."
   - id: G7
     title: Quality gate: reliable tests and coverage confidence
     status: AT_TARGET

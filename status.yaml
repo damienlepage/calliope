@@ -1,2 +1,2 @@
 last_reviewed: 2026-02-06
-summary: "Updated coverage gate to ignore SwiftUI view files, added SpeechTranscriber tests, and confirmed 84.03% line coverage."
+summary: "Added default signing entitlements template, wired packaging script to use it, and documented release override."
