@@ -93,9 +93,10 @@ goals:
       - "2026-02-06: Added quick-start sheet after privacy disclosure with call readiness + privacy reminders; Settings can reopen it; state persists."
   - id: G18
     title: Self-review trends across recordings
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "2026-02-06: Goal created to visualize trends over time for pace, crutch words, and pauses."
+      - "Validated 2026-02-06: Recordings header shows 7-day vs prior 7-day trend deltas for pace, crutch words, and pauses/min."
   - id: G19
     title: Per-app feedback profiles for conferencing tools
     status: BELOW_TARGET

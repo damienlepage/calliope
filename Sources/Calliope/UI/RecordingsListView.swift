@@ -26,6 +26,11 @@ struct RecordingsListView: View {
                             .font(.footnote)
                             .foregroundColor(.secondary)
                     }
+                    if let trendSummaryText = viewModel.trendSummaryText {
+                        Text(trendSummaryText)
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                    }
                     if let mostRecentText = viewModel.mostRecentRecordingText {
                         Text(mostRecentText)
                             .font(.footnote)

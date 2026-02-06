@@ -342,6 +342,18 @@ final class RecordingListViewModel: ObservableObject {
     @Published private(set) var isPlaybackPaused = false
     @Published private(set) var isRecording = false
 
+    private struct SummaryAggregate {
+        let totalDurationSeconds: TimeInterval
+        let totalWords: Int
+        let totalCrutch: Int
+        let totalPauses: Int
+
+        var averageWPM: Int {
+            guard totalDurationSeconds > 0 else { return 0 }
+            return Int(round(Double(totalWords) / (totalDurationSeconds / 60)))
+        }
+    }
+
     var recordingsSummaryText: String? {
         let count = recordings.count
         guard count > 0 else {
@@ -402,6 +414,46 @@ final class RecordingListViewModel: ObservableObject {
             parts.append("Pauses/min \(pausesPerMinute)")
         }
         return parts.joined(separator: " • ")
+    }
+
+    var trendSummaryText: String? {
+        guard !recordings.isEmpty else { return nil }
+        let now = now()
+        let recentStart = RecordingListViewModel.recentSummaryCalendar.date(
+            byAdding: .day,
+            value: -7,
+            to: now
+        ) ?? now
+        let previousStart = RecordingListViewModel.recentSummaryCalendar.date(
+            byAdding: .day,
+            value: -14,
+            to: now
+        ) ?? now
+        guard let recent = aggregateSummaries(from: recentStart, to: now),
+              let previous = aggregateSummaries(from: previousStart, to: recentStart) else {
+            return nil
+        }
+
+        let paceDelta = recent.averageWPM - previous.averageWPM
+        let crutchDelta = recent.totalCrutch - previous.totalCrutch
+        guard let recentPauses = RecordingListViewModel.pausesPerMinute(
+            count: recent.totalPauses,
+            durationSeconds: recent.totalDurationSeconds
+        ),
+        let previousPauses = RecordingListViewModel.pausesPerMinute(
+            count: previous.totalPauses,
+            durationSeconds: previous.totalDurationSeconds
+        ) else {
+            return nil
+        }
+        let pauseDelta = recentPauses - previousPauses
+
+        let parts = [
+            "Pace \(RecordingListViewModel.formatSigned(paceDelta)) WPM",
+            "Crutch \(RecordingListViewModel.formatSigned(crutchDelta))",
+            "Pauses/min \(RecordingListViewModel.formatSigned(pauseDelta))"
+        ]
+        return "Trend (7d vs prior): \(parts.joined(separator: " • "))"
     }
 
     var mostRecentRecordingText: String? {
@@ -483,6 +535,61 @@ final class RecordingListViewModel: ObservableObject {
         let minutes = safeDuration / 60
         let rate = Double(count) / minutes
         return String(format: "%.1f", rate)
+    }
+
+    private static func pausesPerMinute(count: Int, durationSeconds: TimeInterval) -> Double? {
+        guard durationSeconds > 0 else { return nil }
+        let safeDuration = max(durationSeconds, 1)
+        let minutes = safeDuration / 60
+        return Double(count) / minutes
+    }
+
+    private static func formatSigned(_ value: Int) -> String {
+        if value > 0 {
+            return "+\(value)"
+        }
+        if value < 0 {
+            return "\(value)"
+        }
+        return "0"
+    }
+
+    private static func formatSigned(_ value: Double) -> String {
+        let formatted = String(format: "%.1f", abs(value))
+        if value > 0 {
+            return "+\(formatted)"
+        }
+        if value < 0 {
+            return "-\(formatted)"
+        }
+        return "0.0"
+    }
+
+    private func aggregateSummaries(from start: Date, to end: Date) -> SummaryAggregate? {
+        let summaries = recordings
+            .filter { $0.modifiedAt >= start && $0.modifiedAt < end }
+            .compactMap { item -> (summary: AnalysisSummary, durationSeconds: TimeInterval)? in
+                guard let summary = item.summary else { return nil }
+                let durationSeconds = summary.durationSeconds > 0
+                    ? summary.durationSeconds
+                    : (item.duration ?? 0)
+                return (summary, durationSeconds)
+            }
+        guard !summaries.isEmpty else { return nil }
+        let totalDurationSeconds = summaries
+            .map(\.durationSeconds)
+            .filter { $0 > 0 }
+            .reduce(0, +)
+        guard totalDurationSeconds > 0 else { return nil }
+        let totalWords = summaries.map { $0.summary.pace.totalWords }.reduce(0, +)
+        let totalCrutch = summaries.map { $0.summary.crutchWords.totalCount }.reduce(0, +)
+        let totalPauses = summaries.map { $0.summary.pauses.count }.reduce(0, +)
+        return SummaryAggregate(
+            totalDurationSeconds: totalDurationSeconds,
+            totalWords: totalWords,
+            totalCrutch: totalCrutch,
+            totalPauses: totalPauses
+        )
     }
 
     init(
