@@ -78,7 +78,7 @@ run_iteration() {
 
     log "Running swift test (iteration ${iteration}, attempt ${test_attempt})"
     set +e
-    swift test 2>&1 | tee "$test_log"
+    ./scripts/swift-test.sh 2>&1 | tee "$test_log"
     local test_status=${PIPESTATUS[0]}
     set -e
 

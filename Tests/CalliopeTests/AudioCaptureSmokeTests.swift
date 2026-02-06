@@ -1,9 +1,13 @@
 import AVFoundation
+import AudioToolbox
 import XCTest
 @testable import Calliope
 
 final class AudioCaptureSmokeTests: XCTestCase {
-    func testSystemBackendUsesMicrophoneInput() {
+    func testSystemBackendUsesMicrophoneInput() throws {
+        guard systemAudioComponentAvailable() else {
+            throw XCTSkip("System audio component unavailable in this environment.")
+        }
         let backend = SystemAudioCaptureBackend()
         XCTAssertEqual(backend.inputSource, .microphone)
     }
@@ -41,6 +45,17 @@ final class AudioCaptureSmokeTests: XCTestCase {
         let fileSize = (attributes[.size] as? NSNumber)?.intValue ?? 0
         XCTAssertGreaterThan(fileSize, 0)
     }
+}
+
+private func systemAudioComponentAvailable() -> Bool {
+    var description = AudioComponentDescription(
+        componentType: kAudioUnitType_Output,
+        componentSubType: kAudioUnitSubType_HALOutput,
+        componentManufacturer: kAudioUnitManufacturer_Apple,
+        componentFlags: 0,
+        componentFlagsMask: 0
+    )
+    return AudioComponentFindNext(nil, &description) != nil
 }
 
 private final class TestAudioFileInputBackend: AudioCaptureBackend {
