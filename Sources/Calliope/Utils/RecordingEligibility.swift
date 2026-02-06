@@ -16,15 +16,15 @@ struct RecordingEligibility {
         var message: String {
             switch self {
             case .microphonePermissionNotDetermined:
-                return "Microphone access is required. Click Grant Microphone Access."
+                return "Microphone access is required. Continue in Settings to review access."
             case .microphonePermissionDenied:
-                return "Microphone access is denied. Enable it in System Settings > Privacy & Security > Microphone."
+                return "Microphone access is unavailable. Review access in Settings."
             case .microphonePermissionRestricted:
-                return "Microphone access is restricted by system policy."
+                return "Microphone access is restricted by system policy. Review access in Settings."
             case .microphoneUnavailable:
-                return "No microphone input detected. Connect or enable a microphone."
+                return "No microphone input detected. Check your input devices in Settings."
             case .disclosureNotAccepted:
-                return "Confirm the privacy disclosure."
+                return "Review the privacy disclosure in Settings."
             }
         }
     }
