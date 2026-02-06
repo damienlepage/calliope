@@ -153,7 +153,7 @@ final class RecordingListViewModelTests: XCTestCase {
 
         viewModel.loadRecordings()
 
-        XCTAssertEqual(viewModel.recordingsSummaryText, "2 recordings • 2:30 total")
+        XCTAssertEqual(viewModel.recordingsSummaryText, "2 recordings • 02:30 total")
     }
 
     func testRecordingsSummaryTextShowsCountWhenDurationMissing() {
