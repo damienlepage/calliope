@@ -122,15 +122,32 @@ struct RecordingItem: Identifiable, Equatable {
         return formatter
     }()
 
+    private static let durationWithHoursFormatter: DateComponentsFormatter = {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.hour, .minute, .second]
+        formatter.unitsStyle = .positional
+        formatter.zeroFormattingBehavior = [.pad, .dropLeading]
+        return formatter
+    }()
+
     private static let sizeFormatter: ByteCountFormatter = {
         let formatter = ByteCountFormatter()
         formatter.countStyle = .file
         return formatter
     }()
 
-    private static func formatDuration(_ duration: TimeInterval?) -> String? {
+    static func formatDuration(_ duration: TimeInterval?) -> String? {
         guard let duration, duration > 0 else {
             return nil
+        }
+        if duration >= 3600 {
+            guard let formatted = durationWithHoursFormatter.string(from: duration) else {
+                return nil
+            }
+            if formatted.hasPrefix("0") && formatted.count > 1 {
+                return String(formatted.dropFirst())
+            }
+            return formatted
         }
         return durationFormatter.string(from: duration)
     }

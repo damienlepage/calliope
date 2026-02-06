@@ -36,3 +36,9 @@ goals:
     notes:
       - "2026-02-06: Added coverage threshold gate (80%) in scripts/coverage.sh with unit test coverage."
       - "Validated 2026-02-06: Coverage gate ignores SwiftUI view files; ./scripts/coverage.sh reports 84.03%."
+  - id: G8
+    title: Long-session readiness and clarity
+    status: BELOW_TARGET
+    notes:
+      - "2026-02-06: Added next focus area for multi-hour session support and UX clarity."
+      - "2026-02-06: Recordings detail duration uses hours for long sessions."

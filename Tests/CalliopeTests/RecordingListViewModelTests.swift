@@ -148,6 +148,14 @@ final class RecordingListViewModelTests: XCTestCase {
         XCTAssertEqual(item.displayName, "recording_123")
     }
 
+    func testRecordingItemFormatDurationUsesMinutesForShortSessions() {
+        XCTAssertEqual(RecordingItem.formatDuration(65), "01:05")
+    }
+
+    func testRecordingItemFormatDurationUsesHoursForLongSessions() {
+        XCTAssertEqual(RecordingItem.formatDuration(3665), "1:01:05")
+    }
+
     func testRecordingsSummaryTextIncludesCountAndTotalDuration() {
         let urlA = URL(fileURLWithPath: "/tmp/a.m4a")
         let urlB = URL(fileURLWithPath: "/tmp/b.wav")
