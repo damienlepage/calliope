@@ -34,4 +34,18 @@ final class ProcessingLatencyTrackerTests: XCTestCase {
         XCTAssertEqual(tracker.average, 0)
         XCTAssertEqual(tracker.status, .ok)
     }
+
+    func testWindowRollsOverOldestSample() {
+        var tracker = ProcessingLatencyTracker(windowSize: 2, threshold: 0.05)
+
+        XCTAssertEqual(tracker.record(duration: 0.1), .high)
+        XCTAssertEqual(tracker.record(duration: 0.1), .high)
+        XCTAssertEqual(tracker.average, 0.1, accuracy: 0.0001)
+
+        XCTAssertEqual(tracker.record(duration: 0.0), .high)
+        XCTAssertEqual(tracker.average, 0.05, accuracy: 0.0001)
+
+        XCTAssertEqual(tracker.record(duration: 0.0), .ok)
+        XCTAssertEqual(tracker.average, 0.0, accuracy: 0.0001)
+    }
 }

@@ -27,4 +27,15 @@ final class ProcessingUtilizationTrackerTests: XCTestCase {
         XCTAssertEqual(tracker.average, 0)
         XCTAssertEqual(tracker.status, .ok)
     }
+
+    func testWindowRollsOverOldestSample() {
+        var tracker = ProcessingUtilizationTracker(windowSize: 2, highThreshold: 0.7, criticalThreshold: 0.9)
+
+        XCTAssertEqual(tracker.record(utilization: 0.5), .ok)
+        XCTAssertEqual(tracker.record(utilization: 0.9), .high)
+        XCTAssertEqual(tracker.average, 0.7, accuracy: 0.0001)
+
+        XCTAssertEqual(tracker.record(utilization: 0.2), .ok)
+        XCTAssertEqual(tracker.average, 0.55, accuracy: 0.0001)
+    }
 }
