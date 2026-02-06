@@ -205,3 +205,5 @@ Acceptance Criteria: The app uses a macOS toolbar segmented control to switch be
 Acceptance Criteria: When not recording, the Session screen shows a short friendly prompt and a single primary Start control; live feedback panels and recording-only indicators are hidden while idle; the idle state remains the default on app launch; unit tests cover idle-state visibility and that the Start control is present.
 45. [DONE][P2] Show recordings summary in recordings header
 Acceptance Criteria: Recordings header shows the count of recordings and total duration when available; when durations are missing, only the count is shown; summary hides when there are no recordings; unit tests cover summary text formatting for count-only and count-with-duration cases; no network usage is introduced.
+46. [DONE][P2] Disable mic test when permission or input is missing
+Acceptance Criteria: The "Test Mic" control is disabled when microphone permission is not authorized or no microphone input device is available; it remains enabled when permission is authorized and a microphone is present; unit tests cover eligibility logic; no network usage is introduced.

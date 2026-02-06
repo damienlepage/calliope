@@ -24,6 +24,10 @@ struct SettingsView: View {
     let onRunMicTest: () -> Void
 
     var body: some View {
+        let canRunMicTest = MicTestEligibility.canRun(
+            microphonePermission: microphonePermission.state,
+            hasMicrophoneInput: microphoneDevices.hasMicrophoneInput
+        )
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 Text("Settings")
@@ -180,7 +184,7 @@ struct SettingsView: View {
                         onRunMicTest()
                     }
                     .buttonStyle(.bordered)
-                    .disabled(audioCapture.isRecording || audioCapture.isTestingMic)
+                    .disabled(!canRunMicTest || audioCapture.isRecording || audioCapture.isTestingMic)
                     if let statusText = audioCapture.micTestStatusText {
                         Text(statusText)
                             .font(.footnote)
