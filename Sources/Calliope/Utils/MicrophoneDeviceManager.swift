@@ -5,28 +5,27 @@
 //  Created on [Date]
 //
 
-import AVFoundation
 import Combine
 
 protocol MicrophoneDeviceProviding {
-    func availableMicrophoneNames() -> [String]
-    func defaultMicrophoneName() -> String?
+    func availableMicrophones() -> [AudioInputDevice]
+    func defaultMicrophone() -> AudioInputDevice?
 }
 
 struct SystemMicrophoneDeviceProvider: MicrophoneDeviceProviding {
-    func availableMicrophoneNames() -> [String] {
-        AVCaptureDevice.devices(for: .audio).map(\.localizedName)
+    func availableMicrophones() -> [AudioInputDevice] {
+        AudioInputDeviceLookup.inputDevices()
     }
 
-    func defaultMicrophoneName() -> String? {
-        AVCaptureDevice.default(for: .audio)?.localizedName
+    func defaultMicrophone() -> AudioInputDevice? {
+        AudioInputDeviceLookup.defaultInputDevice()
     }
 }
 
 final class MicrophoneDeviceManager: ObservableObject {
     @Published private(set) var hasMicrophoneInput: Bool
-    @Published private(set) var availableMicrophoneNames: [String]
-    @Published private(set) var defaultMicrophoneName: String?
+    @Published private(set) var availableMicrophoneDevices: [AudioInputDevice]
+    @Published private(set) var defaultMicrophoneDevice: AudioInputDevice?
 
     private let provider: MicrophoneDeviceProviding
     private let notificationCenter: NotificationCenter
@@ -38,10 +37,10 @@ final class MicrophoneDeviceManager: ObservableObject {
     ) {
         self.provider = provider
         self.notificationCenter = notificationCenter
-        let names = provider.availableMicrophoneNames()
-        self.hasMicrophoneInput = !names.isEmpty
-        self.availableMicrophoneNames = names
-        self.defaultMicrophoneName = provider.defaultMicrophoneName()
+        let devices = provider.availableMicrophones()
+        self.hasMicrophoneInput = !devices.isEmpty
+        self.availableMicrophoneDevices = devices
+        self.defaultMicrophoneDevice = provider.defaultMicrophone()
         startMonitoring()
     }
 
@@ -52,6 +51,14 @@ final class MicrophoneDeviceManager: ObservableObject {
 
     func refresh() {
         updateAvailability()
+    }
+
+    var availableMicrophoneNames: [String] {
+        availableMicrophoneDevices.map(\.name)
+    }
+
+    var defaultMicrophoneName: String? {
+        defaultMicrophoneDevice?.name
     }
 
     private func startMonitoring() {
@@ -75,18 +82,18 @@ final class MicrophoneDeviceManager: ObservableObject {
     }
 
     private func updateAvailability() {
-        let names = provider.availableMicrophoneNames()
-        let hasInput = !names.isEmpty
-        let defaultName = provider.defaultMicrophoneName()
+        let devices = provider.availableMicrophones()
+        let hasInput = !devices.isEmpty
+        let defaultDevice = provider.defaultMicrophone()
         if Thread.isMainThread {
             hasMicrophoneInput = hasInput
-            availableMicrophoneNames = names
-            defaultMicrophoneName = defaultName
+            availableMicrophoneDevices = devices
+            defaultMicrophoneDevice = defaultDevice
         } else {
             DispatchQueue.main.async { [weak self] in
                 self?.hasMicrophoneInput = hasInput
-                self?.availableMicrophoneNames = names
-                self?.defaultMicrophoneName = defaultName
+                self?.availableMicrophoneDevices = devices
+                self?.defaultMicrophoneDevice = defaultDevice
             }
         }
     }

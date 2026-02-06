@@ -105,6 +105,59 @@ final class AudioCaptureTests: XCTestCase {
         XCTAssertEqual(capture.inputDeviceName, "Test Microphone")
     }
 
+    func testStartRecordingSelectsPreferredMicrophoneWhenConfigured() {
+        let backend = FakeAudioCaptureBackend()
+        backend.selectionResult = .selected
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let preferencesStore = makePreferencesStore()
+        preferencesStore.preferredMicrophoneName = "USB Mic"
+        let capture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: preferencesStore,
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() }
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+
+        XCTAssertEqual(backend.selectInputDeviceCalls, ["USB Mic"])
+        XCTAssertNil(capture.deviceSelectionMessage)
+    }
+
+    func testStartRecordingFallsBackWhenPreferredMicrophoneUnavailable() {
+        let backend = FakeAudioCaptureBackend()
+        backend.selectionResult = .fallbackToDefault
+        let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
+        let preferencesStore = makePreferencesStore()
+        preferencesStore.preferredMicrophoneName = "USB Mic"
+        let capture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: preferencesStore,
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() }
+        )
+
+        let privacyState = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        capture.startRecording(privacyState: privacyState, microphonePermission: .authorized)
+
+        XCTAssertEqual(backend.selectInputDeviceCalls, ["USB Mic"])
+        XCTAssertEqual(
+            capture.deviceSelectionMessage,
+            "Preferred microphone \"USB Mic\" not available. Using system default."
+        )
+    }
+
     func testStartRecordingWithoutPermissionSetsError() {
         let backend = FakeAudioCaptureBackend()
         let manager = RecordingManager(baseDirectory: FileManager.default.temporaryDirectory)
@@ -745,6 +798,8 @@ private final class FakeAudioCaptureBackend: AudioCaptureBackend {
     var installTapCalled = false
     var removeTapCalled = false
     var startError: Error?
+    var selectionResult: AudioInputDeviceSelectionResult = .notRequested
+    var selectInputDeviceCalls: [String?] = []
     private var tapHandler: ((AVAudioPCMBuffer) -> Void)?
     private var configurationChangeHandler: (() -> Void)?
 
@@ -773,6 +828,11 @@ private final class FakeAudioCaptureBackend: AudioCaptureBackend {
 
     func clearConfigurationChangeHandler() {
         configurationChangeHandler = nil
+    }
+
+    func selectInputDevice(named preferredName: String?) -> AudioInputDeviceSelectionResult {
+        selectInputDeviceCalls.append(preferredName)
+        return selectionResult
     }
 
     func start() throws {

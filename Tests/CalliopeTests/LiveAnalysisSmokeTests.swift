@@ -151,6 +151,10 @@ private final class TestAnalysisAudioFileInputBackend: AudioCaptureBackend {
         configurationChangeHandler = nil
     }
 
+    func selectInputDevice(named preferredName: String?) -> AudioInputDeviceSelectionResult {
+        .notRequested
+    }
+
     func start() throws {
         guard let tapHandler else { return }
         let file = try AVAudioFile(forReading: fileURL)

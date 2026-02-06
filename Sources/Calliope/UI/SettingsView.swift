@@ -28,6 +28,8 @@ struct SettingsView: View {
             microphonePermission: microphonePermission.state,
             hasMicrophoneInput: microphoneDevices.hasMicrophoneInput
         )
+        let availableDevices = microphoneDevices.availableMicrophoneDevices
+        let preferredName = audioCapturePreferencesStore.preferredMicrophoneName
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 Text("Settings")
@@ -64,6 +66,29 @@ struct SettingsView: View {
                             .foregroundColor(.secondary)
                     } else {
                         VStack(alignment: .leading, spacing: 6) {
+                            Text("Preferred Input")
+                                .font(.subheadline)
+                            Picker(
+                                "Preferred Input",
+                                selection: $audioCapturePreferencesStore.preferredMicrophoneName
+                            ) {
+                                Text("System Default")
+                                    .tag(String?.none)
+                                if let preferredName, !availableDevices.map(\.name).contains(preferredName) {
+                                    Text("\(preferredName) (Unavailable)")
+                                        .tag(Optional(preferredName))
+                                }
+                                ForEach(availableDevices, id: \.id) { device in
+                                    Text(device.name)
+                                        .tag(Optional(device.name))
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            if let message = audioCapture.deviceSelectionMessage {
+                                Text(message)
+                                    .font(.footnote)
+                                    .foregroundColor(.secondary)
+                            }
                             Text("Available Inputs")
                                 .font(.subheadline)
                             ForEach(microphoneDevices.availableMicrophoneNames, id: \.self) { name in

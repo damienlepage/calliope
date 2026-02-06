@@ -106,6 +106,12 @@ struct AudioCaptureBackendSelection {
     let status: AudioCaptureBackendStatus
 }
 
+enum AudioInputDeviceSelectionResult: Equatable {
+    case notRequested
+    case selected
+    case fallbackToDefault
+}
+
 protocol AudioCaptureBackend {
     var inputSource: AudioInputSource { get }
     var inputFormat: AVAudioFormat { get }
@@ -114,6 +120,7 @@ protocol AudioCaptureBackend {
     func removeTap()
     func setConfigurationChangeHandler(_ handler: @escaping () -> Void)
     func clearConfigurationChangeHandler()
+    func selectInputDevice(named preferredName: String?) -> AudioInputDeviceSelectionResult
     func start() throws
     func stop()
 }
@@ -191,6 +198,18 @@ final class SystemAudioCaptureBackend: AudioCaptureBackend {
         }
     }
 
+    func selectInputDevice(named preferredName: String?) -> AudioInputDeviceSelectionResult {
+        guard let preferredName, !preferredName.isEmpty else {
+            return .notRequested
+        }
+        guard let deviceID = AudioInputDeviceLookup.deviceID(named: preferredName) else {
+            return .fallbackToDefault
+        }
+        return AudioInputDeviceLookup.setInputDevice(deviceID, on: inputNode)
+            ? .selected
+            : .fallbackToDefault
+    }
+
     func start() throws {
         try engine.start()
     }
@@ -249,6 +268,18 @@ final class VoiceIsolationAudioCaptureBackend: AudioCaptureBackend {
         }
     }
 
+    func selectInputDevice(named preferredName: String?) -> AudioInputDeviceSelectionResult {
+        guard let preferredName, !preferredName.isEmpty else {
+            return .notRequested
+        }
+        guard let deviceID = AudioInputDeviceLookup.deviceID(named: preferredName) else {
+            return .fallbackToDefault
+        }
+        return AudioInputDeviceLookup.setInputDevice(deviceID, on: inputNode)
+            ? .selected
+            : .fallbackToDefault
+    }
+
     func start() throws {
         try engine.start()
     }
@@ -278,6 +309,7 @@ class AudioCapture: NSObject, ObservableObject {
     @Published private(set) var currentRecordingURL: URL?
     @Published private(set) var inputDeviceName: String = "Unknown Microphone"
     @Published private(set) var backendStatus: AudioCaptureBackendStatus = .standard
+    @Published private(set) var deviceSelectionMessage: String?
 
     private let bufferSubject = PassthroughSubject<AVAudioPCMBuffer, Never>()
     var audioBufferPublisher: AnyPublisher<AVAudioPCMBuffer, Never> {
@@ -452,6 +484,10 @@ class AudioCapture: NSObject, ObservableObject {
             return
         }
         self.backend = backend
+        applyPreferredInputDeviceSelection(
+            preferredName: preferences.preferredMicrophoneName,
+            backend: backend
+        )
         refreshInputDeviceName(from: backend)
         let recordingFormat = backend.inputFormat
         backend.setConfigurationChangeHandler { [weak self] in
@@ -547,6 +583,10 @@ class AudioCapture: NSObject, ObservableObject {
         }
 
         micTestBackend = backend
+        applyPreferredInputDeviceSelection(
+            preferredName: preferences.preferredMicrophoneName,
+            backend: backend
+        )
         refreshInputDeviceName(from: backend)
         backend.setConfigurationChangeHandler { [weak self] in
             self?.handleMicTestConfigurationChange()
@@ -688,6 +728,17 @@ class AudioCapture: NSObject, ObservableObject {
             DispatchQueue.main.async { [weak self] in
                 self?.inputDeviceName = deviceName
             }
+        }
+    }
+
+    private func applyPreferredInputDeviceSelection(
+        preferredName: String?,
+        backend: AudioCaptureBackend
+    ) {
+        deviceSelectionMessage = nil
+        let result = backend.selectInputDevice(named: preferredName)
+        if case .fallbackToDefault = result, let preferredName {
+            deviceSelectionMessage = "Preferred microphone \"\(preferredName)\" not available. Using system default."
         }
     }
 

@@ -4,19 +4,19 @@ import XCTest
 
 final class MicrophoneDeviceManagerTests: XCTestCase {
     private final class MockMicrophoneDeviceProvider: MicrophoneDeviceProviding {
-        var devices: [String]
-        var defaultDevice: String?
+        var devices: [AudioInputDevice]
+        var defaultDevice: AudioInputDevice?
 
-        init(devices: [String], defaultDevice: String? = nil) {
+        init(devices: [AudioInputDevice], defaultDevice: AudioInputDevice? = nil) {
             self.devices = devices
             self.defaultDevice = defaultDevice
         }
 
-        func availableMicrophoneNames() -> [String] {
+        func availableMicrophones() -> [AudioInputDevice] {
             devices
         }
 
-        func defaultMicrophoneName() -> String? {
+        func defaultMicrophone() -> AudioInputDevice? {
             defaultDevice
         }
     }
@@ -37,9 +37,11 @@ final class MicrophoneDeviceManagerTests: XCTestCase {
 
     func testProvidesDeviceNamesAndDefault() {
         let notificationCenter = NotificationCenter()
+        let builtIn = AudioInputDevice(id: 1, name: "Built-in Microphone")
+        let usb = AudioInputDevice(id: 2, name: "USB Mic")
         let provider = MockMicrophoneDeviceProvider(
-            devices: ["Built-in Microphone", "USB Mic"],
-            defaultDevice: "USB Mic"
+            devices: [builtIn, usb],
+            defaultDevice: usb
         )
 
         let manager = MicrophoneDeviceManager(
@@ -61,8 +63,9 @@ final class MicrophoneDeviceManagerTests: XCTestCase {
         )
 
         let connected = expectation(description: "Reports available after device connects")
-        provider.devices = ["Built-in Microphone"]
-        provider.defaultDevice = "Built-in Microphone"
+        let builtIn = AudioInputDevice(id: 1, name: "Built-in Microphone")
+        provider.devices = [builtIn]
+        provider.defaultDevice = builtIn
         notificationCenter.post(name: .AVCaptureDeviceWasConnected, object: nil)
         DispatchQueue.main.async {
             XCTAssertTrue(manager.hasMicrophoneInput)

@@ -202,6 +202,10 @@ private final class FakeAudioCaptureBackend: AudioCaptureBackend {
 
     func clearConfigurationChangeHandler() {}
 
+    func selectInputDevice(named preferredName: String?) -> AudioInputDeviceSelectionResult {
+        .notRequested
+    }
+
     func start() throws {}
 
     func stop() {}

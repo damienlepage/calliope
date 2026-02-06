@@ -36,6 +36,11 @@ struct SessionView: View {
                             .font(.headline)
                     }
                 }
+                if let message = audioCapture.deviceSelectionMessage {
+                    Text(message)
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                }
                 if viewState.shouldShowRecordingIndicators {
                     Text("Microphone: \(audioCapture.inputDeviceName)")
                         .font(.subheadline)
