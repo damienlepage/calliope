@@ -147,6 +147,7 @@ struct ContentView: View {
                         recordingPreferencesStore: recordingPreferencesStore,
                         perAppProfileStore: perAppProfileStore,
                         audioCapture: audioCapture,
+                        audioAnalyzer: audioAnalyzer,
                         hasAcceptedDisclosure: hasAcceptedDisclosure,
                         recordingsPath: PathDisplayFormatter.displayPath(
                             RecordingManager.shared.recordingsDirectoryURL()

@@ -19,6 +19,7 @@ class AudioAnalyzer: ObservableObject {
     @Published var processingLatencyAverage: TimeInterval = 0
     @Published var processingUtilizationStatus: ProcessingUtilizationStatus = .ok
     @Published var processingUtilizationAverage: Double = 0
+    @Published var processingUtilizationPeak: Double = 0
 
     var feedbackPublisher: AnyPublisher<FeedbackState, Never> {
         let metricsPublisher = Publishers.CombineLatest4(
@@ -133,6 +134,7 @@ class AudioAnalyzer: ObservableObject {
                         self.processingLatencyAverage = 0
                         self.processingUtilizationStatus = .ok
                         self.processingUtilizationAverage = 0
+                        self.processingUtilizationPeak = 0
                         self.silenceMonitor.reset()
                         self.paceStats.reset()
                         self.processingLatencyTracker.reset()
@@ -171,6 +173,7 @@ class AudioAnalyzer: ObservableObject {
                         self.processingLatencyAverage = 0
                         self.processingUtilizationStatus = .ok
                         self.processingUtilizationAverage = 0
+                        self.processingUtilizationPeak = 0
                         self.recordingStart = nil
                         self.recordingURLs = []
                         self.processingLatencyTracker.reset()
@@ -278,6 +281,7 @@ class AudioAnalyzer: ObservableObject {
                 let utilizationStatus = processingUtilizationTracker.record(utilization: utilization)
                 let utilizationAverage = processingUtilizationTracker.average
                 processingUtilizationStats.record(value: utilization)
+                let utilizationPeak = processingUtilizationStats.peak
                 if utilizationStatus != processingUtilizationStatus {
                     DispatchQueue.main.async { [weak self] in
                         self?.processingUtilizationStatus = utilizationStatus
@@ -286,6 +290,11 @@ class AudioAnalyzer: ObservableObject {
                 if abs(utilizationAverage - processingUtilizationAverage) >= 0.001 {
                     DispatchQueue.main.async { [weak self] in
                         self?.processingUtilizationAverage = utilizationAverage
+                    }
+                }
+                if utilizationPeak > processingUtilizationPeak {
+                    DispatchQueue.main.async { [weak self] in
+                        self?.processingUtilizationPeak = utilizationPeak
                     }
                 }
             }

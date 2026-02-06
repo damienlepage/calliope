@@ -17,6 +17,7 @@ struct SettingsView: View {
     @ObservedObject var recordingPreferencesStore: RecordingRetentionPreferencesStore
     @ObservedObject var perAppProfileStore: PerAppFeedbackProfileStore
     @ObservedObject var audioCapture: AudioCapture
+    @ObservedObject var audioAnalyzer: AudioAnalyzer
     let hasAcceptedDisclosure: Bool
     let recordingsPath: String
     let showOpenSettingsAction: Bool
@@ -367,6 +368,36 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 VStack(alignment: .leading, spacing: 8) {
+                    Text("Performance & Energy")
+                        .font(.headline)
+                    Text("Validate CPU and Energy Impact in Activity Monitor while recording.")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                    if audioCapture.isRecording {
+                        Text(PerformanceDiagnosticsFormatter.utilizationSummary(
+                            average: audioAnalyzer.processingUtilizationAverage,
+                            peak: audioAnalyzer.processingUtilizationPeak
+                        ))
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                    } else {
+                        Text("Start a session to see live utilization averages and peaks.")
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                    }
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Guardrail checklist")
+                            .font(.subheadline)
+                        Text("- Close heavy apps before long sessions.")
+                        Text("- Use a headset or dedicated mic.")
+                        Text("- Keep macOS on stable power for long calls.")
+                    }
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                VStack(alignment: .leading, spacing: 8) {
                     Text("About")
                         .font(.headline)
                     Text(appVersionText)
@@ -442,6 +473,7 @@ struct SettingsView: View {
         recordingPreferencesStore: RecordingRetentionPreferencesStore(),
         perAppProfileStore: PerAppFeedbackProfileStore(),
         audioCapture: AudioCapture(capturePreferencesStore: AudioCapturePreferencesStore()),
+        audioAnalyzer: AudioAnalyzer(),
         hasAcceptedDisclosure: true,
         recordingsPath: "/Users/you/Recordings",
         showOpenSettingsAction: false,

@@ -1,6 +1,6 @@
 ---
 id: cal-kg2p
-status: ready
+status: closed
 deps: []
 links: []
 created: 2026-02-06T17:10:10Z
