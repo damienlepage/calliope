@@ -23,12 +23,13 @@ Build Calliope into a privacy-first, low-latency macOS communication coach that 
 
 ## Workflow
 1. Read PRD.md, goals, status, lessons, and ready tickets.
-2. Pick ONE ready ticket, read it with `tk show <id>` and complete it end-to-end.
-3. Make minimal changes, update tests or add small verification steps.
-4. Run `swift test` when feasible.
-5. Update ticket status with `tk status <id> <status>` and note any new lessons.
-6. Update goals/status only if meaningfully changed.
-7. Commit all changes in the repository with the details of the iteration.
+2. If no ready tickets, use 'tk create' to create the next batch of tickets based on PRD.md and goals.
+3. Pick ONE ready ticket, read it with `tk show <id>` and complete it end-to-end.
+4. Make minimal changes, update tests or add small verification steps.
+5. Run `swift test` when feasible.
+6. Update ticket status with `tk status <id> <status>` and note any new lessons.
+7. Update goals/status only if meaningfully changed.
+8. Commit all changes in the repository with the details of the iteration.
 
 ## Stopping Conditions
 - No ready tickets and no clear next task.

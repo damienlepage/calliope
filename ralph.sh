@@ -83,13 +83,6 @@ build_prompt() {
     echo
     echo "## Recent Commits"
     git --no-pager log -5 --oneline || true
-    echo
-    echo "## Instructions"
-    echo "- Complete exactly ONE ready ticket."
-    echo "- If no ready tickets, use 'tk create' to create tickets based on PRD.md."
-    echo "- Keep changes minimal and safe."
-    echo "- Update tickets and goals if needed."
-    echo "- Run 'swift build' if reasonable."
   } > "$session_file"
 }
 
