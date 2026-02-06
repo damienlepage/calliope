@@ -54,6 +54,41 @@ These steps help validate mic capture, ensure Calliope isolates your voice, and 
 - If levels are flat, quit and relaunch Calliope, then restart the call.
 - If the call audio changes, check that no virtual audio device or system-wide audio enhancer is enabled.
 
+## Conferencing Compatibility Verification Log
+
+Use this template to capture compatibility checks for Zoom, Google Meet, and Microsoft Teams. Confirm that Calliope only tracks the local speaker and does not alter call audio.
+
+```markdown
+## Compatibility Check - <DATE>
+
+- macOS version:
+- Calliope version/build:
+- Device model:
+- Audio input device:
+- Notes:
+
+### Zoom
+
+- Call audio unchanged:
+- Calliope tracks only local speaker:
+- Pace/crutch/pause updates while speaking:
+- Observations:
+
+### Google Meet (Chrome)
+
+- Call audio unchanged:
+- Calliope tracks only local speaker:
+- Pace/crutch/pause updates while speaking:
+- Observations:
+
+### Microsoft Teams
+
+- Call audio unchanged:
+- Calliope tracks only local speaker:
+- Pace/crutch/pause updates while speaking:
+- Observations:
+```
+
 ### Adding Future App IDs for Per-App Profiles
 
 Per-app profiles are managed in Settings > Per-App Profiles. Add a new profile by entering the conferencing app bundle identifier (shown in Activity Monitor or System Settings), then customize pace, pause, and crutch-word targets. Example bundle IDs: `us.zoom.xos`, `com.microsoft.teams`, `com.google.Chrome`.
