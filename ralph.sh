@@ -108,6 +108,7 @@ run_iteration() {
   fi
 
   local test_attempt=0
+  local tests_fixed="false"
   while true; do
     test_attempt=$((test_attempt + 1))
     local test_log="$LOG_DIR/tests-iter-${iteration}-attempt-${test_attempt}.log"
@@ -121,6 +122,15 @@ run_iteration() {
 
     if [[ "$test_status" -eq 0 ]]; then
       log "swift test passed (iteration ${iteration}, attempt ${test_attempt})"
+      if [[ "$tests_fixed" == "true" ]]; then
+        if ! git diff --quiet; then
+          git add -A
+          git commit -m "fix tests"
+          log "Committed test fixes with message: fix tests"
+        else
+          log "No changes to commit after fixing tests"
+        fi
+      fi
       return 0
     fi
 
@@ -138,6 +148,7 @@ run_iteration() {
       echo "## Instructions"
       echo "- Fix the failing tests shown above."
       echo "- Make minimal, safe changes."
+      echo "- DO NOT commit changes."
     } > "$test_session"
 
     log "Sending failing test output to agent (iteration ${iteration}, attempt ${test_attempt})"
@@ -145,6 +156,7 @@ run_iteration() {
       log "Agent failed while fixing tests (iteration ${iteration}, attempt ${test_attempt})"
       return 1
     fi
+    tests_fixed="true"
   done
 }
 
