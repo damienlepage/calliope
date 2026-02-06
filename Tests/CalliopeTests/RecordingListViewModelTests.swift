@@ -153,6 +153,65 @@ final class RecordingListViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.recordings.map(\.fileSizeBytes), [sizes[urlB]!, sizes[urlA]!])
     }
 
+    func testSearchFiltersByDisplayNameCaseInsensitive() {
+        let urlA = URL(fileURLWithPath: "/tmp/TeamSync.m4a")
+        let urlB = URL(fileURLWithPath: "/tmp/OneOnOne.m4a")
+        let manager = MockRecordingManager(recordings: [urlA, urlB])
+        let dates: [URL: Date] = [
+            urlA: Date(timeIntervalSince1970: 10),
+            urlB: Date(timeIntervalSince1970: 20)
+        ]
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { dates[$0] ?? .distantPast },
+            durationProvider: { _ in nil },
+            fileSizeProvider: { _ in nil }
+        )
+
+        viewModel.loadRecordings()
+        viewModel.searchText = "team"
+
+        XCTAssertEqual(viewModel.recordings.map(\.url), [urlA])
+
+        viewModel.searchText = ""
+
+        XCTAssertEqual(viewModel.recordings.map(\.url), [urlB, urlA])
+    }
+
+    func testSortOptionOrdersByDurationWithMissingDurationsLast() {
+        let urlA = URL(fileURLWithPath: "/tmp/long.m4a")
+        let urlB = URL(fileURLWithPath: "/tmp/short.m4a")
+        let urlC = URL(fileURLWithPath: "/tmp/unknown.m4a")
+        let manager = MockRecordingManager(recordings: [urlA, urlB, urlC])
+        let dates: [URL: Date] = [
+            urlA: Date(timeIntervalSince1970: 10),
+            urlB: Date(timeIntervalSince1970: 20),
+            urlC: Date(timeIntervalSince1970: 30)
+        ]
+        let durations: [URL: TimeInterval?] = [
+            urlA: 120,
+            urlB: 45,
+            urlC: nil
+        ]
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { dates[$0] ?? .distantPast },
+            durationProvider: { durations[$0] ?? nil },
+            fileSizeProvider: { _ in nil }
+        )
+
+        viewModel.loadRecordings()
+        viewModel.sortOption = .durationLongest
+
+        XCTAssertEqual(viewModel.recordings.map(\.url), [urlA, urlB, urlC])
+
+        viewModel.sortOption = .durationShortest
+
+        XCTAssertEqual(viewModel.recordings.map(\.url), [urlB, urlA, urlC])
+    }
+
     func testRecordingItemDisplayNameStripsExtension() {
         let url = URL(fileURLWithPath: "/tmp/recording_123.m4a")
         let item = RecordingItem(

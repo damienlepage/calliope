@@ -109,3 +109,8 @@ goals:
     notes:
       - "2026-02-06: Identify the frontmost conferencing app, apply matching per-app profile settings, and surface active profile state in session UI."
       - "Validated 2026-02-06: ActiveAnalysisPreferencesStore resolves frontmost app profiles while recording; Session + overlay show active profile label with defaults."
+  - id: G21
+    title: Recordings search and sorting
+    status: BELOW_TARGET
+    notes:
+      - "2026-02-06: Goal created to add search + basic sorting in recordings list to meet PRD browseability requirements."

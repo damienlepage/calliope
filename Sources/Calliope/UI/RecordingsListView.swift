@@ -41,6 +41,19 @@ struct RecordingsListView: View {
                         .foregroundColor(.secondary)
                 }
                 Spacer()
+                TextField("Search recordings", text: $viewModel.searchText)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 220)
+                    .accessibilityLabel("Search recordings")
+                    .accessibilityHint("Filters recordings by name.")
+                Picker("Sort recordings", selection: $viewModel.sortOption) {
+                    ForEach(RecordingSortOption.allCases) { option in
+                        Text(option.label).tag(option)
+                    }
+                }
+                .pickerStyle(.menu)
+                .accessibilityLabel("Sort recordings")
+                .accessibilityHint("Choose a sort order for the recordings list.")
                 Button("Refresh") {
                     viewModel.refreshRecordings()
                 }

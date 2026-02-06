@@ -330,11 +330,43 @@ enum RecordingDeleteRequest: Identifiable, Equatable {
     }
 }
 
+enum RecordingSortOption: String, CaseIterable, Identifiable {
+    case dateNewest
+    case dateOldest
+    case durationLongest
+    case durationShortest
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .dateNewest:
+            return "Date (Newest)"
+        case .dateOldest:
+            return "Date (Oldest)"
+        case .durationLongest:
+            return "Duration (Longest)"
+        case .durationShortest:
+            return "Duration (Shortest)"
+        }
+    }
+}
+
 @MainActor
 final class RecordingListViewModel: ObservableObject {
     static let deleteWhileRecordingMessage = "Stop recording before deleting recordings."
 
     @Published private(set) var recordings: [RecordingItem] = []
+    @Published var searchText: String = "" {
+        didSet {
+            applyFiltersAndSort()
+        }
+    }
+    @Published var sortOption: RecordingSortOption = .dateNewest {
+        didSet {
+            applyFiltersAndSort()
+        }
+    }
     @Published var pendingDelete: RecordingDeleteRequest?
     @Published var detailItem: RecordingItem?
     @Published var deleteErrorMessage: String?
@@ -480,6 +512,7 @@ final class RecordingListViewModel: ObservableObject {
     private let audioPlayerFactory: (URL) throws -> AudioPlaying
     private var audioPlayer: AudioPlaying?
     private var cancellables = Set<AnyCancellable>()
+    private var allRecordings: [RecordingItem] = []
 
     private static let totalDurationFormatter: DateComponentsFormatter = {
         let formatter = DateComponentsFormatter()
@@ -592,6 +625,51 @@ final class RecordingListViewModel: ObservableObject {
         )
     }
 
+    private func applyFiltersAndSort() {
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let filtered: [RecordingItem]
+        if query.isEmpty {
+            filtered = allRecordings
+        } else {
+            filtered = allRecordings.filter { item in
+                item.displayName.localizedCaseInsensitiveContains(query)
+            }
+        }
+        recordings = sortRecordings(filtered)
+    }
+
+    private func sortRecordings(_ items: [RecordingItem]) -> [RecordingItem] {
+        items.sorted { left, right in
+            switch sortOption {
+            case .dateNewest:
+                if left.modifiedAt != right.modifiedAt {
+                    return left.modifiedAt > right.modifiedAt
+                }
+            case .dateOldest:
+                if left.modifiedAt != right.modifiedAt {
+                    return left.modifiedAt < right.modifiedAt
+                }
+            case .durationLongest:
+                let leftDuration = left.duration ?? -1
+                let rightDuration = right.duration ?? -1
+                if leftDuration != rightDuration {
+                    return leftDuration > rightDuration
+                }
+            case .durationShortest:
+                let leftDuration = left.duration ?? Double.greatestFiniteMagnitude
+                let rightDuration = right.duration ?? Double.greatestFiniteMagnitude
+                if leftDuration != rightDuration {
+                    return leftDuration < rightDuration
+                }
+            }
+            let nameComparison = left.displayName.localizedCaseInsensitiveCompare(right.displayName)
+            if nameComparison != .orderedSame {
+                return nameComparison == .orderedAscending
+            }
+            return left.url.absoluteString < right.url.absoluteString
+        }
+    }
+
     init(
         manager: RecordingManaging = RecordingManager.shared,
         workspace: WorkspaceOpening = NSWorkspace.shared,
@@ -634,17 +712,12 @@ final class RecordingListViewModel: ObservableObject {
                 integrityReport: integrityReportProvider(url)
             )
         }
-        let sortedItems = items.sorted { left, right in
-            if left.modifiedAt != right.modifiedAt {
-                return left.modifiedAt > right.modifiedAt
-            }
-            return left.url.absoluteString < right.url.absoluteString
-        }
         if let activePlaybackURL,
-           !sortedItems.contains(where: { $0.url == activePlaybackURL }) {
+           !items.contains(where: { $0.url == activePlaybackURL }) {
             stopPlayback()
         }
-        recordings = sortedItems
+        allRecordings = items
+        applyFiltersAndSort()
     }
 
     func refreshRecordings() {
