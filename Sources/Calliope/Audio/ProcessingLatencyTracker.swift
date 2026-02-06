@@ -37,6 +37,14 @@ struct ProcessingLatencyTracker {
         self.samples = Array(repeating: 0, count: safeWindow)
     }
 
+    init(windowSize: Int, threshold: TimeInterval) {
+        self.init(
+            windowSize: windowSize,
+            highThreshold: threshold,
+            criticalThreshold: TimeInterval.greatestFiniteMagnitude
+        )
+    }
+
     var average: TimeInterval {
         guard count > 0 else { return 0 }
         return total / Double(count)
