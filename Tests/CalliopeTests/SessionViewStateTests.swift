@@ -32,7 +32,7 @@ final class SessionViewStateTests: XCTestCase {
     }
 
     func testErrorStateShowsStatusWhenIdle() {
-        let state = SessionViewState(isRecording: false, status: .error)
+        let state = SessionViewState(isRecording: false, status: .error(.engineStartFailed))
 
         XCTAssertTrue(state.shouldShowIdlePrompt)
         XCTAssertFalse(state.shouldShowFeedbackPanel)
