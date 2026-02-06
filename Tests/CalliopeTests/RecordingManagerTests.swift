@@ -320,4 +320,60 @@ final class RecordingManagerTests: XCTestCase {
         let decoded = try JSONDecoder().decode(RecordingMetadata.self, from: persisted)
         XCTAssertEqual(decoded.title, "Weekly Review")
     }
+
+    func testBackfillMetadataWritesCreatedAtWhenMissingMetadata() {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let recordingsDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
+        let timestampMs: Double = 1_700_000_000_000
+        let recordingURL = recordingsDirectory
+            .appendingPathComponent("recording_\(Int64(timestampMs))_abc.m4a")
+        let expectedDate = Date(timeIntervalSince1970: timestampMs / 1000)
+
+        FileManager.default.createFile(atPath: recordingURL.path, contents: Data([0x1]))
+
+        manager.backfillMetadataIfNeeded(for: [recordingURL])
+
+        let readBack = manager.readMetadata(for: recordingURL)
+        XCTAssertEqual(readBack?.createdAt, expectedDate)
+        XCTAssertEqual(RecordingMetadata.normalizedTitle(readBack?.title ?? ""), readBack?.title)
+    }
+
+    func testBackfillMetadataAddsCreatedAtAndNormalizesTitleWhenMissingCreatedAt() throws {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let recordingsDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
+        let timestampMs: Double = 1_700_000_100_000
+        let recordingURL = recordingsDirectory
+            .appendingPathComponent("recording_\(Int64(timestampMs))_def.m4a")
+        let expectedDate = Date(timeIntervalSince1970: timestampMs / 1000)
+        let metadata = RecordingMetadata(title: "  Weekly \n Review  ")
+
+        FileManager.default.createFile(atPath: recordingURL.path, contents: Data([0x1]))
+        try manager.writeMetadata(metadata, for: recordingURL)
+
+        manager.backfillMetadataIfNeeded(for: [recordingURL])
+
+        let readBack = manager.readMetadata(for: recordingURL)
+        XCTAssertEqual(readBack?.createdAt, expectedDate)
+        XCTAssertEqual(readBack?.title, "Weekly Review")
+    }
+
+    func testBackfillMetadataSkipsUnparseableFilename() {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let recordingsDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
+        let recordingURL = recordingsDirectory.appendingPathComponent("session.m4a")
+        let metadataURL = manager.metadataURL(for: recordingURL)
+
+        FileManager.default.createFile(atPath: recordingURL.path, contents: Data([0x1]))
+
+        manager.backfillMetadataIfNeeded(for: [recordingURL])
+
+        XCTAssertNil(manager.readMetadata(for: recordingURL))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: metadataURL.path))
+    }
 }

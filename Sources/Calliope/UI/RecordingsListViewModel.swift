@@ -12,6 +12,7 @@ import Foundation
 
 protocol RecordingManaging {
     func getAllRecordings() -> [URL]
+    func backfillMetadataIfNeeded(for recordings: [URL])
     func deleteRecording(at url: URL) throws
     func deleteAllRecordings() throws
     func deleteRecordings(olderThan cutoff: Date) -> Int
@@ -283,7 +284,7 @@ struct RecordingItem: Identifiable, Equatable {
             }
             return normalizedTitle
         }
-        if let sessionDate = timestampDate(from: name) ?? metadata?.createdAt ?? modifiedAt {
+        if let sessionDate = RecordingMetadata.inferredCreatedAt(from: url) ?? metadata?.createdAt ?? modifiedAt {
             let sessionTitle = defaultSessionTitle(for: sessionDate)
             if let segmentInfo = segmentInfo(from: name) {
                 return "\(sessionTitle) (Part \(segmentInfo.partLabel))"
@@ -297,7 +298,7 @@ struct RecordingItem: Identifiable, Equatable {
     }
 
     static func defaultSessionTitle(for date: Date) -> String {
-        "Session \(defaultNameFormatter.string(from: date))"
+        RecordingMetadata.defaultSessionTitle(for: date)
     }
 
     private static let durationFormatter: DateComponentsFormatter = {
@@ -319,13 +320,6 @@ struct RecordingItem: Identifiable, Equatable {
     private static let sizeFormatter: ByteCountFormatter = {
         let formatter = ByteCountFormatter()
         formatter.countStyle = .file
-        return formatter
-    }()
-
-    private static let defaultNameFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
         return formatter
     }()
 
@@ -433,16 +427,7 @@ struct RecordingItem: Identifiable, Equatable {
         return "Session \(shortSessionID) Part \(segmentInfo.partLabel)"
     }
 
-    private static func timestampDate(from name: String) -> Date? {
-        guard name.hasPrefix("recording_") else { return nil }
-        let suffix = name.dropFirst("recording_".count)
-        guard let underscoreIndex = suffix.firstIndex(of: "_") else { return nil }
-        let timestampString = String(suffix[..<underscoreIndex])
-        guard let timestampMs = Double(timestampString) else { return nil }
-        let seconds = timestampMs / 1000
-        guard seconds > 0 else { return nil }
-        return Date(timeIntervalSince1970: seconds)
-    }
+    
 }
 
 enum RecordingDeleteRequest: Identifiable, Equatable {
@@ -831,9 +816,13 @@ final class RecordingListViewModel: ObservableObject {
     }
 
     func loadRecordings() {
+        let urls = manager.getAllRecordings()
+        loadRecordings(from: urls)
+    }
+
+    private func loadRecordings(from urls: [URL]) {
         pendingDelete = nil
         deleteErrorMessage = nil
-        let urls = manager.getAllRecordings()
         let items = urls.map { url in
             RecordingItem(
                 url: url,
@@ -856,7 +845,9 @@ final class RecordingListViewModel: ObservableObject {
     func refreshRecordings() {
         guard !isRecording else { return }
         autoCleanIfNeeded()
-        loadRecordings()
+        let urls = manager.getAllRecordings()
+        manager.backfillMetadataIfNeeded(for: urls)
+        loadRecordings(from: urls)
     }
 
     func bind(recordingPublisher: AnyPublisher<Bool, Never>) {

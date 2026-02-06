@@ -1,6 +1,6 @@
 ---
 id: cal-wau2
-status: open
+status: closed
 deps: [cal-sx1v]
 links: []
 created: 2026-02-06T22:18:45Z

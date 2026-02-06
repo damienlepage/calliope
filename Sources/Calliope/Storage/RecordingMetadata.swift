@@ -12,6 +12,13 @@ struct RecordingMetadata: Codable, Equatable {
     let createdAt: Date?
 
     static let maxTitleLength = 80
+    private static let recordingPrefix = "recording_"
+    private static let defaultNameFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter
+    }()
 
     init(title: String, createdAt: Date? = nil) {
         self.title = title
@@ -39,5 +46,21 @@ struct RecordingMetadata: Codable, Equatable {
 
     static func normalizedTitle(_ title: String) -> String? {
         normalizedTitleInfo(title)?.normalized
+    }
+
+    static func defaultSessionTitle(for date: Date) -> String {
+        "Session \(defaultNameFormatter.string(from: date))"
+    }
+
+    static func inferredCreatedAt(from recordingURL: URL) -> Date? {
+        let name = recordingURL.deletingPathExtension().lastPathComponent
+        guard name.hasPrefix(recordingPrefix) else { return nil }
+        let suffix = name.dropFirst(recordingPrefix.count)
+        guard let underscoreIndex = suffix.firstIndex(of: "_") else { return nil }
+        let timestampString = String(suffix[..<underscoreIndex])
+        guard let timestampMs = Double(timestampString) else { return nil }
+        let seconds = timestampMs / 1000
+        guard seconds > 0 else { return nil }
+        return Date(timeIntervalSince1970: seconds)
     }
 }

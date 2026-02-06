@@ -273,4 +273,27 @@ extension RecordingManager {
             return nil
         }
     }
+
+    func backfillMetadataIfNeeded(for recordings: [URL]) {
+        for recordingURL in recordings {
+            let existingMetadata = readMetadata(for: recordingURL)
+            if existingMetadata?.createdAt != nil {
+                continue
+            }
+            guard let inferredCreatedAt = RecordingMetadata.inferredCreatedAt(from: recordingURL) else {
+                continue
+            }
+            let title: String
+            if let existingMetadata {
+                title = existingMetadata.title
+            } else {
+                title = RecordingMetadata.defaultSessionTitle(for: inferredCreatedAt)
+            }
+            guard let normalizedTitle = RecordingMetadata.normalizedTitle(title) else {
+                continue
+            }
+            let backfilled = RecordingMetadata(title: normalizedTitle, createdAt: inferredCreatedAt)
+            try? writeMetadata(backfilled, for: recordingURL)
+        }
+    }
 }
