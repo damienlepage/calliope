@@ -59,9 +59,8 @@ struct SessionView: View {
             backendStatus: audioCapture.backendStatus,
             isRecording: audioCapture.isRecording
         )
-        let recoveryAction = CaptureRecoveryActionMapper.recoveryAction(for: audioCapture.status)
+        let captureRecoveryBanner = CaptureRecoveryBannerState.from(status: audioCapture.status)
         let shouldShowVoiceIsolationAcknowledgement = voiceIsolationAcknowledgementMessage != nil
-            && recoveryAction?.kind != .acknowledgeVoiceIsolationRisk
         let routeWarningText = audioCapture.isRecording
             ? AudioRouteWarningEvaluator.warningText(
                 inputDeviceName: audioCapture.inputDeviceName,
@@ -89,29 +88,39 @@ struct SessionView: View {
                     .accessibilityLabel("Session status")
                     .accessibilityValue(audioCapture.statusText)
                 }
+                if let captureRecoveryBanner {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(captureRecoveryBanner.title)
+                            .font(.headline)
+                        Text(captureRecoveryBanner.message)
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        HStack(spacing: 12) {
+                            Button(captureRecoveryBanner.primaryActionTitle, action: onRetryCapture)
+                                .buttonStyle(.borderedProminent)
+                                .disabled(audioCapture.isTestingMic || !canStartRecording)
+                            Button(captureRecoveryBanner.secondaryActionTitle, action: onOpenSettings)
+                                .buttonStyle(.bordered)
+                        }
+                    }
+                    .frame(maxWidth: 340, alignment: .leading)
+                    .padding()
+                    .background(Color.orange.opacity(0.12))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.orange.opacity(0.25))
+                    )
+                    .accessibilityElement(children: .contain)
+                    .accessibilityLabel("Capture recovery")
+                }
                 if let interruptionMessage = audioCapture.interruptionMessage {
                     Text(interruptionMessage)
                         .font(.footnote)
                         .foregroundColor(.orange)
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: 320)
-                }
-                if let recoveryAction {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(recoveryAction.hint)
-                            .font(.footnote)
-                            .foregroundColor(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Button(recoveryAction.actionTitle) {
-                            handleRecoveryAction(recoveryAction)
-                        }
-                        .buttonStyle(.bordered)
-                        .disabled(
-                            recoveryAction.kind == .retryStart
-                                && (audioCapture.isTestingMic || !canStartRecording)
-                        )
-                    }
-                    .frame(maxWidth: 320, alignment: .leading)
                 }
                 if let captureStatusText {
                     Text(captureStatusText)
@@ -314,16 +323,6 @@ struct SessionView: View {
         }
     }
 
-    private func handleRecoveryAction(_ action: CaptureRecoveryAction) {
-        switch action.kind {
-        case .retryStart:
-            onRetryCapture()
-        case .openSettings:
-            onOpenSettings()
-        case .acknowledgeVoiceIsolationRisk:
-            onAcknowledgeVoiceIsolationRisk()
-        }
-    }
 }
 
 #Preview {

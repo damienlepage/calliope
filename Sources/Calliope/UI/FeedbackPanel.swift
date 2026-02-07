@@ -146,6 +146,9 @@ struct FeedbackPanel: View {
                     Text("No mic input detected")
                         .font(.footnote)
                         .foregroundColor(.orange)
+                    Text("Check your microphone or input selection in Settings.")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
                 }
                 if showWaitingForSpeech {
                     Text("Waiting for speech")

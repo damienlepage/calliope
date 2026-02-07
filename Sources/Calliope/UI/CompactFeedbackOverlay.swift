@@ -105,6 +105,9 @@ struct CompactFeedbackOverlay: View {
                 Text("No mic input detected")
                     .font(.caption)
                     .foregroundColor(.orange)
+                Text("Check your microphone or input selection in Settings.")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
             }
             if showWaitingForSpeech {
                 Text("Waiting for speech")
