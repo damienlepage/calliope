@@ -31,9 +31,10 @@ struct FeedbackPanel: View {
             pauseCount: pauseCount,
             durationSeconds: sessionDurationSeconds
         )
+        let cardSpacing: CGFloat = 12
         let metricColumns = [
-            GridItem(.flexible(), spacing: 12),
-            GridItem(.flexible(), spacing: 12)
+            GridItem(.flexible(), spacing: cardSpacing),
+            GridItem(.flexible(), spacing: cardSpacing)
         ]
         let crutchLevel = CrutchWordFeedback.level(for: crutchWords)
         VStack(alignment: .leading, spacing: 16) {
@@ -41,11 +42,6 @@ struct FeedbackPanel: View {
                 Text("Real-time Feedback")
                     .font(.headline)
                 Spacer()
-                if let elapsedText = ElapsedTimeFormatter.labelText(sessionDurationText) {
-                    Text(elapsedText)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
             }
 
             FeedbackCard(title: "Pace") {
@@ -69,7 +65,7 @@ struct FeedbackPanel: View {
                 )
             }
 
-            LazyVGrid(columns: metricColumns, spacing: 12) {
+            LazyVGrid(columns: metricColumns, spacing: cardSpacing) {
                 FeedbackStatCard(
                     title: "Crutch Words",
                     value: "\(crutchWords)",
@@ -87,18 +83,32 @@ struct FeedbackPanel: View {
                             .padding(.top, 2)
                     }
                 }
+                FeedbackCard(title: "Input Level") {
+                    VStack(alignment: .leading, spacing: 6) {
+                        InputLevelMeterView(level: inputLevel)
+                        Text(inputLevelStatusText())
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                FeedbackStatCard(
+                    title: "Elapsed",
+                    value: sessionDurationText ?? "—",
+                    valueColor: .primary,
+                    subtitle: "Session time"
+                )
             }
 
-            FeedbackCard(title: "Input & Processing") {
+            FeedbackCard(title: "System Health") {
                 VStack(alignment: .leading, spacing: 8) {
-                    InputLevelMeterView(level: inputLevel)
                     statusLine(
                         label: "Processing",
                         value: ProcessingLatencyFormatter.statusText(
                             status: processingLatencyStatus,
                             average: processingLatencyAverage
                         ),
-                        color: processingStatusColor(processingLatencyStatus)
+                        color: processingStatusColor(processingLatencyStatus),
+                        icon: statusIconName(for: processingLatencyStatus)
                     )
                     statusLine(
                         label: "Load",
@@ -106,7 +116,8 @@ struct FeedbackPanel: View {
                             status: processingUtilizationStatus,
                             average: processingUtilizationAverage
                         ),
-                        color: utilizationStatusColor(processingUtilizationStatus)
+                        color: utilizationStatusColor(processingUtilizationStatus),
+                        icon: statusIconName(for: processingUtilizationStatus)
                     )
                     if let warningText = ProcessingLatencyFormatter.warningText(status: processingLatencyStatus) {
                         feedbackNote(warningText)
@@ -141,11 +152,11 @@ struct FeedbackPanel: View {
         case .idle:
             return .secondary
         case .slow:
-            return .blue // Too slow
+            return Color(NSColor.systemBlue)
         case .target:
-            return .green // Good pace
+            return Color(NSColor.systemGreen)
         case .fast:
-            return .red // Too fast
+            return Color(NSColor.systemOrange)
         }
     }
 
@@ -160,42 +171,69 @@ struct FeedbackPanel: View {
     private func crutchColor(_ level: CrutchWordFeedbackLevel) -> Color {
         switch level {
         case .calm:
-            return .green
+            return Color(NSColor.systemGreen)
         case .caution:
-            return .orange
+            return Color(NSColor.systemOrange)
         }
     }
 
     private func processingStatusColor(_ status: ProcessingLatencyStatus) -> Color {
         switch status {
         case .ok:
-            return .green
+            return .secondary
         case .high:
-            return .orange
+            return Color(NSColor.systemOrange)
         case .critical:
-            return .red
+            return Color(NSColor.systemRed)
         }
     }
 
     private func utilizationStatusColor(_ status: ProcessingUtilizationStatus) -> Color {
         switch status {
         case .ok:
-            return .green
+            return .secondary
         case .high:
-            return .orange
+            return Color(NSColor.systemOrange)
         case .critical:
-            return .red
+            return Color(NSColor.systemRed)
         }
     }
 
-    private func statusLine(label: String, value: String, color: Color) -> some View {
+    private func statusLine(label: String, value: String, color: Color, icon: String?) -> some View {
         HStack(spacing: 6) {
+            if let icon {
+                Image(systemName: icon)
+                    .font(.footnote)
+                    .foregroundColor(color)
+            }
             Text("\(label):")
                 .font(.footnote)
                 .foregroundColor(.secondary)
             Text(value)
                 .font(.footnote)
                 .foregroundColor(color)
+        }
+    }
+
+    private func statusIconName(for status: ProcessingLatencyStatus) -> String? {
+        switch status {
+        case .ok:
+            return "checkmark.circle.fill"
+        case .high:
+            return "exclamationmark.triangle.fill"
+        case .critical:
+            return "exclamationmark.octagon.fill"
+        }
+    }
+
+    private func statusIconName(for status: ProcessingUtilizationStatus) -> String? {
+        switch status {
+        case .ok:
+            return "checkmark.circle.fill"
+        case .high:
+            return "exclamationmark.triangle.fill"
+        case .critical:
+            return "exclamationmark.octagon.fill"
         }
     }
 
@@ -206,9 +244,23 @@ struct FeedbackPanel: View {
     }
 
     private func feedbackWarning(_ text: String) -> some View {
-        Text(text)
-            .font(.footnote)
-            .foregroundColor(.orange)
+        HStack(spacing: 6) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.footnote)
+            Text(text)
+                .font(.footnote)
+        }
+        .foregroundColor(Color(NSColor.systemOrange))
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color(NSColor.systemOrange).opacity(0.12))
+        )
+    }
+
+    private func inputLevelStatusText() -> String {
+        inputLevel < InputLevelMeter.meaningfulThreshold ? "Low signal" : "Active"
     }
 }
 

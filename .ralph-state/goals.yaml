@@ -190,6 +190,7 @@ goals:
       - "Validated 2026-02-07: Added capture recovery banner with retry/settings actions plus silence guidance and unit coverage."
   - id: G34
     title: Feedback visualization polish for calm focus
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "2026-02-07: Goal created to refine real-time feedback visuals for a calmer, more intuitive coaching experience."
+      - "Validated 2026-02-07: Feedback panel and overlay now emphasize pace, group secondary metrics in a grid, and use calmer status/warning styling."

@@ -35,16 +35,16 @@ struct CompactFeedbackOverlay: View {
             durationSeconds: sessionDurationSeconds
         )
         let crutchLevel = CrutchWordFeedback.level(for: crutchWords)
+        let cardSpacing: CGFloat = 10
+        let metricColumns = [
+            GridItem(.flexible(), spacing: cardSpacing),
+            GridItem(.flexible(), spacing: cardSpacing)
+        ]
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 Text("Live Feedback")
                     .font(.headline)
                 Spacer()
-                if let elapsedText = ElapsedTimeFormatter.labelText(sessionDurationText) {
-                    Text(elapsedText)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
             }
             VStack(alignment: .leading, spacing: 2) {
                 Text(captureStatusText)
@@ -72,7 +72,7 @@ struct CompactFeedbackOverlay: View {
                 }
             }
 
-            HStack(spacing: 10) {
+            LazyVGrid(columns: metricColumns, spacing: cardSpacing) {
                 OverlayStatCard(
                     title: "Crutch Words",
                     value: "\(crutchWords)",
@@ -85,19 +85,33 @@ struct CompactFeedbackOverlay: View {
                     valueColor: .primary,
                     subtitle: pauseSubtitleText(rateText: pauseRateText)
                 )
+                OverlayCard(title: "Input Level") {
+                    VStack(alignment: .leading, spacing: 6) {
+                        InputLevelMeterView(level: inputLevel)
+                            .frame(maxWidth: .infinity)
+                        Text(inputLevelStatusText())
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                OverlayStatCard(
+                    title: "Elapsed",
+                    value: sessionDurationText ?? "—",
+                    valueColor: .primary,
+                    subtitle: "Session time"
+                )
             }
 
-            OverlayCard(title: "Input & Processing") {
+            OverlayCard(title: "System Health") {
                 VStack(alignment: .leading, spacing: 8) {
-                    InputLevelMeterView(level: inputLevel)
-                        .frame(width: 180)
                     statusLine(
                         label: "Processing",
                         value: ProcessingLatencyFormatter.statusText(
                             status: processingLatencyStatus,
                             average: processingLatencyAverage
                         ),
-                        color: processingStatusColor(processingLatencyStatus)
+                        color: processingStatusColor(processingLatencyStatus),
+                        icon: statusIconName(for: processingLatencyStatus)
                     )
                     statusLine(
                         label: "Load",
@@ -105,7 +119,8 @@ struct CompactFeedbackOverlay: View {
                             status: processingUtilizationStatus,
                             average: processingUtilizationAverage
                         ),
-                        color: utilizationStatusColor(processingUtilizationStatus)
+                        color: utilizationStatusColor(processingUtilizationStatus),
+                        icon: statusIconName(for: processingUtilizationStatus)
                     )
                     if let warningText = ProcessingLatencyFormatter.warningText(status: processingLatencyStatus) {
                         feedbackNote(warningText)
@@ -144,11 +159,11 @@ struct CompactFeedbackOverlay: View {
         case .idle:
             return .secondary
         case .slow:
-            return .blue
+            return Color(NSColor.systemBlue)
         case .target:
-            return .green
+            return Color(NSColor.systemGreen)
         case .fast:
-            return .red
+            return Color(NSColor.systemOrange)
         }
     }
 
@@ -163,42 +178,69 @@ struct CompactFeedbackOverlay: View {
     private func crutchColor(_ level: CrutchWordFeedbackLevel) -> Color {
         switch level {
         case .calm:
-            return .green
+            return Color(NSColor.systemGreen)
         case .caution:
-            return .orange
+            return Color(NSColor.systemOrange)
         }
     }
 
     private func processingStatusColor(_ status: ProcessingLatencyStatus) -> Color {
         switch status {
         case .ok:
-            return .green
+            return .secondary
         case .high:
-            return .orange
+            return Color(NSColor.systemOrange)
         case .critical:
-            return .red
+            return Color(NSColor.systemRed)
         }
     }
 
     private func utilizationStatusColor(_ status: ProcessingUtilizationStatus) -> Color {
         switch status {
         case .ok:
-            return .green
+            return .secondary
         case .high:
-            return .orange
+            return Color(NSColor.systemOrange)
         case .critical:
-            return .red
+            return Color(NSColor.systemRed)
         }
     }
 
-    private func statusLine(label: String, value: String, color: Color) -> some View {
+    private func statusLine(label: String, value: String, color: Color, icon: String?) -> some View {
         HStack(spacing: 6) {
+            if let icon {
+                Image(systemName: icon)
+                    .font(.footnote)
+                    .foregroundColor(color)
+            }
             Text("\(label):")
                 .font(.footnote)
                 .foregroundColor(.secondary)
             Text(value)
                 .font(.footnote)
                 .foregroundColor(color)
+        }
+    }
+
+    private func statusIconName(for status: ProcessingLatencyStatus) -> String? {
+        switch status {
+        case .ok:
+            return "checkmark.circle.fill"
+        case .high:
+            return "exclamationmark.triangle.fill"
+        case .critical:
+            return "exclamationmark.octagon.fill"
+        }
+    }
+
+    private func statusIconName(for status: ProcessingUtilizationStatus) -> String? {
+        switch status {
+        case .ok:
+            return "checkmark.circle.fill"
+        case .high:
+            return "exclamationmark.triangle.fill"
+        case .critical:
+            return "exclamationmark.octagon.fill"
         }
     }
 
@@ -209,9 +251,23 @@ struct CompactFeedbackOverlay: View {
     }
 
     private func feedbackWarning(_ text: String) -> some View {
-        Text(text)
-            .font(.footnote)
-            .foregroundColor(.orange)
+        HStack(spacing: 6) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.footnote)
+            Text(text)
+                .font(.footnote)
+        }
+        .foregroundColor(Color(NSColor.systemOrange))
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color(NSColor.systemOrange).opacity(0.12))
+        )
+    }
+
+    private func inputLevelStatusText() -> String {
+        inputLevel < InputLevelMeter.meaningfulThreshold ? "Low signal" : "Active"
     }
 }
 
