@@ -2,6 +2,11 @@ import AVFoundation
 import XCTest
 @testable import Calliope
 
+private func makeTranscript(word: String = "word", count: Int) -> String {
+    guard count > 0 else { return "" }
+    return Array(repeating: word, count: count).joined(separator: " ")
+}
+
 final class AnalysisSummaryTests: XCTestCase {
     func testSummaryWrittenWhenRecordingStops() {
         let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
@@ -68,6 +73,70 @@ final class AnalysisSummaryTests: XCTestCase {
         XCTAssertEqual(writer.lastSummary?.processing.latencyPeakMs, 0)
         XCTAssertEqual(writer.lastSummary?.processing.utilizationAverage, 0)
         XCTAssertEqual(writer.lastSummary?.processing.utilizationPeak, 0)
+    }
+
+    func testSummaryPaceStatsMatchTranscriptAndElapsedTime() {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            UUID().uuidString,
+            isDirectory: true
+        )
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let suiteName = "AnalysisSummaryTests.AudioCapture.\(UUID().uuidString)"
+        let captureDefaults = UserDefaults(suiteName: suiteName)!
+        captureDefaults.removePersistentDomain(forName: suiteName)
+        let preferencesStore = AudioCapturePreferencesStore(defaults: captureDefaults)
+        let audioCapture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: preferencesStore,
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: FakeAudioCaptureBackend(), status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() }
+        )
+        let writer = MockSummaryWriter()
+        let start = Date(timeIntervalSince1970: 1_000)
+        let clock = TestClock([
+            start,
+            start,
+            start.addingTimeInterval(30),
+            start.addingTimeInterval(60)
+        ])
+        let analyzer = AudioAnalyzer(
+            summaryWriter: writer,
+            now: clock.now,
+            speechTranscriberFactory: { FakeSpeechTranscriber() }
+        )
+        let analysisDefaults = UserDefaults(suiteName: "AnalysisSummaryTests.Pace")!
+        analysisDefaults.removePersistentDomain(forName: "AnalysisSummaryTests.Pace")
+        let preferences = AnalysisPreferencesStore(defaults: analysisDefaults)
+
+        analyzer.setup(audioCapture: audioCapture, preferencesStore: preferences)
+
+        let recordingURL = manager.getNewRecordingURL()
+        audioCapture.setRecordingURLForTesting(recordingURL)
+
+        audioCapture.isRecording = true
+        let startHandled = expectation(description: "start handled")
+        DispatchQueue.main.async { startHandled.fulfill() }
+        wait(for: [startHandled], timeout: 1.0)
+
+        analyzer.handleTranscription(makeTranscript(count: 30))
+        analyzer.handleTranscription(makeTranscript(count: 120))
+
+        audioCapture.isRecording = false
+        let stopHandled = expectation(description: "stop handled")
+        DispatchQueue.main.async { stopHandled.fulfill() }
+        wait(for: [stopHandled], timeout: 1.0)
+
+        guard let summary = writer.lastSummary else {
+            XCTFail("Expected summary to be written")
+            return
+        }
+
+        XCTAssertEqual(summary.pace.totalWords, 120)
+        XCTAssertEqual(summary.pace.minWPM, 60, accuracy: 0.001)
+        XCTAssertEqual(summary.pace.maxWPM, 120, accuracy: 0.001)
+        XCTAssertEqual(summary.pace.averageWPM, 90, accuracy: 0.001)
     }
 
     func testRecordingManagerWritesSummaryJSON() throws {

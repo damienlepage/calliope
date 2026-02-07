@@ -249,6 +249,75 @@ final class AudioAnalyzerTests: XCTestCase {
         XCTAssertEqual(summary.pace.totalWords, 5)
     }
 
+    func testSummaryUsesLatestTranscriptCountsAcrossUpdates() {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            UUID().uuidString,
+            isDirectory: true
+        )
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let suiteName = "AudioAnalyzerTests.AudioCapture.\(UUID().uuidString)"
+        let captureDefaults = UserDefaults(suiteName: suiteName)!
+        captureDefaults.removePersistentDomain(forName: suiteName)
+        let preferencesStore = AudioCapturePreferencesStore(defaults: captureDefaults)
+        let audioCapture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: preferencesStore,
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: FakeAudioCaptureBackend(), status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() },
+            recordingStartConfirmation: { true }
+        )
+        let analysisSuiteName = "AudioAnalyzerTests.Analysis.\(UUID().uuidString)"
+        let analysisDefaults = UserDefaults(suiteName: analysisSuiteName)!
+        analysisDefaults.removePersistentDomain(forName: analysisSuiteName)
+        let analysisPreferences = AnalysisPreferencesStore(defaults: analysisDefaults)
+        analysisPreferences.crutchWords = ["uh", "you know"]
+        let summaryWriter = CapturingSummaryWriter()
+        let analyzer = AudioAnalyzer(
+            summaryWriter: summaryWriter,
+            speechTranscriberFactory: { FakeSpeechTranscriber() }
+        )
+
+        analyzer.setup(audioCapture: audioCapture, preferencesStore: analysisPreferences)
+
+        audioCapture.startRecording(
+            privacyState: PrivacyGuardrails.State(hasAcceptedDisclosure: true),
+            microphonePermission: .authorized,
+            hasMicrophoneInput: true
+        )
+
+        let startExpectation = expectation(description: "Allow start to process")
+        DispatchQueue.main.async { startExpectation.fulfill() }
+        wait(for: [startExpectation], timeout: 1.0)
+
+        analyzer.handleTranscription("uh hello")
+        let firstUpdateExpectation = expectation(description: "Allow first transcription to process")
+        DispatchQueue.main.async { firstUpdateExpectation.fulfill() }
+        wait(for: [firstUpdateExpectation], timeout: 1.0)
+
+        analyzer.handleTranscription("uh hello you know uh")
+        let secondUpdateExpectation = expectation(description: "Allow second transcription to process")
+        DispatchQueue.main.async { secondUpdateExpectation.fulfill() }
+        wait(for: [secondUpdateExpectation], timeout: 1.0)
+
+        audioCapture.stopRecording()
+
+        let stopExpectation = expectation(description: "Allow stop to process")
+        DispatchQueue.main.async { stopExpectation.fulfill() }
+        wait(for: [stopExpectation], timeout: 1.0)
+
+        guard let summary = summaryWriter.lastSummary else {
+            XCTFail("Expected summary to be written")
+            return
+        }
+
+        XCTAssertEqual(summary.crutchWords.totalCount, 3)
+        XCTAssertEqual(summary.crutchWords.counts["uh"], 2)
+        XCTAssertEqual(summary.crutchWords.counts["you know"], 1)
+        XCTAssertEqual(summary.pace.totalWords, 5)
+    }
+
     func testIntegrityValidationRunsOnStopForAllRecordingURLs() {
         let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
             UUID().uuidString,

@@ -232,7 +232,8 @@ goals:
       - "Validated 2026-02-07: Removed processing/load system health cards from session feedback panel and compact overlay; status warnings remain in Settings/diagnostics."
   - id: G41
     title: Accuracy validation for pace and crutch stats
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "New 2026-02-07: PRD requires WPM accuracy and live crutch counts to match post-session stats; add regression coverage to validate alignment."
       - "2026-02-07: Added AudioAnalyzer summary regression test for crutch counts and total words."
+      - "Validated 2026-02-07: Added regression coverage for multiple transcription updates to keep crutch counts and total words aligned with final transcript."
