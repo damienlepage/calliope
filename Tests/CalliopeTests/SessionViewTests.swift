@@ -16,7 +16,6 @@ final class SessionViewTests: XCTestCase {
             sessionDurationText: "00:12",
             sessionDurationSeconds: 12,
             canStartRecording: true,
-            blockingReasonsText: nil,
             voiceIsolationAcknowledgementMessage: nil,
             activeProfileLabel: nil,
             showTitlePrompt: false,
@@ -61,7 +60,6 @@ final class SessionViewTests: XCTestCase {
             sessionDurationText: "01:10",
             sessionDurationSeconds: 70,
             canStartRecording: true,
-            blockingReasonsText: nil,
             voiceIsolationAcknowledgementMessage: nil,
             activeProfileLabel: ActiveProfileLabelFormatter.labelText(
                 isRecording: true,

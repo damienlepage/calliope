@@ -59,7 +59,6 @@ struct ContentView: View {
         let showOpenSettingsAction: Bool
         let showOpenSoundSettingsAction: Bool
         let showOpenSpeechSettingsAction: Bool
-        let blockingReasonsText: String?
         let voiceIsolationAcknowledgementMessage: String?
     }
 
@@ -141,7 +140,6 @@ struct ContentView: View {
         let showOpenSpeechSettingsAction = speechSettingsActionModel.shouldShow(
             state: speechPermission.state
         )
-        let blockingReasonsText = blockingReasonsText(blockingReasons)
         let voiceIsolationAcknowledgementMessage = blockingReasons.first(
             where: { $0 == .voiceIsolationRiskUnacknowledged }
         )?.message
@@ -162,7 +160,6 @@ struct ContentView: View {
             showOpenSettingsAction: showOpenSettingsAction,
             showOpenSoundSettingsAction: showOpenSoundSettingsAction,
             showOpenSpeechSettingsAction: showOpenSpeechSettingsAction,
-            blockingReasonsText: blockingReasonsText,
             voiceIsolationAcknowledgementMessage: voiceIsolationAcknowledgementMessage
         )
     }
@@ -355,7 +352,6 @@ struct ContentView: View {
                 sessionDurationText: viewState.sessionDurationText,
                 sessionDurationSeconds: viewState.sessionDurationSeconds,
                 canStartRecording: viewState.canStartRecording,
-                blockingReasonsText: viewState.blockingReasonsText,
                 voiceIsolationAcknowledgementMessage: viewState.voiceIsolationAcknowledgementMessage,
                 activeProfileLabel: viewState.activeProfileLabel,
                 showTitlePrompt: viewState.pendingSessionForTitle != nil,
@@ -509,14 +505,6 @@ struct ContentView: View {
 
     private func loadPostSessionReview(for session: CompletedRecordingSession) -> PostSessionReview? {
         PostSessionReview(session: session)
-    }
-
-    private func blockingReasonsText(_ reasons: [RecordingEligibility.Reason]) -> String? {
-        guard !reasons.isEmpty else {
-            return nil
-        }
-        let details = reasons.map(\.message).joined(separator: " ")
-        return "Start is disabled. \(details)"
     }
 
     private func acknowledgeVoiceIsolationRisk() {

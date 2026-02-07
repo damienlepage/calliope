@@ -16,7 +16,6 @@ struct SessionView: View {
     let sessionDurationText: String?
     let sessionDurationSeconds: Int?
     let canStartRecording: Bool
-    let blockingReasonsText: String?
     let voiceIsolationAcknowledgementMessage: String?
     let activeProfileLabel: String?
     let showTitlePrompt: Bool
@@ -39,10 +38,7 @@ struct SessionView: View {
 
     var body: some View {
         let viewState = SessionViewState(
-            isRecording: audioCapture.isRecording,
-            status: audioCapture.status,
-            hasBlockingReasons: blockingReasonsText != nil,
-            activeProfileLabel: activeProfileLabel
+            isRecording: audioCapture.isRecording
         )
         let titlePromptState = SessionTitlePromptState(
             draft: sessionTitleDraft,
@@ -69,13 +65,6 @@ struct SessionView: View {
                 Spacer()
             }
             .frame(maxWidth: Layout.contentMaxWidth, alignment: .leading)
-
-            if viewState.shouldShowTitle {
-                Text("Calliope")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .accessibilityAddTraits(.isHeader)
-            }
 
             if viewState.shouldShowIdlePrompt {
                 Text("Ready when you are. Press Start to begin coaching.")
@@ -235,7 +224,6 @@ private struct SessionViewPreview: View {
             sessionDurationText: "00:32",
             sessionDurationSeconds: 32,
             canStartRecording: true,
-            blockingReasonsText: nil,
             voiceIsolationAcknowledgementMessage: nil,
             activeProfileLabel: "Profile: Default (App: Default)",
             showTitlePrompt: true,
@@ -346,7 +334,6 @@ private struct SessionViewRecordingPreview: View {
             sessionDurationText: "04:12",
             sessionDurationSeconds: 252,
             canStartRecording: true,
-            blockingReasonsText: nil,
             voiceIsolationAcknowledgementMessage: nil,
             activeProfileLabel: "Profile: Default (App: Zoom)",
             showTitlePrompt: false,

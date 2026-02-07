@@ -7,56 +7,13 @@
 
 struct SessionViewState: Equatable {
     let isRecording: Bool
-    let status: AudioCaptureStatus
-    let hasBlockingReasons: Bool
-    let activeProfileLabel: String?
-
-    var shouldShowTitle: Bool {
-        if isRecording {
-            return true
-        }
-        if case .error = status {
-            return true
-        }
-        return false
-    }
 
     var shouldShowIdlePrompt: Bool {
-        if isRecording {
-            return false
-        }
-        if case .error = status {
-            return false
-        }
-        if hasBlockingReasons {
-            return false
-        }
-        return true
+        !isRecording
     }
 
     var shouldShowFeedbackPanel: Bool {
         true
-    }
-
-    var shouldShowRecordingDetails: Bool {
-        isRecording
-    }
-
-    var shouldShowStatus: Bool {
-        false
-    }
-
-    var shouldShowActiveProfileLabel: Bool {
-        guard isRecording else { return false }
-        return activeProfileLabel != nil
-    }
-
-    var shouldShowBlockingReasons: Bool {
-        guard !isRecording else { return false }
-        if case .error = status {
-            return true
-        }
-        return hasBlockingReasons
     }
 
     var primaryButtonTitle: String {
