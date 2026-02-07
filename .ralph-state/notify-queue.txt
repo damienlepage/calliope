@@ -1,0 +1,1 @@
+Goal completed: End-to-end validation of core user flows
