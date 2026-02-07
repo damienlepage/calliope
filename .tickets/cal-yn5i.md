@@ -66,3 +66,7 @@ Still blocked in this environment: cannot launch packaged app or access macOS 13
 **2026-02-07T18:30:31Z**
 
 2026-02-07: Still blocked in this environment; cannot access packaged app or macOS 13/14/15 hardware to run smoke tests. Manual QA needed to update release/QA-2026-02-07.md with results.
+
+**2026-02-07T18:45:06Z**
+
+2026-02-07: Still blocked in this environment; cannot launch packaged app or access macOS 13/14/15 hardware for smoke tests. Manual QA required to update release/QA-2026-02-07.md with results.
