@@ -1,1 +1,1 @@
-Goal completed: Local diagnostics export for support and troubleshooting
+Goal completed: Release candidate readiness checklist and documentation

@@ -208,6 +208,7 @@ goals:
       - "Validated 2026-02-07: Settings export generates a diagnostics JSON report under the recordings Diagnostics folder, reveals it in Finder, and unit tests cover encoding and writer output."
   - id: G37
     title: Release candidate readiness checklist and documentation
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "2026-02-07: New goal created to formalize release QA steps, packaging validation, and user-facing readiness documentation."
+      - "Validated 2026-02-07: Added release QA report template with user-facing notes and linked it from README and release checklist; unit test added."

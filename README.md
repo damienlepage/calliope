@@ -154,6 +154,11 @@ Use the provided scripts to run tests with local cache directories, which avoids
 COVERAGE_THRESHOLD=85 ./scripts/coverage.sh
 ```
 
+## Release Checklist
+
+Release validation steps are documented in `RELEASE_CHECKLIST.md`.
+Use `RELEASE_QA_TEMPLATE.md` to capture release candidate QA results and user-facing notes.
+
 ### Development Workflow
 
 1. **Write code in Cursor** - All source files are in `Sources/Calliope/`
