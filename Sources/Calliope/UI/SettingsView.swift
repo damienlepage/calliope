@@ -17,6 +17,7 @@ struct SettingsView: View {
     @ObservedObject var audioCapturePreferencesStore: AudioCapturePreferencesStore
     @ObservedObject var recordingPreferencesStore: RecordingRetentionPreferencesStore
     @ObservedObject var perAppProfileStore: PerAppFeedbackProfileStore
+    @ObservedObject var coachingProfileStore: CoachingProfileStore
     @ObservedObject var conferencingVerificationStore: ConferencingCompatibilityVerificationStore
     @ObservedObject var audioCapture: AudioCapture
     @ObservedObject var audioAnalyzer: AudioAnalyzer
@@ -34,6 +35,7 @@ struct SettingsView: View {
     let onRunMicTest: () -> Void
     let onShowQuickStart: () -> Void
     @State private var isPerAppProfilesPresented = false
+    @State private var isCoachingProfilesPresented = false
 
     var body: some View {
         let canRunMicTest = MicTestEligibility.canRun(
@@ -362,6 +364,32 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 VStack(alignment: .leading, spacing: 8) {
+                    Text("Coaching Profiles")
+                        .font(.headline)
+                    Text("Create named profiles for different coaching targets per session.")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                    if coachingProfileStore.profiles.isEmpty {
+                        Text("No profiles yet. Add one to customize coaching targets.")
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                    } else {
+                        ForEach(coachingProfileStore.profiles.sorted(
+                            by: { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+                        )) { profile in
+                            Text(profile.name)
+                                .font(.footnote)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    Button("Manage Profiles") {
+                        isCoachingProfilesPresented = true
+                    }
+                    .buttonStyle(.bordered)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                VStack(alignment: .leading, spacing: 8) {
                     Text("Per-App Profiles")
                         .font(.headline)
                     Text("Create custom pace, pause, and crutch-word targets for each conferencing app.")
@@ -498,6 +526,9 @@ struct SettingsView: View {
         .onChange(of: audioCapture.isTestingMic) { _ in
             audioCapture.refreshDiagnostics()
         }
+        .sheet(isPresented: $isCoachingProfilesPresented) {
+            CoachingProfilesSheet(coachingProfileStore: coachingProfileStore)
+        }
         .sheet(isPresented: $isPerAppProfilesPresented) {
             PerAppProfilesSheet(perAppProfileStore: perAppProfileStore)
         }
@@ -557,6 +588,7 @@ struct SettingsView: View {
         audioCapturePreferencesStore: AudioCapturePreferencesStore(),
         recordingPreferencesStore: RecordingRetentionPreferencesStore(),
         perAppProfileStore: PerAppFeedbackProfileStore(),
+        coachingProfileStore: CoachingProfileStore(),
         conferencingVerificationStore: ConferencingCompatibilityVerificationStore(),
         audioCapture: AudioCapture(capturePreferencesStore: AudioCapturePreferencesStore()),
         audioAnalyzer: AudioAnalyzer(),

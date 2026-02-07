@@ -9,10 +9,10 @@ import Combine
 import Foundation
 
 struct AnalysisPreferences: Equatable, Codable {
-    let paceMin: Double
-    let paceMax: Double
-    let pauseThreshold: TimeInterval
-    let crutchWords: [String]
+    var paceMin: Double
+    var paceMax: Double
+    var pauseThreshold: TimeInterval
+    var crutchWords: [String]
 
     static let `default` = AnalysisPreferences(
         paceMin: Constants.targetPaceMin,

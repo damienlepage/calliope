@@ -163,6 +163,7 @@ struct ContentView: View {
                         audioCapturePreferencesStore: audioCapturePreferencesStore,
                         recordingPreferencesStore: recordingPreferencesStore,
                         perAppProfileStore: perAppProfileStore,
+                        coachingProfileStore: coachingProfileStore,
                         conferencingVerificationStore: conferencingVerificationStore,
                         audioCapture: audioCapture,
                         audioAnalyzer: audioAnalyzer,

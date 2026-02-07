@@ -68,6 +68,34 @@ final class CoachingProfileStoreTests: XCTestCase {
         XCTAssertEqual(store.selectedProfileID, store.profiles.first?.id)
     }
 
+    func testSetProfileNormalizesNameAndPreferences() {
+        let defaults = makeDefaults("CoachingProfileStoreTests.setProfile")
+        let store = CoachingProfileStore(defaults: defaults)
+        guard let existing = store.profiles.first else {
+            XCTFail("Expected a seeded profile")
+            return
+        }
+
+        var updated = existing
+        updated.name = " Focused "
+        updated.preferences = AnalysisPreferences(
+            paceMin: 190,
+            paceMax: 140,
+            pauseThreshold: 0,
+            crutchWords: ["Um", " ", "um", "Like"]
+        )
+        store.setProfile(updated)
+
+        guard let stored = store.profiles.first(where: { $0.id == existing.id }) else {
+            XCTFail("Expected updated profile")
+            return
+        }
+        XCTAssertEqual(stored.name, "Focused")
+        XCTAssertLessThanOrEqual(stored.preferences.paceMin, stored.preferences.paceMax)
+        XCTAssertGreaterThan(stored.preferences.pauseThreshold, 0)
+        XCTAssertEqual(stored.preferences.crutchWords, ["um", "like"])
+    }
+
     private func makeDefaults(_ suiteName: String) -> UserDefaults {
         let defaults = UserDefaults(suiteName: suiteName)!
         defaults.removePersistentDomain(forName: suiteName)
