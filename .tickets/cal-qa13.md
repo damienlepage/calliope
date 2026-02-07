@@ -1,7 +1,7 @@
 ---
 id: cal-qa13
 status: blocked
-deps: []
+deps: [cal-b1yg]
 links: []
 created: 2026-02-07T20:30:00Z
 type: task
