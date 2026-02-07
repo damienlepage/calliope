@@ -17,6 +17,9 @@ enum Constants {
     static let targetPaceMax: Double = 180.0 // words per minute
     static let pauseThreshold: TimeInterval = 1.0 // seconds
     static let speechAmplitudeThreshold: Float = 0.02 // RMS amplitude threshold for speech
+    static let speakingTimeTargetPercent: Double = 40.0
+    static let speakingTimeTargetMinPercent: Double = 10.0
+    static let speakingTimeTargetMaxPercent: Double = 90.0
 
     // Performance guardrails
     static let processingLatencyWindowSize: Int = 30

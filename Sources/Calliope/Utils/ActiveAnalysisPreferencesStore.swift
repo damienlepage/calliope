@@ -73,7 +73,8 @@ final class ActiveAnalysisPreferencesStore: ObservableObject, AnalysisPreference
                     paceMin: profile.paceMin,
                     paceMax: profile.paceMax,
                     pauseThreshold: profile.pauseThreshold,
-                    crutchWords: profile.crutchWords
+                    crutchWords: profile.crutchWords,
+                    speakingTimeTargetPercent: profile.speakingTimeTargetPercent
                 )
             } ?? resolvedBase
             return ActiveState(

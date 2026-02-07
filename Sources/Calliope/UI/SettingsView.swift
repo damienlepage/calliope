@@ -297,6 +297,37 @@ struct SettingsView: View {
                             .accessibilityValue(String(format: "%.1f seconds", preferencesStore.pauseThreshold))
                         }
                     }
+                    ViewThatFits(in: .horizontal) {
+                        HStack {
+                            Text("Speaking Time Target")
+                                .font(.subheadline)
+                            Spacer()
+                            Stepper(
+                                value: $preferencesStore.speakingTimeTargetPercent,
+                                in: Constants.speakingTimeTargetMinPercent...Constants.speakingTimeTargetMaxPercent,
+                                step: 5
+                            ) {
+                                Text("\(Int(preferencesStore.speakingTimeTargetPercent))%")
+                                    .font(.subheadline)
+                            }
+                            .accessibilityLabel("Speaking time target")
+                            .accessibilityValue("\(Int(preferencesStore.speakingTimeTargetPercent)) percent")
+                        }
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Speaking Time Target")
+                                .font(.subheadline)
+                            Stepper(
+                                value: $preferencesStore.speakingTimeTargetPercent,
+                                in: Constants.speakingTimeTargetMinPercent...Constants.speakingTimeTargetMaxPercent,
+                                step: 5
+                            ) {
+                                Text("\(Int(preferencesStore.speakingTimeTargetPercent))%")
+                                    .font(.subheadline)
+                            }
+                            .accessibilityLabel("Speaking time target")
+                            .accessibilityValue("\(Int(preferencesStore.speakingTimeTargetPercent)) percent")
+                        }
+                    }
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Crutch Words (comma or newline separated)")
                             .font(.subheadline)
@@ -347,7 +378,7 @@ struct SettingsView: View {
                         preferencesStore.resetToDefaults()
                     }
                     .buttonStyle(.bordered)
-                    .accessibilityHint("Reset pace, pause, and crutch word settings.")
+                    .accessibilityHint("Reset pace, pause, speaking time target, and crutch word settings.")
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 

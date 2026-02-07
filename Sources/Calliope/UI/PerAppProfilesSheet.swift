@@ -83,7 +83,7 @@ struct PerAppProfilesSheet: View {
                         )
                         .id(profile.appIdentifier)
                     } else {
-                        Text("Select a profile to edit pace, pauses, and crutch words.")
+                        Text("Select a profile to edit pace, pauses, speaking-time target, and crutch words.")
                             .font(.footnote)
                             .foregroundColor(.secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -160,6 +160,19 @@ private struct PerAppProfileEditor: View {
                 Spacer()
                 Stepper(value: pauseThresholdBinding, in: 0.5...5.0, step: 0.1) {
                     Text(String(format: "%.1f s", profile.pauseThreshold))
+                        .font(.subheadline)
+                }
+            }
+            HStack {
+                Text("Speaking Time Target")
+                    .font(.subheadline)
+                Spacer()
+                Stepper(
+                    value: speakingTimeTargetBinding,
+                    in: Constants.speakingTimeTargetMinPercent...Constants.speakingTimeTargetMaxPercent,
+                    step: 5
+                ) {
+                    Text("\(Int(profile.speakingTimeTargetPercent))%")
                         .font(.subheadline)
                 }
             }
@@ -244,6 +257,15 @@ private struct PerAppProfileEditor: View {
             get: { AnalysisPreferencesStore.formatCrutchWords(profile.crutchWords) },
             set: { newValue in
                 profile.crutchWords = AnalysisPreferencesStore.parseCrutchWords(from: newValue)
+            }
+        )
+    }
+
+    private var speakingTimeTargetBinding: Binding<Double> {
+        Binding(
+            get: { profile.speakingTimeTargetPercent },
+            set: { newValue in
+                profile.speakingTimeTargetPercent = newValue
             }
         )
     }

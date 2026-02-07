@@ -14,6 +14,7 @@ struct CompactFeedbackOverlay: View {
     let pauseCount: Int
     let pauseAverageDuration: TimeInterval
     let speakingTimeSeconds: TimeInterval
+    let speakingTimeTargetPercent: Double
     let inputLevel: Double
     let showSilenceWarning: Bool
     let showWaitingForSpeech: Bool
@@ -126,7 +127,7 @@ struct CompactFeedbackOverlay: View {
                     title: "Speaking",
                     value: speakingTimeText,
                     valueColor: .primary,
-                    subtitle: "Talk time"
+                    subtitle: "Talk time · \(speakingTargetText())"
                 )
                 OverlayCard(title: "Input Level") {
                     VStack(alignment: .leading, spacing: 6) {
@@ -213,6 +214,11 @@ struct CompactFeedbackOverlay: View {
         case .caution:
             return Color(NSColor.systemOrange)
         }
+    }
+
+    private func speakingTargetText() -> String {
+        let target = Int(speakingTimeTargetPercent.rounded())
+        return "Target: \(target)% of session"
     }
 
     private func feedbackNote(_ text: String) -> some View {
@@ -328,6 +334,7 @@ struct CompactFeedbackOverlay_Previews: PreviewProvider {
             pauseCount: 1,
             pauseAverageDuration: 0.9,
             speakingTimeSeconds: 18,
+            speakingTimeTargetPercent: Constants.speakingTimeTargetPercent,
             inputLevel: 0.6,
             showSilenceWarning: false,
             showWaitingForSpeech: false,

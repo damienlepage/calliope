@@ -39,7 +39,8 @@ final class CoachingProfileStoreTests: XCTestCase {
                     paceMin: 130,
                     paceMax: 170,
                     pauseThreshold: 1.1,
-                    crutchWords: ["um", "like"]
+                    crutchWords: ["um", "like"],
+                    speakingTimeTargetPercent: 45
                 )
             ) else {
                 XCTFail("Expected to create a coaching profile")
@@ -85,7 +86,8 @@ final class CoachingProfileStoreTests: XCTestCase {
             paceMin: 190,
             paceMax: 140,
             pauseThreshold: 0,
-            crutchWords: ["Um", " ", "um", "Like"]
+            crutchWords: ["Um", " ", "um", "Like"],
+            speakingTimeTargetPercent: 5
         )
         store.setProfile(updated)
 
@@ -97,6 +99,7 @@ final class CoachingProfileStoreTests: XCTestCase {
         XCTAssertLessThanOrEqual(stored.preferences.paceMin, stored.preferences.paceMax)
         XCTAssertGreaterThan(stored.preferences.pauseThreshold, 0)
         XCTAssertEqual(stored.preferences.crutchWords, ["um", "like"])
+        XCTAssertEqual(stored.preferences.speakingTimeTargetPercent, Constants.speakingTimeTargetPercent)
     }
 
     private func makeDefaults(_ suiteName: String) -> UserDefaults {

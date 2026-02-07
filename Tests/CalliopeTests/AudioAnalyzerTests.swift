@@ -39,7 +39,8 @@ final class AudioAnalyzerTests: XCTestCase {
             paceMin: 110,
             paceMax: 170,
             pauseThreshold: 2.2,
-            crutchWords: ["alpha", "you know"]
+            crutchWords: ["alpha", "you know"],
+            speakingTimeTargetPercent: 42
         )
 
         analyzer.applyPreferences(preferences)
@@ -560,7 +561,8 @@ final class AudioAnalyzerTests: XCTestCase {
                 paceMin: 110,
                 paceMax: 170,
                 pauseThreshold: 1.0,
-                crutchWords: ["uh"]
+                crutchWords: ["uh"],
+                speakingTimeTargetPercent: 40
             )
         )
 

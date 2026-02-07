@@ -62,7 +62,7 @@ struct CoachingProfilesSheet: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Profile Details")
                         .font(.headline)
-                    Text("Set pace, pause, and crutch-word targets for each profile.")
+                    Text("Set pace, pause, speaking-time, and crutch-word targets for each profile.")
                         .font(.caption)
                         .foregroundColor(.secondary)
                     if let selectedProfileID,
@@ -83,7 +83,7 @@ struct CoachingProfilesSheet: View {
                         )
                         .id(profile.id)
                     } else {
-                        Text("Select a profile to edit its name and preferences.")
+                        Text("Select a profile to edit its name and coaching targets.")
                             .font(.footnote)
                             .foregroundColor(.secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -180,6 +180,19 @@ private struct CoachingProfileEditor: View {
                         .font(.subheadline)
                 }
             }
+            HStack {
+                Text("Speaking Time Target")
+                    .font(.subheadline)
+                Spacer()
+                Stepper(
+                    value: speakingTimeTargetBinding,
+                    in: Constants.speakingTimeTargetMinPercent...Constants.speakingTimeTargetMaxPercent,
+                    step: 5
+                ) {
+                    Text("\(Int(profile.preferences.speakingTimeTargetPercent))%")
+                        .font(.subheadline)
+                }
+            }
             VStack(alignment: .leading, spacing: 4) {
                 Text("Crutch Words (comma or newline separated)")
                     .font(.subheadline)
@@ -265,6 +278,15 @@ private struct CoachingProfileEditor: View {
             get: { profile.preferences.pauseThreshold },
             set: { newValue in
                 profile.preferences.pauseThreshold = newValue
+            }
+        )
+    }
+
+    private var speakingTimeTargetBinding: Binding<Double> {
+        Binding(
+            get: { profile.preferences.speakingTimeTargetPercent },
+            set: { newValue in
+                profile.preferences.speakingTimeTargetPercent = newValue
             }
         )
     }

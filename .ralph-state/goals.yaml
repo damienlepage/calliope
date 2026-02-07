@@ -279,3 +279,9 @@ goals:
     notes:
       - "New 2026-02-07: PRD requires predictable behavior when backgrounded, minimized, or reopened; validate recording continuity, timer accuracy, and UI state restoration across app lifecycle transitions."
       - "Validated 2026-02-07: Added lifecycle monitor to refresh diagnostics on app reactivation and test coverage for active/inactive transitions."
+  - id: G49
+    title: Speaking-time target coaching control
+    status: AT_TARGET
+    notes:
+      - "New 2026-02-07: Add a speaking-time target to coaching profiles and surface it in live feedback so sessions can be tuned per profile."
+      - "Validated 2026-02-07: Added speaking-time target preference to base/coaching/per-app profiles, surfaced target in live feedback, and updated tests."

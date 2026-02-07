@@ -16,6 +16,7 @@ struct PerAppFeedbackProfile: Codable, Equatable, Identifiable {
     var paceMax: Double
     var pauseThreshold: TimeInterval
     var crutchWords: [String]
+    var speakingTimeTargetPercent: Double
 
     var id: String { appIdentifier }
 
@@ -25,8 +26,41 @@ struct PerAppFeedbackProfile: Codable, Equatable, Identifiable {
             paceMin: Constants.targetPaceMin,
             paceMax: Constants.targetPaceMax,
             pauseThreshold: Constants.pauseThreshold,
-            crutchWords: Constants.crutchWords
+            crutchWords: Constants.crutchWords,
+            speakingTimeTargetPercent: Constants.speakingTimeTargetPercent
         )
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case appIdentifier
+        case paceMin
+        case paceMax
+        case pauseThreshold
+        case crutchWords
+        case speakingTimeTargetPercent
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        appIdentifier = try container.decode(String.self, forKey: .appIdentifier)
+        paceMin = try container.decode(Double.self, forKey: .paceMin)
+        paceMax = try container.decode(Double.self, forKey: .paceMax)
+        pauseThreshold = try container.decode(TimeInterval.self, forKey: .pauseThreshold)
+        crutchWords = try container.decode([String].self, forKey: .crutchWords)
+        speakingTimeTargetPercent = try container.decodeIfPresent(
+            Double.self,
+            forKey: .speakingTimeTargetPercent
+        ) ?? Constants.speakingTimeTargetPercent
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(appIdentifier, forKey: .appIdentifier)
+        try container.encode(paceMin, forKey: .paceMin)
+        try container.encode(paceMax, forKey: .paceMax)
+        try container.encode(pauseThreshold, forKey: .pauseThreshold)
+        try container.encode(crutchWords, forKey: .crutchWords)
+        try container.encode(speakingTimeTargetPercent, forKey: .speakingTimeTargetPercent)
     }
 }
 
@@ -124,12 +158,17 @@ final class PerAppFeedbackProfileStore: ObservableObject {
                 return true
             }
 
+        let normalizedSpeakingTarget = AnalysisPreferencesStore.normalizeSpeakingTimeTarget(
+            profile.speakingTimeTargetPercent
+        )
+
         return PerAppFeedbackProfile(
             appIdentifier: appIdentifier,
             paceMin: paceMin,
             paceMax: paceMax,
             pauseThreshold: pauseThreshold,
-            crutchWords: normalizedCrutchWords
+            crutchWords: normalizedCrutchWords,
+            speakingTimeTargetPercent: normalizedSpeakingTarget
         )
     }
 

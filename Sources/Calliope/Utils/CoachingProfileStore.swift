@@ -158,7 +158,8 @@ final class CoachingProfileStore: ObservableObject {
                 paceMin: 130,
                 paceMax: 170,
                 pauseThreshold: 0.8,
-                crutchWords: Constants.crutchWords
+                crutchWords: Constants.crutchWords,
+                speakingTimeTargetPercent: Constants.speakingTimeTargetPercent
             )
         )
         let conversational = CoachingProfile(
@@ -168,7 +169,8 @@ final class CoachingProfileStore: ObservableObject {
                 paceMin: 110,
                 paceMax: 175,
                 pauseThreshold: 1.4,
-                crutchWords: Constants.crutchWords
+                crutchWords: Constants.crutchWords,
+                speakingTimeTargetPercent: Constants.speakingTimeTargetPercent
             )
         )
         return [defaultProfile, focused, conversational].compactMap(Self.normalize)
@@ -197,11 +199,16 @@ final class CoachingProfileStore: ObservableObject {
                 return true
             }
 
+        let normalizedSpeakingTarget = AnalysisPreferencesStore.normalizeSpeakingTimeTarget(
+            preferences.speakingTimeTargetPercent
+        )
+
         return AnalysisPreferences(
             paceMin: paceMin,
             paceMax: paceMax,
             pauseThreshold: pauseThreshold,
-            crutchWords: normalizedCrutchWords
+            crutchWords: normalizedCrutchWords,
+            speakingTimeTargetPercent: normalizedSpeakingTarget
         )
     }
 

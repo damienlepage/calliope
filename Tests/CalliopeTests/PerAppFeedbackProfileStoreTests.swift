@@ -24,7 +24,8 @@ final class PerAppFeedbackProfileStoreTests: XCTestCase {
                 paceMin: 130,
                 paceMax: 190,
                 pauseThreshold: 1.2,
-                crutchWords: ["um", "you know"]
+                crutchWords: ["um", "you know"],
+                speakingTimeTargetPercent: 50
             )
             store.setProfile(profile)
         }
@@ -33,6 +34,7 @@ final class PerAppFeedbackProfileStoreTests: XCTestCase {
         XCTAssertEqual(reloaded.profiles.count, 1)
         XCTAssertEqual(reloaded.profile(for: "us.zoom.xos")?.paceMin, 130)
         XCTAssertEqual(reloaded.profile(for: "us.zoom.xos")?.crutchWords, ["um", "you know"])
+        XCTAssertEqual(reloaded.profile(for: "us.zoom.xos")?.speakingTimeTargetPercent, 50)
     }
 
     func testProfileNormalizationAdjustsInvalidValues() {
@@ -46,7 +48,8 @@ final class PerAppFeedbackProfileStoreTests: XCTestCase {
             paceMin: 200,
             paceMax: 140,
             pauseThreshold: 0,
-            crutchWords: [" Um ", "um", " ", "So"]
+            crutchWords: [" Um ", "um", " ", "So"],
+            speakingTimeTargetPercent: 5
         )
 
         store.setProfile(profile)
@@ -56,6 +59,7 @@ final class PerAppFeedbackProfileStoreTests: XCTestCase {
         XCTAssertEqual(normalized?.paceMax, 200)
         XCTAssertEqual(normalized?.pauseThreshold, Constants.pauseThreshold)
         XCTAssertEqual(normalized?.crutchWords, ["um", "so"])
+        XCTAssertEqual(normalized?.speakingTimeTargetPercent, Constants.speakingTimeTargetPercent)
     }
 
     func testAddProfileNormalizesIdentifierAndUsesDefaults() {
@@ -71,6 +75,7 @@ final class PerAppFeedbackProfileStoreTests: XCTestCase {
         XCTAssertEqual(profile?.paceMin, Constants.targetPaceMin)
         XCTAssertEqual(profile?.paceMax, Constants.targetPaceMax)
         XCTAssertEqual(profile?.pauseThreshold, Constants.pauseThreshold)
+        XCTAssertEqual(profile?.speakingTimeTargetPercent, Constants.speakingTimeTargetPercent)
     }
 
     func testProfileLookupNormalizesIdentifier() {
@@ -85,7 +90,8 @@ final class PerAppFeedbackProfileStoreTests: XCTestCase {
                 paceMin: 120,
                 paceMax: 180,
                 pauseThreshold: 1.1,
-                crutchWords: ["um"]
+                crutchWords: ["um"],
+                speakingTimeTargetPercent: 35
             )
         )
 

@@ -14,6 +14,7 @@ struct FeedbackPanel: View {
     let pauseCount: Int
     let pauseAverageDuration: TimeInterval
     let speakingTimeSeconds: TimeInterval
+    let speakingTimeTargetPercent: Double
     let inputLevel: Double
     let showSilenceWarning: Bool
     let showWaitingForSpeech: Bool
@@ -118,7 +119,7 @@ struct FeedbackPanel: View {
                     title: "Speaking",
                     value: speakingTimeText,
                     valueColor: .primary,
-                    subtitle: "Talk time"
+                    subtitle: "Talk time · \(speakingTargetText())"
                 )
                 FeedbackCard(title: "Input Level") {
                     VStack(alignment: .leading, spacing: 6) {
@@ -203,6 +204,11 @@ struct FeedbackPanel: View {
         case .caution:
             return Color(NSColor.systemOrange)
         }
+    }
+
+    private func speakingTargetText() -> String {
+        let target = Int(speakingTimeTargetPercent.rounded())
+        return "Target: \(target)% of session"
     }
 
     private func feedbackNote(_ text: String) -> some View {
@@ -400,6 +406,7 @@ struct FeedbackPanel_Previews: PreviewProvider {
             pauseCount: 2,
             pauseAverageDuration: 1.4,
             speakingTimeSeconds: 72,
+            speakingTimeTargetPercent: Constants.speakingTimeTargetPercent,
             inputLevel: 0.4,
             showSilenceWarning: false,
             showWaitingForSpeech: false,

@@ -13,6 +13,7 @@ final class ActiveAnalysisPreferencesStoreTests: XCTestCase {
         baseStore.paceMax = 160
         baseStore.pauseThreshold = 1.5
         baseStore.crutchWords = ["uh"]
+        baseStore.speakingTimeTargetPercent = 55
 
         let profileStore = PerAppFeedbackProfileStore(defaults: profileDefaults)
         profileStore.setProfile(
@@ -21,7 +22,8 @@ final class ActiveAnalysisPreferencesStoreTests: XCTestCase {
                 paceMin: 130,
                 paceMax: 170,
                 pauseThreshold: 0.8,
-                crutchWords: ["like"]
+                crutchWords: ["like"],
+                speakingTimeTargetPercent: 35
             )
         )
         let coachingStore = CoachingProfileStore(defaults: coachingDefaults)
@@ -31,7 +33,8 @@ final class ActiveAnalysisPreferencesStoreTests: XCTestCase {
                 paceMin: 140,
                 paceMax: 190,
                 pauseThreshold: 0.6,
-                crutchWords: ["actually"]
+                crutchWords: ["actually"],
+                speakingTimeTargetPercent: 45
             )
         )
         if let coachingProfile {
@@ -72,13 +75,15 @@ final class ActiveAnalysisPreferencesStoreTests: XCTestCase {
         baseStore.paceMax = 180
         baseStore.pauseThreshold = 1.2
         baseStore.crutchWords = ["um"]
+        baseStore.speakingTimeTargetPercent = 50
 
         let profile = PerAppFeedbackProfile(
             appIdentifier: "us.zoom.xos",
             paceMin: 135,
             paceMax: 165,
             pauseThreshold: 0.7,
-            crutchWords: ["like", "so"]
+            crutchWords: ["like", "so"],
+            speakingTimeTargetPercent: 25
         )
         let profileStore = PerAppFeedbackProfileStore(defaults: profileDefaults)
         profileStore.setProfile(profile)
@@ -89,7 +94,8 @@ final class ActiveAnalysisPreferencesStoreTests: XCTestCase {
                 paceMin: 150,
                 paceMax: 190,
                 pauseThreshold: 0.9,
-                crutchWords: ["basically"]
+                crutchWords: ["basically"],
+                speakingTimeTargetPercent: 60
             )
         )
         if let coachingProfile {
@@ -125,6 +131,7 @@ final class ActiveAnalysisPreferencesStoreTests: XCTestCase {
         XCTAssertEqual(store.activePreferences.paceMax, profile.paceMax)
         XCTAssertEqual(store.activePreferences.pauseThreshold, profile.pauseThreshold)
         XCTAssertEqual(store.activePreferences.crutchWords, profile.crutchWords)
+        XCTAssertEqual(store.activePreferences.speakingTimeTargetPercent, profile.speakingTimeTargetPercent)
         XCTAssertEqual(store.activeAppIdentifier, "us.zoom.xos")
         XCTAssertEqual(store.activeProfile, profile)
     }
@@ -138,6 +145,7 @@ final class ActiveAnalysisPreferencesStoreTests: XCTestCase {
         baseStore.paceMax = 172
         baseStore.pauseThreshold = 1.1
         baseStore.crutchWords = ["uh", "um"]
+        baseStore.speakingTimeTargetPercent = 65
 
         let profileStore = PerAppFeedbackProfileStore(defaults: profileDefaults)
         let coachingStore = CoachingProfileStore(defaults: coachingDefaults)
@@ -147,7 +155,8 @@ final class ActiveAnalysisPreferencesStoreTests: XCTestCase {
                 paceMin: 130,
                 paceMax: 165,
                 pauseThreshold: 0.8,
-                crutchWords: ["so"]
+                crutchWords: ["so"],
+                speakingTimeTargetPercent: 40
             )
         )
         if let coachingProfile {

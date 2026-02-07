@@ -17,6 +17,7 @@ final class AnalysisPreferencesStoreTests: XCTestCase {
         XCTAssertEqual(store.paceMax, Constants.targetPaceMax)
         XCTAssertEqual(store.pauseThreshold, Constants.pauseThreshold)
         XCTAssertEqual(store.crutchWords, Constants.crutchWords)
+        XCTAssertEqual(store.speakingTimeTargetPercent, Constants.speakingTimeTargetPercent)
     }
 
     func testPreferencesPersistAcrossInstances() {
@@ -33,12 +34,14 @@ final class AnalysisPreferencesStoreTests: XCTestCase {
         store.paceMax = 160
         store.pauseThreshold = 2.5
         store.crutchWords = ["alpha", "beta", "you know"]
+        store.speakingTimeTargetPercent = 55
 
         let reloaded = AnalysisPreferencesStore(defaults: defaults)
         XCTAssertEqual(reloaded.paceMin, 100)
         XCTAssertEqual(reloaded.paceMax, 160)
         XCTAssertEqual(reloaded.pauseThreshold, 2.5)
         XCTAssertEqual(reloaded.crutchWords, ["alpha", "beta", "you know"])
+        XCTAssertEqual(reloaded.speakingTimeTargetPercent, 55)
     }
 
     func testParseCrutchWordsDeduplicatesAndNormalizes() {
@@ -81,6 +84,7 @@ final class AnalysisPreferencesStoreTests: XCTestCase {
         defaults.set(120.0, forKey: "analysisPreferences.paceMax")
         defaults.set(-2.0, forKey: "analysisPreferences.pauseThreshold")
         defaults.set([" Uh ", "um", "UM", ""], forKey: "analysisPreferences.crutchWords")
+        defaults.set(5.0, forKey: "analysisPreferences.speakingTimeTargetPercent")
 
         let store = AnalysisPreferencesStore(defaults: defaults)
 
@@ -88,6 +92,7 @@ final class AnalysisPreferencesStoreTests: XCTestCase {
         XCTAssertEqual(store.paceMax, 200.0)
         XCTAssertEqual(store.pauseThreshold, Constants.pauseThreshold)
         XCTAssertEqual(store.crutchWords, ["uh", "um"])
+        XCTAssertEqual(store.speakingTimeTargetPercent, Constants.speakingTimeTargetPercent)
     }
 
     func testResetToDefaultsRestoresValuesAndPersists() {
@@ -104,6 +109,7 @@ final class AnalysisPreferencesStoreTests: XCTestCase {
         store.paceMax = 190
         store.pauseThreshold = 3.0
         store.crutchWords = ["alpha", "beta"]
+        store.speakingTimeTargetPercent = 70
 
         store.resetToDefaults()
 
@@ -111,12 +117,14 @@ final class AnalysisPreferencesStoreTests: XCTestCase {
         XCTAssertEqual(store.paceMax, Constants.targetPaceMax)
         XCTAssertEqual(store.pauseThreshold, Constants.pauseThreshold)
         XCTAssertEqual(store.crutchWords, Constants.crutchWords)
+        XCTAssertEqual(store.speakingTimeTargetPercent, Constants.speakingTimeTargetPercent)
 
         let reloaded = AnalysisPreferencesStore(defaults: defaults)
         XCTAssertEqual(reloaded.paceMin, Constants.targetPaceMin)
         XCTAssertEqual(reloaded.paceMax, Constants.targetPaceMax)
         XCTAssertEqual(reloaded.pauseThreshold, Constants.pauseThreshold)
         XCTAssertEqual(reloaded.crutchWords, Constants.crutchWords)
+        XCTAssertEqual(reloaded.speakingTimeTargetPercent, Constants.speakingTimeTargetPercent)
     }
 
     func testCrutchWordPresetsIncludeDefaultAndApply() {

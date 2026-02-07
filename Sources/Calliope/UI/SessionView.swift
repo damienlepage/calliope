@@ -163,6 +163,7 @@ struct SessionView: View {
                     pauseCount: feedbackViewModel.state.pauseCount,
                     pauseAverageDuration: feedbackViewModel.state.pauseAverageDuration,
                     speakingTimeSeconds: feedbackViewModel.state.speakingTimeSeconds,
+                    speakingTimeTargetPercent: analysisPreferences.speakingTimeTargetPercent,
                     inputLevel: feedbackViewModel.state.inputLevel,
                     showSilenceWarning: feedbackViewModel.state.showSilenceWarning,
                     showWaitingForSpeech: feedbackViewModel.showWaitingForSpeech,
