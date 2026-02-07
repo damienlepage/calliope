@@ -13,6 +13,7 @@ struct FeedbackPanel: View {
     let crutchWords: Int
     let pauseCount: Int
     let pauseAverageDuration: TimeInterval
+    let speakingTimeSeconds: TimeInterval
     let inputLevel: Double
     let showSilenceWarning: Bool
     let showWaitingForSpeech: Bool
@@ -30,6 +31,9 @@ struct FeedbackPanel: View {
         let pauseRateText = PauseRateFormatter.rateText(
             pauseCount: pauseCount,
             durationSeconds: sessionDurationSeconds
+        )
+        let speakingTimeText = SessionDurationFormatter.format(
+            seconds: max(0, Int(speakingTimeSeconds.rounded()))
         )
         let cardSpacing: CGFloat = 12
         let metricColumns = [
@@ -83,6 +87,12 @@ struct FeedbackPanel: View {
                             .padding(.top, 2)
                     }
                 }
+                FeedbackStatCard(
+                    title: "Speaking",
+                    value: speakingTimeText,
+                    valueColor: .primary,
+                    subtitle: "Talk time"
+                )
                 FeedbackCard(title: "Input Level") {
                     VStack(alignment: .leading, spacing: 6) {
                         InputLevelMeterView(level: inputLevel)
@@ -412,6 +422,7 @@ struct FeedbackPanel_Previews: PreviewProvider {
             crutchWords: 3,
             pauseCount: 2,
             pauseAverageDuration: 1.4,
+            speakingTimeSeconds: 72,
             inputLevel: 0.4,
             showSilenceWarning: false,
             showWaitingForSpeech: false,

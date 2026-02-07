@@ -13,6 +13,7 @@ struct CompactFeedbackOverlay: View {
     let crutchWords: Int
     let pauseCount: Int
     let pauseAverageDuration: TimeInterval
+    let speakingTimeSeconds: TimeInterval
     let inputLevel: Double
     let showSilenceWarning: Bool
     let showWaitingForSpeech: Bool
@@ -33,6 +34,9 @@ struct CompactFeedbackOverlay: View {
         let pauseRateText = PauseRateFormatter.rateText(
             pauseCount: pauseCount,
             durationSeconds: sessionDurationSeconds
+        )
+        let speakingTimeText = SessionDurationFormatter.format(
+            seconds: max(0, Int(speakingTimeSeconds.rounded()))
         )
         let crutchLevel = CrutchWordFeedback.level(for: crutchWords)
         let cardSpacing: CGFloat = 10
@@ -84,6 +88,12 @@ struct CompactFeedbackOverlay: View {
                     value: "\(pauseCount)",
                     valueColor: .primary,
                     subtitle: pauseSubtitleText(rateText: pauseRateText)
+                )
+                OverlayStatCard(
+                    title: "Speaking",
+                    value: speakingTimeText,
+                    valueColor: .primary,
+                    subtitle: "Talk time"
                 )
                 OverlayCard(title: "Input Level") {
                     VStack(alignment: .leading, spacing: 6) {
@@ -339,6 +349,7 @@ struct CompactFeedbackOverlay_Previews: PreviewProvider {
             crutchWords: 2,
             pauseCount: 1,
             pauseAverageDuration: 0.9,
+            speakingTimeSeconds: 18,
             inputLevel: 0.6,
             showSilenceWarning: false,
             showWaitingForSpeech: false,

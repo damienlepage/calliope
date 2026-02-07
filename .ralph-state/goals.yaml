@@ -212,3 +212,19 @@ goals:
     notes:
       - "2026-02-07: New goal created to formalize release QA steps, packaging validation, and user-facing readiness documentation."
       - "Validated 2026-02-07: Added release QA report template with user-facing notes and linked it from README and release checklist; unit test added."
+  - id: G38
+    title: Live closed captions with CC toggle
+    status: BELOW_TARGET
+    notes:
+      - "2026-02-07: PRD requires on-the-fly closed captions visible by default with a CC toggle; session UI does not yet expose captions."
+  - id: G39
+    title: Live speaking time in session feedback
+    status: AT_TARGET
+    notes:
+      - "2026-02-07: PRD requires live feedback to show speaking time alongside pace, crutch words, pauses, input level, and total time."
+      - "Validated 2026-02-07: Live feedback and overlay now show speaking time during recording with audio-driven updates and unit coverage."
+  - id: G40
+    title: Remove system health from live feedback surfaces
+    status: BELOW_TARGET
+    notes:
+      - "2026-02-07: PRD specifies no system health on live feedback; current session and overlay show processing/load status."

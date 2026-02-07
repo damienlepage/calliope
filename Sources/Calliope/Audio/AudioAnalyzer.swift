@@ -13,6 +13,7 @@ class AudioAnalyzer: ObservableObject {
     @Published var crutchWordCount: Int = 0
     @Published var pauseCount: Int = 0
     @Published var pauseAverageDuration: TimeInterval = 0
+    @Published var speakingTimeSeconds: TimeInterval = 0
     @Published var inputLevel: Double = 0.0
     @Published var silenceWarning: Bool = false
     @Published var processingLatencyStatus: ProcessingLatencyStatus = .ok
@@ -32,17 +33,25 @@ class AudioAnalyzer: ObservableObject {
         let latencyPublisher = Publishers.CombineLatest($processingLatencyStatus, $processingLatencyAverage)
         let utilizationPublisher = Publishers.CombineLatest($processingUtilizationStatus, $processingUtilizationAverage)
 
-        return Publishers.CombineLatest3(metricsPublisher, $inputLevel, $silenceWarning)
+        let feedbackMetrics = Publishers.CombineLatest4(
+            metricsPublisher,
+            $inputLevel,
+            $silenceWarning,
+            $speakingTimeSeconds
+        )
+        return feedbackMetrics
             .combineLatest(latencyPublisher, utilizationPublisher)
             .map { combined, latency, utilization in
                 let metrics = combined.0
                 let inputLevel = combined.1
                 let warning = combined.2
+                let speakingTimeSeconds = combined.3
                 return FeedbackState(
                     pace: metrics.0,
                     crutchWords: metrics.1,
                     pauseCount: metrics.2,
                     pauseAverageDuration: metrics.3,
+                    speakingTimeSeconds: speakingTimeSeconds,
                     inputLevel: inputLevel,
                     showSilenceWarning: warning,
                     processingLatencyStatus: latency.0,
@@ -128,6 +137,7 @@ class AudioAnalyzer: ObservableObject {
                         self.pauseDetector?.reset()
                         self.pauseCount = 0
                         self.pauseAverageDuration = 0
+                        self.speakingTimeSeconds = 0
                         self.inputLevel = 0.0
                         self.silenceWarning = false
                         self.processingLatencyStatus = .ok
@@ -167,6 +177,7 @@ class AudioAnalyzer: ObservableObject {
                         self.crutchWordCount = 0
                         self.pauseCount = 0
                         self.pauseAverageDuration = 0
+                        self.speakingTimeSeconds = 0
                         self.inputLevel = 0.0
                         self.silenceWarning = false
                         self.processingLatencyStatus = .ok
@@ -246,6 +257,12 @@ class AudioAnalyzer: ObservableObject {
         speechTranscriber?.appendAudioBuffer(buffer)
         updateInputLevel(from: buffer)
         speakingActivityTracker.process(buffer)
+        let speakingTime = speakingActivityTracker.summary().timeSeconds
+        if abs(speakingTime - speakingTimeSeconds) >= 0.05 {
+            DispatchQueue.main.async { [weak self] in
+                self?.speakingTimeSeconds = speakingTime
+            }
+        }
         if let pauseDetector = pauseDetector {
             let didDetectPause = pauseDetector.detectPause(in: buffer)
             let updatedCount = pauseDetector.getPauseCount()

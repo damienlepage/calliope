@@ -293,6 +293,60 @@ final class AudioAnalyzerTests: XCTestCase {
     }
 
     #if canImport(AVFoundation)
+    func testSpeakingTimeUpdatesWhileRecording() {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            UUID().uuidString,
+            isDirectory: true
+        )
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let suiteName = "AudioAnalyzerTests.AudioCapture.\(UUID().uuidString)"
+        let captureDefaults = UserDefaults(suiteName: suiteName)!
+        captureDefaults.removePersistentDomain(forName: suiteName)
+        let preferencesStore = AudioCapturePreferencesStore(defaults: captureDefaults)
+        let backend = FakeAudioCaptureBackend()
+        let audioCapture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: preferencesStore,
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: backend, status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() },
+            recordingStartConfirmation: { true }
+        )
+        let analysisSuiteName = "AudioAnalyzerTests.Analysis.\(UUID().uuidString)"
+        let analysisDefaults = UserDefaults(suiteName: analysisSuiteName)!
+        analysisDefaults.removePersistentDomain(forName: analysisSuiteName)
+        let analysisPreferences = AnalysisPreferencesStore(defaults: analysisDefaults)
+        let analyzer = AudioAnalyzer(
+            summaryWriter: manager,
+            speechTranscriberFactory: { FakeSpeechTranscriber() }
+        )
+
+        analyzer.setup(audioCapture: audioCapture, preferencesStore: analysisPreferences)
+
+        audioCapture.startRecording(
+            privacyState: PrivacyGuardrails.State(hasAcceptedDisclosure: true),
+            microphonePermission: .authorized,
+            hasMicrophoneInput: true
+        )
+
+        backend.simulateBuffer(amplitude: 0.1, frameCount: 4410)
+        backend.simulateBuffer(amplitude: 0.1, frameCount: 4410)
+
+        let updateExpectation = expectation(description: "Allow main queue to process")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { updateExpectation.fulfill() }
+        wait(for: [updateExpectation], timeout: 1.0)
+
+        XCTAssertEqual(analyzer.speakingTimeSeconds, 0.2, accuracy: 0.02)
+
+        audioCapture.stopRecording()
+        let resetExpectation = expectation(description: "Allow stop to process")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { resetExpectation.fulfill() }
+        wait(for: [resetExpectation], timeout: 1.0)
+
+        XCTAssertEqual(analyzer.speakingTimeSeconds, 0, accuracy: 0.01)
+    }
+
     func testAudioBufferIgnoredWhenNotRecording() {
         let analyzer = AudioAnalyzer()
         analyzer.applyPreferences(
@@ -361,14 +415,19 @@ private final class FakeAudioCaptureBackend: AudioCaptureBackend {
     let inputSource: AudioInputSource = .microphone
     let inputDeviceName: String = "Test Microphone"
     private var configurationHandler: (() -> Void)?
+    private var tapHandler: ((AVAudioPCMBuffer) -> Void)?
 
     init() {
         inputFormat = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 1)!
     }
 
-    func installTap(bufferSize: AVAudioFrameCount, handler: @escaping (AVAudioPCMBuffer) -> Void) {}
+    func installTap(bufferSize: AVAudioFrameCount, handler: @escaping (AVAudioPCMBuffer) -> Void) {
+        tapHandler = handler
+    }
 
-    func removeTap() {}
+    func removeTap() {
+        tapHandler = nil
+    }
 
     func setConfigurationChangeHandler(_ handler: @escaping () -> Void) {
         configurationHandler = handler
@@ -385,6 +444,21 @@ private final class FakeAudioCaptureBackend: AudioCaptureBackend {
     func start() throws {}
 
     func stop() {}
+
+    func simulateBuffer(amplitude: Float, frameCount: AVAudioFrameCount) {
+        guard let tapHandler else { return }
+        guard let buffer = AVAudioPCMBuffer(
+            pcmFormat: inputFormat,
+            frameCapacity: frameCount
+        ) else { return }
+        buffer.frameLength = frameCount
+        if let channelData = buffer.floatChannelData {
+            for index in 0..<Int(frameCount) {
+                channelData[0][index] = amplitude
+            }
+        }
+        tapHandler(buffer)
+    }
 }
 
 private final class FakeAudioFileWriter: AudioFileWritable {
