@@ -194,3 +194,9 @@ goals:
     notes:
       - "2026-02-07: Goal created to refine real-time feedback visuals for a calmer, more intuitive coaching experience."
       - "Validated 2026-02-07: Feedback panel and overlay now emphasize pace, group secondary metrics in a grid, and use calmer status/warning styling."
+  - id: G35
+    title: Recordings list sorting includes speaking-time percentage
+    status: AT_TARGET
+    notes:
+      - "2026-02-07: Goal created to align recordings sorting options with PRD example (speaking-time %)."
+      - "Validated 2026-02-07: Recordings list supports speaking % sort (highest/lowest) with missing values sorted last and unit coverage."

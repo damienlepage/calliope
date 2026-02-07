@@ -1,1 +1,1 @@
-Goal completed: Feedback visualization polish for calm focus
+Goal completed: Recordings list sorting includes speaking-time percentage

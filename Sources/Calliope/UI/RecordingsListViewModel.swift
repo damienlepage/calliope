@@ -394,6 +394,15 @@ struct RecordingItem: Identifiable, Equatable {
         return parts.joined(separator: " • ")
     }
 
+    var speakingPercentValue: Double? {
+        guard let summary else { return nil }
+        let speakingSeconds = summary.speaking.timeSeconds
+        let sessionDuration = summary.durationSeconds > 0 ? summary.durationSeconds : (duration ?? 0)
+        guard speakingSeconds > 0, sessionDuration > 0 else { return nil }
+        let ratio = speakingSeconds / sessionDuration
+        return min(max(ratio, 0), 1)
+    }
+
     private func metadataDetailText() -> String {
         let dateText = RecordingMetadataDisplayFormatter.dateTimeText(for: sessionDate)
         let details = [
@@ -426,6 +435,8 @@ enum RecordingSortOption: String, CaseIterable, Identifiable {
     case dateOldest
     case durationLongest
     case durationShortest
+    case speakingPercentHighest
+    case speakingPercentLowest
 
     var id: String { rawValue }
 
@@ -439,6 +450,10 @@ enum RecordingSortOption: String, CaseIterable, Identifiable {
             return "Duration (Longest)"
         case .durationShortest:
             return "Duration (Shortest)"
+        case .speakingPercentHighest:
+            return "Speaking % (Highest)"
+        case .speakingPercentLowest:
+            return "Speaking % (Lowest)"
         }
     }
 }
@@ -752,6 +767,18 @@ final class RecordingListViewModel: ObservableObject {
                 let rightDuration = right.duration ?? Double.greatestFiniteMagnitude
                 if leftDuration != rightDuration {
                     return leftDuration < rightDuration
+                }
+            case .speakingPercentHighest:
+                let leftPercent = left.speakingPercentValue ?? -1
+                let rightPercent = right.speakingPercentValue ?? -1
+                if leftPercent != rightPercent {
+                    return leftPercent > rightPercent
+                }
+            case .speakingPercentLowest:
+                let leftPercent = left.speakingPercentValue ?? Double.greatestFiniteMagnitude
+                let rightPercent = right.speakingPercentValue ?? Double.greatestFiniteMagnitude
+                if leftPercent != rightPercent {
+                    return leftPercent < rightPercent
                 }
             }
             let nameComparison = left.displayName.localizedCaseInsensitiveCompare(right.displayName)

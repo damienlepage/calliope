@@ -342,6 +342,85 @@ final class RecordingListViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.recordings.map(\.url), [urlB, urlA, urlC])
     }
 
+    func testSortOptionOrdersBySpeakingPercentWithMissingSummariesLast() {
+        let urlA = URL(fileURLWithPath: "/tmp/speaking-high.m4a")
+        let urlB = URL(fileURLWithPath: "/tmp/speaking-low.m4a")
+        let urlC = URL(fileURLWithPath: "/tmp/speaking-missing.m4a")
+        let manager = MockRecordingManager(recordings: [urlA, urlB, urlC])
+        let dates: [URL: Date] = [
+            urlA: Date(timeIntervalSince1970: 10),
+            urlB: Date(timeIntervalSince1970: 20),
+            urlC: Date(timeIntervalSince1970: 30)
+        ]
+        let summaries: [URL: AnalysisSummary] = [
+            urlA: AnalysisSummary(
+                version: 1,
+                createdAt: Date(timeIntervalSince1970: 1),
+                durationSeconds: 100,
+                pace: AnalysisSummary.PaceStats(
+                    averageWPM: 120,
+                    minWPM: 100,
+                    maxWPM: 140,
+                    totalWords: 200
+                ),
+                pauses: AnalysisSummary.PauseStats(
+                    count: 0,
+                    thresholdSeconds: 1.0,
+                    averageDurationSeconds: 0
+                ),
+                crutchWords: AnalysisSummary.CrutchWordStats(
+                    totalCount: 0,
+                    counts: [:]
+                ),
+                speaking: AnalysisSummary.SpeakingStats(
+                    timeSeconds: 50,
+                    turnCount: 2
+                )
+            ),
+            urlB: AnalysisSummary(
+                version: 1,
+                createdAt: Date(timeIntervalSince1970: 1),
+                durationSeconds: 100,
+                pace: AnalysisSummary.PaceStats(
+                    averageWPM: 120,
+                    minWPM: 100,
+                    maxWPM: 140,
+                    totalWords: 200
+                ),
+                pauses: AnalysisSummary.PauseStats(
+                    count: 0,
+                    thresholdSeconds: 1.0,
+                    averageDurationSeconds: 0
+                ),
+                crutchWords: AnalysisSummary.CrutchWordStats(
+                    totalCount: 0,
+                    counts: [:]
+                ),
+                speaking: AnalysisSummary.SpeakingStats(
+                    timeSeconds: 20,
+                    turnCount: 1
+                )
+            )
+        ]
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { dates[$0] ?? .distantPast },
+            durationProvider: { _ in nil },
+            fileSizeProvider: { _ in nil },
+            summaryProvider: { summaries[$0] }
+        )
+
+        viewModel.loadRecordings()
+        viewModel.sortOption = .speakingPercentHighest
+
+        XCTAssertEqual(viewModel.recordings.map(\.url), [urlA, urlB, urlC])
+
+        viewModel.sortOption = .speakingPercentLowest
+
+        XCTAssertEqual(viewModel.recordings.map(\.url), [urlB, urlA, urlC])
+    }
+
     func testRecordingItemDisplayNameStripsExtension() {
         let timestampMs = 1_700_000_000_000.0
         let date = Date(timeIntervalSince1970: timestampMs / 1000)
