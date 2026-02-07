@@ -65,6 +65,24 @@ struct FeedbackPanel: View {
                 Spacer()
             }
 
+            FeedbackCard(title: "Input Level") {
+                VStack(alignment: .leading, spacing: 6) {
+                    InputLevelMeterView(level: inputLevel)
+                    Text(inputLevelStatusText())
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Input level")
+            .accessibilityValue(
+                AccessibilityFormatting.inputLevelValue(
+                    level: inputLevel,
+                    statusText: inputLevelStatusText()
+                )
+            )
+
             FeedbackCard(title: "Pace") {
                 ViewThatFits(in: .horizontal) {
                     HStack(alignment: .firstTextBaseline) {
@@ -110,10 +128,16 @@ struct FeedbackPanel: View {
 
             LazyVGrid(columns: metricColumns, spacing: cardSpacing) {
                 FeedbackStatCard(
-                    title: "Crutch Words",
-                    value: "\(crutchWords)",
-                    valueColor: crutchColor(crutchLevel),
-                    subtitle: "Status: \(crutchStatusText) · Target: \u{2264} 5"
+                    title: "Elapsed",
+                    value: sessionDurationText ?? "—",
+                    valueColor: .primary,
+                    subtitle: "Session time"
+                )
+                FeedbackStatCard(
+                    title: "Speaking",
+                    value: speakingTimeText,
+                    valueColor: .primary,
+                    subtitle: "Talk time · \(speakingTargetText())"
                 )
                 FeedbackStatCard(
                     title: "Pauses",
@@ -128,33 +152,10 @@ struct FeedbackPanel: View {
                     }
                 }
                 FeedbackStatCard(
-                    title: "Speaking",
-                    value: speakingTimeText,
-                    valueColor: .primary,
-                    subtitle: "Talk time · \(speakingTargetText())"
-                )
-                FeedbackCard(title: "Input Level") {
-                    VStack(alignment: .leading, spacing: 6) {
-                        InputLevelMeterView(level: inputLevel)
-                        Text(inputLevelStatusText())
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Input level")
-                .accessibilityValue(
-                    AccessibilityFormatting.inputLevelValue(
-                        level: inputLevel,
-                        statusText: inputLevelStatusText()
-                    )
-                )
-                FeedbackStatCard(
-                    title: "Elapsed",
-                    value: sessionDurationText ?? "—",
-                    valueColor: .primary,
-                    subtitle: "Session time"
+                    title: "Crutch Words",
+                    value: "\(crutchWords)",
+                    valueColor: crutchColor(crutchLevel),
+                    subtitle: "Status: \(crutchStatusText) · Target: \u{2264} 5"
                 )
             }
 

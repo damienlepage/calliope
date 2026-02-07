@@ -1,6 +1,6 @@
 ---
 id: cal-0grx
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-07T20:33:47Z

@@ -1,6 +1,6 @@
 ---
 id: cal-nh10
-status: open
+status: closed
 deps: [cal-ndcp, cal-0grx]
 links: []
 created: 2026-02-07T20:33:59Z

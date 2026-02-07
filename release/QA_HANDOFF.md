@@ -50,9 +50,14 @@ Thanks,
 
 | macOS Version | Owner | Access Confirmed |
 | --- | --- | --- |
-| macOS 13 (Ventura) |  |  |
-| macOS 14 (Sonoma) |  |  |
-| macOS 15 (Sequoia) |  |  |
+| macOS 13 (Ventura) | Unassigned | No |
+| macOS 14 (Sonoma) | Unassigned | No |
+| macOS 15 (Sequoia) | Unassigned | No |
+
+## Access Notes
+
+- macOS 13/14/15 test hardware or VM access is not confirmed yet.
+- Assign an owner for each macOS version and update the table once access is secured.
 
 ## Run the QA Preflight
 

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>Calliope</string>
+    <key>CFBundleDisplayName</key>
+    <string>Calliope</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.calliope.app</string>
+    <key>CFBundleExecutable</key>
+    <string>Calliope</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>13.0</string>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.productivity</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Calliope uses your microphone to provide real-time speaking feedback during calls.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>Calliope uses on-device speech recognition to detect crutch words and pacing.</string>
+</dict>
+</plist>

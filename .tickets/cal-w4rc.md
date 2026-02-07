@@ -1,6 +1,6 @@
 ---
 id: cal-w4rc
-status: open
+status: closed
 deps: [cal-ndcp, cal-0grx, cal-b1yg]
 links: []
 created: 2026-02-07T20:33:53Z

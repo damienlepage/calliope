@@ -1,6 +1,6 @@
 ---
 id: cal-pv1c
-status: blocked
+status: closed
 deps: [cal-b1yg]
 links: []
 created: 2026-02-07T19:25:41Z

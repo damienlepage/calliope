@@ -1,6 +1,6 @@
 ---
 id: cal-qa15
-status: blocked
+status: closed
 deps: [cal-b1yg]
 links: []
 created: 2026-02-07T20:31:00Z

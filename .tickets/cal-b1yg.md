@@ -1,6 +1,6 @@
 ---
 id: cal-b1yg
-status: blocked
+status: closed
 deps: []
 links: []
 created: 2026-02-07T19:19:56Z
