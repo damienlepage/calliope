@@ -52,7 +52,9 @@ final class LiveFeedbackViewModel: ObservableObject {
             .receive(on: queue)
             .sink { [weak self] _ in
                 guard let self else { return }
-                self.liveTranscript = ""
+                if !self.liveTranscript.isEmpty {
+                    self.liveTranscript = ""
+                }
                 if self.state != .zero {
                     self.state = .zero
                 }
@@ -121,9 +123,12 @@ final class LiveFeedbackViewModel: ObservableObject {
             .receive(on: queue)
             .sink { [weak self] _ in
                 guard let self else { return }
-                self.state = .zero
-                self.sessionDurationSeconds = nil
-                self.liveTranscript = ""
+                queue.async { [weak self] in
+                    guard let self else { return }
+                    self.state = .zero
+                    self.sessionDurationSeconds = nil
+                    self.liveTranscript = ""
+                }
             }
             .store(in: &cancellables)
 
