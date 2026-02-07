@@ -335,9 +335,10 @@ goals:
       - "New 2026-02-07: Confirm packaged app launches, permissions, recordings storage, and session flows on supported macOS versions; document results."
   - id: G58
     title: Live feedback layout is clean and glanceable
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "New 2026-02-07: Live feedback must be readable in under 500ms and fit without scrolling; layout is calm, uncluttered, and consistent across window sizes."
+      - "Validated 2026-02-07: Captions/profile section now uses adaptive layout with line-limited captions to prevent overflow at default window size."
   - id: G59
     title: Live feedback includes all glanceable metrics
     status: BELOW_TARGET

@@ -35,6 +35,12 @@ struct SessionView: View {
     let onToggleRecording: () -> Void
     @State private var postSessionDetailItem: RecordingItem?
     @State private var showCaptions: Bool = true
+    private enum Layout {
+        static let contentMaxWidth: CGFloat = 340
+        static let profilePickerWidth: CGFloat = 200
+        static let captionLineLimit = 3
+        static let supplementarySpacing: CGFloat = 12
+    }
 
     var body: some View {
         let viewState = SessionViewState(
@@ -175,168 +181,132 @@ struct SessionView: View {
                 )
             }
 
-                if audioCapture.isRecording {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Live captions")
-                                .font(.headline)
-                                .accessibilityAddTraits(.isHeader)
-                            Spacer()
-                            Toggle("CC", isOn: $showCaptions)
-                                .toggleStyle(.switch)
-                                .labelsHidden()
-                                .accessibilityLabel("Closed captions")
-                                .accessibilityValue(showCaptions ? "On" : "Off")
-                                .accessibilityHint("Toggle live captions on or off.")
+            if shouldShowSupplementaryPanel(isRecording: audioCapture.isRecording) {
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .top, spacing: Layout.supplementarySpacing) {
+                        if audioCapture.isRecording {
+                            captionsCard()
                         }
-                        if showCaptions {
-                            Text(captionBodyText(for: feedbackViewModel.liveTranscript))
-                                .font(.callout)
-                                .foregroundColor(.secondary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(12)
-                                .background(Color.secondary.opacity(0.08))
-                                .cornerRadius(12)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color.secondary.opacity(0.12))
-                                )
-                                .accessibilityLabel("Live captions")
-                                .accessibilityValue(
-                                    captionBodyText(for: feedbackViewModel.liveTranscript)
-                                )
+                        if coachingProfiles.count > 1 {
+                            profilePickerCard(selectedProfileName: selectedProfileName)
                         }
                     }
-                    .frame(maxWidth: 320, alignment: .leading)
-                    .padding(.top, 4)
-                }
-
-                if coachingProfiles.count > 1 {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Coaching profile")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    Picker("Coaching profile", selection: $selectedCoachingProfileID) {
-                        ForEach(coachingProfiles) { profile in
-                            Text(profile.name)
-                                .tag(profile.id as UUID?)
+                    VStack(alignment: .leading, spacing: Layout.supplementarySpacing) {
+                        if audioCapture.isRecording {
+                            captionsCard()
+                        }
+                        if coachingProfiles.count > 1 {
+                            profilePickerCard(selectedProfileName: selectedProfileName)
                         }
                     }
-                    .pickerStyle(.menu)
-                    .frame(maxWidth: 260, alignment: .leading)
-                    .accessibilityLabel("Coaching profile")
-                    .accessibilityValue(
-                        AccessibilityFormatting.profileValue(selectedName: selectedProfileName)
-                    )
-                    .accessibilityHint("Choose which coaching profile to apply to this session.")
                 }
-                .frame(maxWidth: 320, alignment: .leading)
+                .frame(maxWidth: Layout.contentMaxWidth, alignment: .leading)
             }
 
-                if let postSessionReview, !audioCapture.isRecording {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Session recap")
-                            .font(.headline)
-                            .accessibilityAddTraits(.isHeader)
-                        VStack(alignment: .leading, spacing: 4) {
-                            ForEach(postSessionReview.summaryLines, id: \.self) { line in
-                                Text(line)
-                            }
+            if let postSessionReview, !audioCapture.isRecording {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Session recap")
+                        .font(.headline)
+                        .accessibilityAddTraits(.isHeader)
+                    VStack(alignment: .leading, spacing: 4) {
+                        ForEach(postSessionReview.summaryLines, id: \.self) { line in
+                            Text(line)
                         }
+                    }
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("Session recap")
+                    .accessibilityValue(postSessionReview.summaryLines.joined(separator: ", "))
+                    HStack(spacing: 12) {
+                        Button("Open Recording") {
+                            postSessionDetailItem = postSessionRecordingItem
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(postSessionActionsDisabled || postSessionItemUnavailable)
+                        .accessibilityHint("Open the recording details for this session.")
+                        Button("Edit Title", action: onEditSessionTitle)
+                            .buttonStyle(.bordered)
+                            .disabled(postSessionActionsDisabled || showTitlePrompt)
+                            .accessibilityHint("Edit the saved title for this session.")
+                        Button("Go to Recordings", action: onViewRecordings)
+                            .buttonStyle(.bordered)
+                            .disabled(postSessionActionsDisabled)
+                            .accessibilityHint("Open the recordings list.")
+                    }
+                }
+                .frame(maxWidth: Layout.contentMaxWidth, alignment: .leading)
+                .padding()
+                .background(Color.secondary.opacity(0.08))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.secondary.opacity(0.15))
+                )
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel("Post-session review")
+            }
+
+            if showTitlePrompt {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Name this session")
+                        .font(.headline)
+                        .accessibilityAddTraits(.isHeader)
+                    TextField("Optional title", text: $sessionTitleDraft)
+                        .textFieldStyle(.roundedBorder)
+                        .accessibilityLabel("Session title")
+                        .accessibilityHint("Optional name for this session.")
+                    Text(titlePromptState.helperText)
+                        .font(.footnote)
+                        .foregroundColor(titleHintColor)
+                    HStack(spacing: 12) {
+                        Button("Save", action: onSaveSessionTitle)
+                            .buttonStyle(.borderedProminent)
+                            .disabled(!titlePromptState.isValid)
+                        Button("Skip", action: onSkipSessionTitle)
+                            .buttonStyle(.bordered)
+                    }
+                }
+                .frame(maxWidth: Layout.contentMaxWidth, alignment: .leading)
+                .padding()
+                .background(.thinMaterial)
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.secondary.opacity(0.2))
+                )
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel("Session title prompt")
+            }
+
+            if shouldShowVoiceIsolationAcknowledgement, let voiceIsolationAcknowledgementMessage {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(voiceIsolationAcknowledgementMessage)
                         .font(.footnote)
                         .foregroundColor(.secondary)
-                        .accessibilityElement(children: .combine)
-                        .accessibilityLabel("Session recap")
-                        .accessibilityValue(postSessionReview.summaryLines.joined(separator: ", "))
-                        HStack(spacing: 12) {
-                            Button("Open Recording") {
-                                postSessionDetailItem = postSessionRecordingItem
-                            }
-                            .buttonStyle(.bordered)
-                            .disabled(postSessionActionsDisabled || postSessionItemUnavailable)
-                            .accessibilityHint("Open the recording details for this session.")
-                            Button("Edit Title", action: onEditSessionTitle)
-                                .buttonStyle(.bordered)
-                                .disabled(postSessionActionsDisabled || showTitlePrompt)
-                                .accessibilityHint("Edit the saved title for this session.")
-                            Button("Go to Recordings", action: onViewRecordings)
-                                .buttonStyle(.bordered)
-                                .disabled(postSessionActionsDisabled)
-                                .accessibilityHint("Open the recordings list.")
-                        }
-                    }
-                    .frame(maxWidth: 320, alignment: .leading)
-                    .padding()
-                    .background(Color.secondary.opacity(0.08))
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.secondary.opacity(0.15))
-                    )
-                    .accessibilityElement(children: .contain)
-                    .accessibilityLabel("Post-session review")
+                        .fixedSize(horizontal: false, vertical: true)
+                    Button("I Understand", action: onAcknowledgeVoiceIsolationRisk)
+                        .buttonStyle(.bordered)
                 }
+                .frame(maxWidth: Layout.contentMaxWidth, alignment: .leading)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Voice isolation warning")
+                .accessibilityValue(voiceIsolationAcknowledgementMessage)
+            }
 
-                if showTitlePrompt {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Name this session")
-                            .font(.headline)
-                            .accessibilityAddTraits(.isHeader)
-                        TextField("Optional title", text: $sessionTitleDraft)
-                            .textFieldStyle(.roundedBorder)
-                            .accessibilityLabel("Session title")
-                            .accessibilityHint("Optional name for this session.")
-                        Text(titlePromptState.helperText)
-                            .font(.footnote)
-                            .foregroundColor(titleHintColor)
-                        HStack(spacing: 12) {
-                            Button("Save", action: onSaveSessionTitle)
-                                .buttonStyle(.borderedProminent)
-                                .disabled(!titlePromptState.isValid)
-                            Button("Skip", action: onSkipSessionTitle)
-                                .buttonStyle(.bordered)
-                        }
-                    }
-                    .frame(maxWidth: 320, alignment: .leading)
-                    .padding()
-                    .background(.thinMaterial)
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.secondary.opacity(0.2))
-                    )
-                    .accessibilityElement(children: .contain)
-                    .accessibilityLabel("Session title prompt")
+            HStack(spacing: 20) {
+                Button(action: onToggleRecording) {
+                    Text(viewState.primaryButtonTitle)
+                        .frame(minWidth: 100, minHeight: 40)
+                        .padding(.horizontal, 8)
                 }
-
-                if shouldShowVoiceIsolationAcknowledgement, let voiceIsolationAcknowledgementMessage {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(voiceIsolationAcknowledgementMessage)
-                            .font(.footnote)
-                            .foregroundColor(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Button("I Understand", action: onAcknowledgeVoiceIsolationRisk)
-                            .buttonStyle(.bordered)
-                    }
-                    .frame(maxWidth: 320, alignment: .leading)
-                    .accessibilityElement(children: .combine)
-                    .accessibilityLabel("Voice isolation warning")
-                    .accessibilityValue(voiceIsolationAcknowledgementMessage)
-                }
-
-                HStack(spacing: 20) {
-                    Button(action: onToggleRecording) {
-                        Text(viewState.primaryButtonTitle)
-                            .frame(minWidth: 100, minHeight: 40)
-                            .padding(.horizontal, 8)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(
-                        audioCapture.isTestingMic || (!audioCapture.isRecording && !canStartRecording)
-                    )
-                    .accessibilityLabel(viewState.primaryButtonAccessibilityLabel)
-                    .accessibilityHint(viewState.primaryButtonAccessibilityHint)
-                }
+                .buttonStyle(.borderedProminent)
+                .disabled(
+                    audioCapture.isTestingMic || (!audioCapture.isRecording && !canStartRecording)
+                )
+                .accessibilityLabel(viewState.primaryButtonAccessibilityLabel)
+                .accessibilityHint(viewState.primaryButtonAccessibilityHint)
+            }
 
             if viewState.shouldShowBlockingReasons, let blockingReasonsText {
                 Text(blockingReasonsText)
@@ -360,6 +330,78 @@ struct SessionView: View {
         }
     }
 
+    private func shouldShowSupplementaryPanel(isRecording: Bool) -> Bool {
+        isRecording || coachingProfiles.count > 1
+    }
+
+    @ViewBuilder
+    private func captionsCard() -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Live captions")
+                    .font(.headline)
+                    .accessibilityAddTraits(.isHeader)
+                Spacer()
+                Toggle("CC", isOn: $showCaptions)
+                    .toggleStyle(.switch)
+                    .labelsHidden()
+                    .accessibilityLabel("Closed captions")
+                    .accessibilityValue(showCaptions ? "On" : "Off")
+                    .accessibilityHint("Toggle live captions on or off.")
+            }
+            if showCaptions {
+                Text(captionBodyText(for: feedbackViewModel.liveTranscript))
+                    .font(.callout)
+                    .foregroundColor(.secondary)
+                    .lineLimit(Layout.captionLineLimit)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(12)
+                    .background(Color.secondary.opacity(0.08))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.secondary.opacity(0.12))
+                    )
+                    .accessibilityLabel("Live captions")
+                    .accessibilityValue(
+                        captionBodyText(for: feedbackViewModel.liveTranscript)
+                    )
+            }
+        }
+        .padding(.top, 4)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private func profilePickerCard(selectedProfileName: String?) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Coaching profile")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            Picker("Coaching profile", selection: $selectedCoachingProfileID) {
+                ForEach(coachingProfiles) { profile in
+                    Text(profile.name)
+                        .tag(profile.id as UUID?)
+                }
+            }
+            .pickerStyle(.menu)
+            .frame(maxWidth: Layout.profilePickerWidth, alignment: .leading)
+            .accessibilityLabel("Coaching profile")
+            .accessibilityValue(
+                AccessibilityFormatting.profileValue(selectedName: selectedProfileName)
+            )
+            .accessibilityHint("Choose which coaching profile to apply to this session.")
+        }
+        .padding(12)
+        .background(Color.secondary.opacity(0.08))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.secondary.opacity(0.12))
+        )
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
     private func statusColor(for status: AudioCaptureStatus) -> Color {
         switch status {
         case .idle:
@@ -380,6 +422,10 @@ struct SessionView: View {
 
 #Preview {
     SessionViewPreview()
+}
+
+#Preview("Session Recording Layout") {
+    SessionViewRecordingPreview()
 }
 
 private struct SessionViewPreview: View {
@@ -465,6 +511,61 @@ private struct SessionViewPreview: View {
                 integrityReport: nil,
                 metadata: nil
             ),
+            sessionTitleDraft: $sessionTitle,
+            onSaveSessionTitle: {},
+            onSkipSessionTitle: {},
+            onViewRecordings: {},
+            onEditSessionTitle: {},
+            onAcknowledgeVoiceIsolationRisk: {},
+            onOpenSettings: {},
+            onRetryCapture: {},
+            onToggleRecording: {}
+        )
+    }
+}
+
+private struct SessionViewRecordingPreview: View {
+    @State private var sessionTitle = ""
+    private let defaultProfile = CoachingProfile.default()
+    private let focusedProfile = CoachingProfile(id: UUID(), name: "Focused", preferences: .default)
+    private let audioCapture: AudioCapture = {
+        let capture = AudioCapture(capturePreferencesStore: AudioCapturePreferencesStore())
+        capture.isRecording = true
+        return capture
+    }()
+    private let feedbackViewModel = LiveFeedbackViewModel(
+        initialState: FeedbackState(
+            pace: 155,
+            crutchWords: 2,
+            pauseCount: 3,
+            pauseAverageDuration: 1.2,
+            speakingTimeSeconds: 75,
+            inputLevel: 0.6,
+            showSilenceWarning: false
+        )
+    )
+
+    var body: some View {
+        SessionView(
+            audioCapture: audioCapture,
+            feedbackViewModel: feedbackViewModel,
+            analysisPreferences: AnalysisPreferences.default,
+            coachingProfiles: [
+                defaultProfile,
+                focusedProfile
+            ],
+            selectedCoachingProfileID: .constant(defaultProfile.id),
+            sessionDurationText: "04:12",
+            sessionDurationSeconds: 252,
+            canStartRecording: true,
+            blockingReasonsText: nil,
+            voiceIsolationAcknowledgementMessage: nil,
+            storageStatus: .ok,
+            activeProfileLabel: "Profile: Default (App: Zoom)",
+            showTitlePrompt: false,
+            defaultSessionTitle: nil,
+            postSessionReview: nil,
+            postSessionRecordingItem: nil,
             sessionTitleDraft: $sessionTitle,
             onSaveSessionTitle: {},
             onSkipSessionTitle: {},

@@ -1,1 +1,1 @@
-Goal completed: Pace visualization communicates target zone at a glance
+Goal completed: Live feedback layout is clean and glanceable

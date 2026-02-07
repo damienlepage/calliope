@@ -1,6 +1,6 @@
 ---
 id: cal-c210
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-07T18:33:59Z
