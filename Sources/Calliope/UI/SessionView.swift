@@ -69,6 +69,7 @@ struct SessionView: View {
                 Text("Calliope")
                     .font(.largeTitle)
                     .fontWeight(.bold)
+                    .accessibilityAddTraits(.isHeader)
             }
 
             if viewState.shouldShowStatus {
@@ -175,6 +176,7 @@ struct SessionView: View {
                         HStack {
                             Text("Live captions")
                                 .font(.headline)
+                                .accessibilityAddTraits(.isHeader)
                             Spacer()
                             Toggle("CC", isOn: $showCaptions)
                                 .toggleStyle(.switch)
@@ -228,6 +230,7 @@ struct SessionView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Session recap")
                             .font(.headline)
+                            .accessibilityAddTraits(.isHeader)
                         VStack(alignment: .leading, spacing: 4) {
                             ForEach(postSessionReview.summaryLines, id: \.self) { line in
                                 Text(line)
@@ -271,6 +274,7 @@ struct SessionView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Name this session")
                             .font(.headline)
+                            .accessibilityAddTraits(.isHeader)
                         TextField("Optional title", text: $sessionTitleDraft)
                             .textFieldStyle(.roundedBorder)
                             .accessibilityLabel("Session title")
@@ -329,6 +333,8 @@ struct SessionView: View {
                     .font(.footnote)
                     .foregroundColor(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityLabel("Session blocked")
+                    .accessibilityValue(blockingReasonsText)
             }
             Spacer(minLength: 0)
         }

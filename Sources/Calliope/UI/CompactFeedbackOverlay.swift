@@ -51,6 +51,7 @@ struct CompactFeedbackOverlay: View {
             HStack(alignment: .firstTextBaseline) {
                 Text("Live Feedback")
                     .font(.headline)
+                    .accessibilityAddTraits(.isHeader)
                 Spacer()
             }
             VStack(alignment: .leading, spacing: 2) {
@@ -166,6 +167,12 @@ struct CompactFeedbackOverlay: View {
                 }
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("Session status")
+                .accessibilityValue(
+                    AccessibilityFormatting.statusValue(
+                        warnings: statusMessages.warnings,
+                        notes: statusMessages.notes
+                    )
+                )
             }
         }
         .padding(12)

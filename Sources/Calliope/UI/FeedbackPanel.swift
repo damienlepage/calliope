@@ -48,6 +48,7 @@ struct FeedbackPanel: View {
             HStack(alignment: .firstTextBaseline) {
                 Text("Real-time Feedback")
                     .font(.headline)
+                    .accessibilityAddTraits(.isHeader)
                 Spacer()
             }
 
