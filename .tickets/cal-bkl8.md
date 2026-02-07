@@ -1,6 +1,6 @@
 ---
 id: cal-bkl8
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-07T06:01:03Z

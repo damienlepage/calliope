@@ -9,6 +9,7 @@ import SwiftUI
 
 struct RecordingsListView: View {
     @ObservedObject var viewModel: RecordingListViewModel
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     private enum Layout {
         static let recordingColumnMin: CGFloat = 180
         static let recordingColumnIdeal: CGFloat = 240
@@ -32,71 +33,16 @@ struct RecordingsListView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Recordings")
-                        .font(.headline)
-                    if let summaryText = viewModel.recordingsSummaryText {
-                        Text(summaryText)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    if let recentSummaryText = viewModel.recentSummaryText {
-                        Text(recentSummaryText)
-                            .font(.footnote)
-                            .foregroundColor(.secondary)
-                    }
-                    if let trendSummaryText = viewModel.trendSummaryText {
-                        Text(trendSummaryText)
-                            .font(.footnote)
-                            .foregroundColor(.secondary)
-                    }
-                    if let mostRecentText = viewModel.mostRecentRecordingText {
-                        Text(mostRecentText)
-                            .font(.footnote)
-                            .foregroundColor(.secondary)
-                    }
-                    Text("Stored in \(viewModel.recordingsPath)")
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .top) {
+                    summaryBlock
+                    Spacer()
+                    controlsExpanded
                 }
-                .accessibilityElement(children: .combine)
-                Spacer()
-                TextField("Search recordings", text: $viewModel.searchText)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(minWidth: 200, idealWidth: 220, maxWidth: 260)
-                    .layoutPriority(1)
-                    .accessibilityLabel("Search recordings")
-                    .accessibilityHint("Filters recordings by name.")
-                Picker("Sort recordings", selection: $viewModel.sortOption) {
-                    ForEach(RecordingSortOption.allCases) { option in
-                        Text(option.label).tag(option)
-                    }
+                VStack(alignment: .leading, spacing: 12) {
+                    summaryBlock
+                    controlsCompact
                 }
-                .pickerStyle(.menu)
-                .accessibilityLabel("Sort recordings")
-                .accessibilityHint("Choose a sort order for the recordings list.")
-                Button("Refresh") {
-                    viewModel.refreshRecordings()
-                }
-                .buttonStyle(.bordered)
-                .disabled(viewModel.isRecording)
-                .accessibilityLabel("Refresh recordings")
-                .accessibilityHint("Reload the recordings list.")
-                Button("Open Folder") {
-                    viewModel.openRecordingsFolder()
-                }
-                .buttonStyle(.bordered)
-                .accessibilityLabel("Open recordings folder")
-                .accessibilityHint("Open the recordings folder in Finder.")
-                Button("Delete All") {
-                    viewModel.requestDeleteAll()
-                }
-                .buttonStyle(.bordered)
-                .tint(.red)
-                .disabled(viewModel.isRecording || viewModel.recordings.isEmpty)
-                .accessibilityLabel("Delete all recordings")
-                .accessibilityHint("Deletes every recording in the list.")
             }
             if viewModel.recordings.isEmpty {
                 Text("No recordings yet.")
@@ -108,7 +54,8 @@ struct RecordingsListView: View {
                     TableColumn("Recording") { item in
                         Text(item.displayName)
                             .font(.subheadline)
-                            .lineLimit(1)
+                            .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
+                            .fixedSize(horizontal: false, vertical: true)
                             .accessibilityLabel("Recording name")
                             .accessibilityValue(item.displayName)
                     }
@@ -155,18 +102,28 @@ struct RecordingsListView: View {
                     )
                     TableColumn("Status") { item in
                         if let integrityText = item.integrityStatusText {
-                            Label("Issue", systemImage: "exclamationmark.triangle.fill")
-                                .font(.footnote)
-                                .foregroundColor(.orange)
-                                .help(integrityText)
-                                .accessibilityLabel("Recording status")
-                                .accessibilityValue(integrityText)
+                            Label {
+                                Text("Issue")
+                                    .font(.footnote)
+                                    .foregroundColor(.primary)
+                            } icon: {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundColor(.orange)
+                            }
+                            .help(integrityText)
+                            .accessibilityLabel("Recording status")
+                            .accessibilityValue(integrityText)
                         } else {
-                            Label("OK", systemImage: "checkmark.circle")
-                                .font(.footnote)
-                                .foregroundColor(.secondary)
-                                .accessibilityLabel("Recording status")
-                                .accessibilityValue("No issues detected")
+                            Label {
+                                Text("OK")
+                                    .font(.footnote)
+                                    .foregroundColor(.primary)
+                            } icon: {
+                                Image(systemName: "checkmark.circle")
+                                    .foregroundColor(.secondary)
+                            }
+                            .accessibilityLabel("Recording status")
+                            .accessibilityValue("No issues detected")
                         }
                     }
                     .width(
@@ -219,11 +176,16 @@ struct RecordingsListView: View {
                 }
             }
             if let deleteErrorMessage = viewModel.deleteErrorMessage {
-                Text(deleteErrorMessage)
-                    .font(.footnote)
-                    .foregroundColor(.orange)
-                    .accessibilityLabel("Warning")
-                    .accessibilityValue(deleteErrorMessage)
+                Label {
+                    Text(deleteErrorMessage)
+                        .font(.footnote)
+                        .foregroundColor(.primary)
+                } icon: {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.orange)
+                }
+                .accessibilityLabel("Warning")
+                .accessibilityValue(deleteErrorMessage)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -259,6 +221,113 @@ struct RecordingsListView: View {
                 )
             }
         }
+    }
+}
+
+private extension RecordingsListView {
+    var summaryBlock: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("Recordings")
+                .font(.headline)
+            if let summaryText = viewModel.recordingsSummaryText {
+                Text(summaryText)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+            if let recentSummaryText = viewModel.recentSummaryText {
+                Text(recentSummaryText)
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+            }
+            if let trendSummaryText = viewModel.trendSummaryText {
+                Text(trendSummaryText)
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+            }
+            if let mostRecentText = viewModel.mostRecentRecordingText {
+                Text(mostRecentText)
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+            }
+            Text("Stored in \(viewModel.recordingsPath)")
+                .font(.footnote)
+                .foregroundColor(.secondary)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    var controlsExpanded: some View {
+        HStack(alignment: .center, spacing: 8) {
+            searchField
+            sortPicker
+            refreshButton
+            openFolderButton
+            deleteAllButton
+        }
+    }
+
+    var controlsCompact: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                searchField
+                sortPicker
+            }
+            HStack(spacing: 8) {
+                refreshButton
+                openFolderButton
+                deleteAllButton
+            }
+        }
+    }
+
+    var searchField: some View {
+        TextField("Search recordings", text: $viewModel.searchText)
+            .textFieldStyle(.roundedBorder)
+            .frame(minWidth: 200, idealWidth: 240, maxWidth: 320)
+            .layoutPriority(1)
+            .accessibilityLabel("Search recordings")
+            .accessibilityHint("Filters recordings by name.")
+    }
+
+    var sortPicker: some View {
+        Picker("Sort recordings", selection: $viewModel.sortOption) {
+            ForEach(RecordingSortOption.allCases) { option in
+                Text(option.label).tag(option)
+            }
+        }
+        .pickerStyle(.menu)
+        .accessibilityLabel("Sort recordings")
+        .accessibilityHint("Choose a sort order for the recordings list.")
+    }
+
+    var refreshButton: some View {
+        Button("Refresh") {
+            viewModel.refreshRecordings()
+        }
+        .buttonStyle(.bordered)
+        .disabled(viewModel.isRecording)
+        .accessibilityLabel("Refresh recordings")
+        .accessibilityHint("Reload the recordings list.")
+    }
+
+    var openFolderButton: some View {
+        Button("Open Folder") {
+            viewModel.openRecordingsFolder()
+        }
+        .buttonStyle(.bordered)
+        .accessibilityLabel("Open recordings folder")
+        .accessibilityHint("Open the recordings folder in Finder.")
+    }
+
+    var deleteAllButton: some View {
+        Button("Delete All") {
+            viewModel.requestDeleteAll()
+        }
+        .buttonStyle(.bordered)
+        .tint(.red)
+        .disabled(viewModel.isRecording || viewModel.recordings.isEmpty)
+        .accessibilityLabel("Delete all recordings")
+        .accessibilityHint("Deletes every recording in the list.")
     }
 }
 

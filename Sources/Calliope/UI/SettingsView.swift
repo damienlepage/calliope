@@ -67,10 +67,15 @@ struct SettingsView: View {
                         .accessibilityHint("Open macOS sound input settings.")
                     }
                     if !microphoneDevices.hasMicrophoneInput {
-                        Label("No microphone input device detected.", systemImage: "exclamationmark.triangle.fill")
-                            .font(.footnote)
-                            .foregroundColor(.secondary)
-                            .accessibilityLabel("No microphone input device detected")
+                        Label {
+                            Text("No microphone input device detected.")
+                                .font(.footnote)
+                                .foregroundColor(.primary)
+                        } icon: {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.orange)
+                        }
+                        .accessibilityLabel("No microphone input device detected")
                     } else {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Preferred Input")
@@ -178,50 +183,98 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Sensitivity Preferences")
                         .font(.headline)
-                    HStack {
-                        Text("Pace Min")
-                            .font(.subheadline)
-                        Spacer()
-                        Stepper(
-                            value: $preferencesStore.paceMin,
-                            in: 60...220,
-                            step: 5
-                        ) {
-                            Text("\(Int(preferencesStore.paceMin)) WPM")
+                    ViewThatFits(in: .horizontal) {
+                        HStack {
+                            Text("Pace Min")
                                 .font(.subheadline)
+                            Spacer()
+                            Stepper(
+                                value: $preferencesStore.paceMin,
+                                in: 60...220,
+                                step: 5
+                            ) {
+                                Text("\(Int(preferencesStore.paceMin)) WPM")
+                                    .font(.subheadline)
+                            }
+                            .accessibilityLabel("Pace minimum")
+                            .accessibilityValue("\(Int(preferencesStore.paceMin)) words per minute")
                         }
-                        .accessibilityLabel("Pace minimum")
-                        .accessibilityValue("\(Int(preferencesStore.paceMin)) words per minute")
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Pace Min")
+                                .font(.subheadline)
+                            Stepper(
+                                value: $preferencesStore.paceMin,
+                                in: 60...220,
+                                step: 5
+                            ) {
+                                Text("\(Int(preferencesStore.paceMin)) WPM")
+                                    .font(.subheadline)
+                            }
+                            .accessibilityLabel("Pace minimum")
+                            .accessibilityValue("\(Int(preferencesStore.paceMin)) words per minute")
+                        }
                     }
-                    HStack {
-                        Text("Pace Max")
-                            .font(.subheadline)
-                        Spacer()
-                        Stepper(
-                            value: $preferencesStore.paceMax,
-                            in: 80...260,
-                            step: 5
-                        ) {
-                            Text("\(Int(preferencesStore.paceMax)) WPM")
+                    ViewThatFits(in: .horizontal) {
+                        HStack {
+                            Text("Pace Max")
                                 .font(.subheadline)
+                            Spacer()
+                            Stepper(
+                                value: $preferencesStore.paceMax,
+                                in: 80...260,
+                                step: 5
+                            ) {
+                                Text("\(Int(preferencesStore.paceMax)) WPM")
+                                    .font(.subheadline)
+                            }
+                            .accessibilityLabel("Pace maximum")
+                            .accessibilityValue("\(Int(preferencesStore.paceMax)) words per minute")
                         }
-                        .accessibilityLabel("Pace maximum")
-                        .accessibilityValue("\(Int(preferencesStore.paceMax)) words per minute")
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Pace Max")
+                                .font(.subheadline)
+                            Stepper(
+                                value: $preferencesStore.paceMax,
+                                in: 80...260,
+                                step: 5
+                            ) {
+                                Text("\(Int(preferencesStore.paceMax)) WPM")
+                                    .font(.subheadline)
+                            }
+                            .accessibilityLabel("Pace maximum")
+                            .accessibilityValue("\(Int(preferencesStore.paceMax)) words per minute")
+                        }
                     }
-                    HStack {
-                        Text("Pause Threshold")
-                            .font(.subheadline)
-                        Spacer()
-                        Stepper(
-                            value: $preferencesStore.pauseThreshold,
-                            in: 0.5...5.0,
-                            step: 0.1
-                        ) {
-                            Text(String(format: "%.1f s", preferencesStore.pauseThreshold))
+                    ViewThatFits(in: .horizontal) {
+                        HStack {
+                            Text("Pause Threshold")
                                 .font(.subheadline)
+                            Spacer()
+                            Stepper(
+                                value: $preferencesStore.pauseThreshold,
+                                in: 0.5...5.0,
+                                step: 0.1
+                            ) {
+                                Text(String(format: "%.1f s", preferencesStore.pauseThreshold))
+                                    .font(.subheadline)
+                            }
+                            .accessibilityLabel("Pause threshold")
+                            .accessibilityValue(String(format: "%.1f seconds", preferencesStore.pauseThreshold))
                         }
-                        .accessibilityLabel("Pause threshold")
-                        .accessibilityValue(String(format: "%.1f seconds", preferencesStore.pauseThreshold))
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Pause Threshold")
+                                .font(.subheadline)
+                            Stepper(
+                                value: $preferencesStore.pauseThreshold,
+                                in: 0.5...5.0,
+                                step: 0.1
+                            ) {
+                                Text(String(format: "%.1f s", preferencesStore.pauseThreshold))
+                                    .font(.subheadline)
+                            }
+                            .accessibilityLabel("Pause threshold")
+                            .accessibilityValue(String(format: "%.1f seconds", preferencesStore.pauseThreshold))
+                        }
                     }
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Crutch Words (comma or newline separated)")
