@@ -123,6 +123,44 @@ final class RecordingItemTests: XCTestCase {
         XCTAssertEqual(displayName, "Weekly Review - Part 02")
     }
 
+    func testDisplayNameAvoidsPartLabelDuplicationWhenTitleContainsPartNumber() {
+        let timestampMs = 1_700_000_000_000.0
+        let date = Date(timeIntervalSince1970: timestampMs / 1000)
+        let url = URL(
+            fileURLWithPath: "/tmp/recording_\(Int(timestampMs))_ABC_session-1234567890abcdef_part-02.m4a"
+        )
+        let metadata = RecordingMetadata(title: "Weekly Review Part 2")
+
+        let displayName = RecordingItem.displayName(for: url, metadata: metadata)
+
+        let expectedDateText = RecordingMetadataDisplayFormatter.conciseDateText(for: date)
+        XCTAssertEqual(displayName, "\(expectedDateText) - Weekly Review Part 2")
+    }
+
+    func testDisplayNameAvoidsDefaultTitleDuplication() {
+        let timestampMs = 1_700_000_000_000.0
+        let date = Date(timeIntervalSince1970: timestampMs / 1000)
+        let url = URL(fileURLWithPath: "/tmp/recording_\(Int(timestampMs))_ABC.m4a")
+        let metadata = RecordingMetadata(title: RecordingMetadata.defaultSessionTitle(for: date))
+
+        let displayName = RecordingItem.displayName(for: url, metadata: metadata)
+
+        XCTAssertEqual(displayName, expectedDisplayName(date: date))
+    }
+
+    func testDisplayNameUsesConciseDateWithPartLabelForDefaultTitleSegments() {
+        let timestampMs = 1_700_000_000_000.0
+        let date = Date(timeIntervalSince1970: timestampMs / 1000)
+        let url = URL(
+            fileURLWithPath: "/tmp/recording_\(Int(timestampMs))_ABC_session-1234567890abcdef_part-03.m4a"
+        )
+        let metadata = RecordingMetadata(title: RecordingMetadata.defaultSessionTitle(for: date))
+
+        let displayName = RecordingItem.displayName(for: url, metadata: metadata)
+
+        XCTAssertEqual(displayName, expectedDisplayName(date: date, partLabel: "03"))
+    }
+
     func testSessionDatePrefersMetadataCreatedAt() {
         let createdAt = Date(timeIntervalSince1970: 1_700_000_000)
         let modifiedAt = Date(timeIntervalSince1970: 1_800_000_000)

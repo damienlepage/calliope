@@ -14,7 +14,7 @@ struct RecordingMetadataDisplayFormatter {
     )
     private static let conciseDateFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d 'at' h:mma"
+        formatter.dateFormat = "MMM d, h:mma"
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.amSymbol = "am"
         formatter.pmSymbol = "pm"
@@ -42,7 +42,6 @@ struct RecordingMetadataDisplayFormatter {
         duration: TimeInterval? = nil
     ) -> String {
         let name = url.deletingPathExtension().lastPathComponent
-        let normalizedTitle = (metadata?.title).flatMap { RecordingMetadata.normalizedTitle($0) }
         let segmentInfo = segmentInfo(from: name)
         let now = Date()
         let inferredCreatedAt = RecordingMetadata.inferredCreatedAt(from: url)
@@ -52,16 +51,23 @@ struct RecordingMetadataDisplayFormatter {
             modifiedAt: modifiedAt,
             now: now
         )
+        let normalizedTitle = (metadata?.title).flatMap { RecordingMetadata.normalizedTitle($0) }
+        let resolvedTitle = normalizedTitle.flatMap { title -> String? in
+            guard let sessionDate else { return title }
+            let defaultTitle = RecordingMetadata.defaultSessionTitle(for: sessionDate)
+            let normalizedDefault = RecordingMetadata.normalizedTitle(defaultTitle)
+            return title == normalizedDefault ? nil : title
+        }
         let baseName: String
         if let sessionDate {
             let dateText = conciseDateText(for: sessionDate)
-            if let normalizedTitle {
-                baseName = "\(dateText) - \(normalizedTitle)"
+            if let resolvedTitle {
+                baseName = "\(dateText) - \(resolvedTitle)"
             } else {
                 baseName = dateText
             }
-        } else if let normalizedTitle {
-            baseName = normalizedTitle
+        } else if let resolvedTitle {
+            baseName = resolvedTitle
         } else if let segmentLabel = segmentLabel(from: name) {
             baseName = segmentLabel
         } else {
@@ -70,7 +76,8 @@ struct RecordingMetadataDisplayFormatter {
 
         guard let segmentInfo else { return baseName }
         let partLabel = "Part \(segmentInfo.partLabel)"
-        if baseName.localizedCaseInsensitiveContains(partLabel) {
+        if baseName.localizedCaseInsensitiveContains(partLabel)
+            || containsNormalizedPartLabel(baseName, partLabel: segmentInfo.partLabel) {
             return baseName
         }
         return "\(baseName) - \(partLabel)"
@@ -97,5 +104,11 @@ struct RecordingMetadataDisplayFormatter {
             ? String(segmentInfo.sessionID.prefix(8))
             : segmentInfo.sessionID
         return "Session \(shortSessionID) Part \(segmentInfo.partLabel)"
+    }
+
+    private static func containsNormalizedPartLabel(_ baseName: String, partLabel: String) -> Bool {
+        guard let partNumber = Int(partLabel) else { return false }
+        let normalizedLabel = "Part \(partNumber)"
+        return baseName.localizedCaseInsensitiveContains(normalizedLabel)
     }
 }

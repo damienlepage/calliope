@@ -381,9 +381,10 @@ goals:
       - "New 2026-02-07: Validate in live Zoom/Meet/Teams calls that only the local speaker is detected, with headset and speaker scenarios, and document outcomes."
   - id: G66
     title: Session and recordings UX cleanup for clarity and visibility
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "New 2026-02-07: Session screen must show start/stop at top, avoid scrolling, keep all elements visible (inactive state greyed), remove status/error popups and top recording/input/capture/inactive messages, ensure captions always visible; recordings list must be visible with concise naming format."
+      - "Validated 2026-02-07: Recordings list uses concise date/time display names with optional titles and non-duplicative part labels."
   - id: G67
     title: Editable titles for existing recordings
     status: AT_TARGET
