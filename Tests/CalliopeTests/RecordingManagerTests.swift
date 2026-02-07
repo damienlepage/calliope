@@ -385,7 +385,7 @@ final class RecordingManagerTests: XCTestCase {
         let manager = RecordingManager(baseDirectory: tempDir)
         let recordingsDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
         let recordingURL = recordingsDirectory.appendingPathComponent("session.m4a")
-        let metadataURL = recordingsDirectory.appendingPathComponent("session.metadata.json")
+        let metadataURL = manager.metadataURL(for: recordingURL)
 
         FileManager.default.createFile(atPath: recordingURL.path, contents: Data([0x1]))
         FileManager.default.createFile(atPath: metadataURL.path, contents: Data([0x1, 0x2]))
@@ -432,13 +432,17 @@ final class RecordingManagerTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: metadataURL.path))
     }
 
-    func testCleanupOrphanedMetadataRemovesInvalidMetadataForRecording() throws {
+    func testCleanupOrphanedMetadataRepairsInvalidMetadataForRecording() throws {
         let tempDir = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         let manager = RecordingManager(baseDirectory: tempDir)
         let recordingsDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
-        let recordingURL = recordingsDirectory.appendingPathComponent("session.m4a")
+        let timestampMs: Double = 1_700_000_000_000
+        let recordingURL = recordingsDirectory
+            .appendingPathComponent("recording_\(Int64(timestampMs))_abc.m4a")
         let metadataURL = recordingsDirectory.appendingPathComponent("session.metadata.json")
+        let expectedDate = Date(timeIntervalSince1970: timestampMs / 1000)
+        let expectedTitle = RecordingMetadata.defaultSessionTitle(for: expectedDate)
 
         FileManager.default.createFile(atPath: recordingURL.path, contents: Data([0x1]))
         let metadata = RecordingMetadata(title: "   \n ")
@@ -447,7 +451,10 @@ final class RecordingManagerTests: XCTestCase {
 
         manager.cleanupOrphanedMetadata(for: [recordingURL])
 
-        XCTAssertFalse(FileManager.default.fileExists(atPath: metadataURL.path))
+        let readBack = manager.readMetadata(for: recordingURL)
+        XCTAssertEqual(readBack?.title, expectedTitle)
+        XCTAssertEqual(readBack?.createdAt, expectedDate)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: metadataURL.path))
         XCTAssertTrue(FileManager.default.fileExists(atPath: recordingURL.path))
     }
 
@@ -578,5 +585,58 @@ final class RecordingManagerTests: XCTestCase {
 
         XCTAssertNil(manager.readMetadata(for: recordingURL))
         XCTAssertFalse(FileManager.default.fileExists(atPath: metadataURL.path))
+    }
+
+    func testBackfillMetadataAlignsMultiSegmentSession() throws {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let recordingsDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
+        let timestampMsA: Double = 1_700_000_000_000
+        let timestampMsB: Double = 1_700_000_100_000
+        let recordingURLA = recordingsDirectory.appendingPathComponent(
+            "recording_\(Int64(timestampMsA))_abc_session-abcdef_part-01.m4a"
+        )
+        let recordingURLB = recordingsDirectory.appendingPathComponent(
+            "recording_\(Int64(timestampMsB))_def_session-abcdef_part-02.m4a"
+        )
+        let expectedDate = Date(timeIntervalSince1970: timestampMsA / 1000)
+
+        FileManager.default.createFile(atPath: recordingURLA.path, contents: Data([0x1]))
+        FileManager.default.createFile(atPath: recordingURLB.path, contents: Data([0x1]))
+        let metadata = RecordingMetadata(title: "  Weekly \n Review  ")
+        try manager.writeMetadata(metadata, for: recordingURLB)
+
+        manager.backfillMetadataIfNeeded(for: [recordingURLA, recordingURLB])
+
+        let readBackA = manager.readMetadata(for: recordingURLA)
+        let readBackB = manager.readMetadata(for: recordingURLB)
+        XCTAssertEqual(readBackA?.title, "Weekly Review")
+        XCTAssertEqual(readBackB?.title, "Weekly Review")
+        XCTAssertEqual(readBackA?.createdAt, expectedDate)
+        XCTAssertEqual(readBackB?.createdAt, expectedDate)
+    }
+
+    func testCleanupOrphanedMetadataRepairsMalformedJSONForRecording() {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let recordingsDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
+        let timestampMs: Double = 1_700_000_400_000
+        let recordingURL = recordingsDirectory
+            .appendingPathComponent("recording_\(Int64(timestampMs))_xyz.m4a")
+        let metadataURL = manager.metadataURL(for: recordingURL)
+        let expectedDate = Date(timeIntervalSince1970: timestampMs / 1000)
+        let expectedTitle = RecordingMetadata.defaultSessionTitle(for: expectedDate)
+
+        FileManager.default.createFile(atPath: recordingURL.path, contents: Data([0x1]))
+        FileManager.default.createFile(atPath: metadataURL.path, contents: Data([0x1, 0x2]))
+
+        manager.cleanupOrphanedMetadata(for: [recordingURL])
+
+        let readBack = manager.readMetadata(for: recordingURL)
+        XCTAssertEqual(readBack?.title, expectedTitle)
+        XCTAssertEqual(readBack?.createdAt, expectedDate)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: metadataURL.path))
     }
 }
