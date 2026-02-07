@@ -493,7 +493,7 @@ final class RecordingListViewModelTests: XCTestCase {
         )
 
         let expectedDateText = RecordingMetadataDisplayFormatter.conciseDateText(for: date)
-        XCTAssertEqual(item.displayName, "\(expectedDateText) - 3min")
+        XCTAssertEqual(item.displayName, expectedDateText)
     }
 
     func testLoadRecordingsSurfacesIntegrityWarnings() {

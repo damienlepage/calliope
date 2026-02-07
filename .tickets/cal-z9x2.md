@@ -1,6 +1,6 @@
 ---
 id: cal-z9x2
-status: ready
+status: closed
 deps: []
 links: []
 created: 2026-02-07T22:57:24Z

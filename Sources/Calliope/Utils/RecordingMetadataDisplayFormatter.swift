@@ -52,28 +52,22 @@ struct RecordingMetadataDisplayFormatter {
             modifiedAt: modifiedAt,
             now: now
         )
-        if let sessionDate {
-            let dateText = conciseDateText(for: sessionDate)
-            let durationText = durationMinutesText(for: duration) ?? "0min"
-            var parts = ["\(dateText) - \(durationText)"]
-            if let normalizedTitle {
-                parts.append(normalizedTitle)
-            }
-            if let segmentInfo {
-                parts.append("Part \(segmentInfo.partLabel)")
-            }
-            return parts.joined(separator: " - ")
-        }
+        let baseName: String
         if let normalizedTitle {
-            if let segmentInfo {
-                return "\(normalizedTitle) (Part \(segmentInfo.partLabel))"
-            }
-            return normalizedTitle
+            baseName = normalizedTitle
+        } else if let sessionDate {
+            baseName = conciseDateText(for: sessionDate)
+        } else if let segmentLabel = segmentLabel(from: name) {
+            baseName = segmentLabel
+        } else {
+            baseName = name
         }
-        if let segmentLabel = segmentLabel(from: name) {
-            return segmentLabel
+
+        guard let segmentInfo else { return baseName }
+        if baseName.localizedCaseInsensitiveContains("Part \(segmentInfo.partLabel)") {
+            return baseName
         }
-        return name
+        return "\(baseName) - Part \(segmentInfo.partLabel)"
     }
 
     private struct SegmentInfo {

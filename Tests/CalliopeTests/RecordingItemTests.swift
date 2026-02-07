@@ -5,35 +5,26 @@ import XCTest
 final class RecordingItemTests: XCTestCase {
     private func expectedDisplayName(
         date: Date,
-        duration: TimeInterval,
         title: String? = nil,
         partLabel: String? = nil
     ) -> String {
-        let dateText = RecordingMetadataDisplayFormatter.conciseDateText(for: date)
-        let durationText = RecordingMetadataDisplayFormatter.durationMinutesText(for: duration) ?? "0min"
-        var parts = ["\(dateText) - \(durationText)"]
-        if let title {
-            parts.append(title)
-        }
-        if let partLabel {
-            parts.append("Part \(partLabel)")
-        }
-        return parts.joined(separator: " - ")
+        let baseName = title ?? RecordingMetadataDisplayFormatter.conciseDateText(for: date)
+        guard let partLabel else { return baseName }
+        return "\(baseName) - Part \(partLabel)"
     }
 
     func testDisplayNameUsesSegmentLabelForSessionParts() {
         let timestampMs = 1_700_000_000_000.0
         let date = Date(timeIntervalSince1970: timestampMs / 1000)
-        let duration: TimeInterval = 180
         let url = URL(
             fileURLWithPath: "/tmp/recording_\(Int(timestampMs))_ABC_session-1234567890abcdef_part-02.m4a"
         )
 
-        let displayName = RecordingItem.displayName(for: url, duration: duration)
+        let displayName = RecordingItem.displayName(for: url)
 
         XCTAssertEqual(
             displayName,
-            expectedDisplayName(date: date, duration: duration, partLabel: "02")
+            expectedDisplayName(date: date, partLabel: "02")
         )
     }
 
@@ -47,54 +38,50 @@ final class RecordingItemTests: XCTestCase {
 
     func testDisplayNameUsesModifiedAtWhenTimestampMissing() {
         let date = Date(timeIntervalSince1970: 1_700_000_000)
-        let duration: TimeInterval = 180
         let url = URL(fileURLWithPath: "/tmp/audio_capture.m4a")
 
-        let displayName = RecordingItem.displayName(for: url, modifiedAt: date, duration: duration)
+        let displayName = RecordingItem.displayName(for: url, modifiedAt: date)
 
-        XCTAssertEqual(displayName, expectedDisplayName(date: date, duration: duration))
+        XCTAssertEqual(displayName, expectedDisplayName(date: date))
     }
 
     func testDisplayNameUsesMetadataCreatedAtWhenTimestampMissing() {
         let date = Date(timeIntervalSince1970: 1_700_000_000)
-        let duration: TimeInterval = 180
         let url = URL(fileURLWithPath: "/tmp/audio_capture.m4a")
         let metadata = RecordingMetadata(title: "   \n ", createdAt: date)
 
-        let displayName = RecordingItem.displayName(for: url, metadata: metadata, duration: duration)
+        let displayName = RecordingItem.displayName(for: url, metadata: metadata)
 
-        XCTAssertEqual(displayName, expectedDisplayName(date: date, duration: duration))
+        XCTAssertEqual(displayName, expectedDisplayName(date: date))
     }
 
     func testDisplayNamePrefersMetadataCreatedAtOverInferredTimestamp() {
         let inferredTimestampMs = 1_700_000_000_000.0
         let inferredDate = Date(timeIntervalSince1970: inferredTimestampMs / 1000)
         let metadataDate = Date(timeIntervalSince1970: 1_600_000_000)
-        let duration: TimeInterval = 180
         let url = URL(
             fileURLWithPath: "/tmp/recording_\(Int(inferredTimestampMs))_ABC.m4a"
         )
         let metadata = RecordingMetadata(title: "  \n ", createdAt: metadataDate)
 
-        let displayName = RecordingItem.displayName(for: url, metadata: metadata, duration: duration)
+        let displayName = RecordingItem.displayName(for: url, metadata: metadata)
 
-        XCTAssertEqual(displayName, expectedDisplayName(date: metadataDate, duration: duration))
-        XCTAssertNotEqual(displayName, expectedDisplayName(date: inferredDate, duration: duration))
+        XCTAssertEqual(displayName, expectedDisplayName(date: metadataDate))
+        XCTAssertNotEqual(displayName, expectedDisplayName(date: inferredDate))
     }
 
     func testDisplayNameIgnoresUnreasonableMetadataCreatedAt() {
         let inferredTimestampMs = 1_700_000_000_000.0
         let inferredDate = Date(timeIntervalSince1970: inferredTimestampMs / 1000)
         let futureDate = Date().addingTimeInterval(60 * 60 * 48)
-        let duration: TimeInterval = 180
         let url = URL(
             fileURLWithPath: "/tmp/recording_\(Int(inferredTimestampMs))_ABC.m4a"
         )
         let metadata = RecordingMetadata(title: "  \n ", createdAt: futureDate)
 
-        let displayName = RecordingItem.displayName(for: url, metadata: metadata, duration: duration)
+        let displayName = RecordingItem.displayName(for: url, metadata: metadata)
 
-        XCTAssertEqual(displayName, expectedDisplayName(date: inferredDate, duration: duration))
+        XCTAssertEqual(displayName, expectedDisplayName(date: inferredDate))
     }
 
     func testDisplayNameUsesMetadataTitleForSingleSegment() {
@@ -121,7 +108,7 @@ final class RecordingItemTests: XCTestCase {
 
         let displayName = RecordingItem.displayName(for: url, metadata: metadata)
 
-        XCTAssertEqual(displayName, "Weekly Review (Part 02)")
+        XCTAssertEqual(displayName, "Weekly Review - Part 02")
     }
 
     func testSessionDatePrefersMetadataCreatedAt() {
