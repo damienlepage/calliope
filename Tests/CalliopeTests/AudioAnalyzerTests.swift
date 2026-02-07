@@ -318,6 +318,78 @@ final class AudioAnalyzerTests: XCTestCase {
         XCTAssertEqual(summary.pace.totalWords, 5)
     }
 
+    func testSummaryCapturesPaceStatsFromKnownElapsedTime() {
+        var now = Date(timeIntervalSince1970: 0)
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            UUID().uuidString,
+            isDirectory: true
+        )
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let suiteName = "AudioAnalyzerTests.AudioCapture.\(UUID().uuidString)"
+        let captureDefaults = UserDefaults(suiteName: suiteName)!
+        captureDefaults.removePersistentDomain(forName: suiteName)
+        let preferencesStore = AudioCapturePreferencesStore(defaults: captureDefaults)
+        let audioCapture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: preferencesStore,
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: FakeAudioCaptureBackend(), status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() },
+            recordingStartConfirmation: { true }
+        )
+        let analysisSuiteName = "AudioAnalyzerTests.Analysis.\(UUID().uuidString)"
+        let analysisDefaults = UserDefaults(suiteName: analysisSuiteName)!
+        analysisDefaults.removePersistentDomain(forName: analysisSuiteName)
+        let analysisPreferences = AnalysisPreferencesStore(defaults: analysisDefaults)
+        let summaryWriter = CapturingSummaryWriter()
+        let analyzer = AudioAnalyzer(
+            summaryWriter: summaryWriter,
+            now: { now },
+            speechTranscriberFactory: { FakeSpeechTranscriber() }
+        )
+
+        analyzer.setup(audioCapture: audioCapture, preferencesStore: analysisPreferences)
+
+        audioCapture.startRecording(
+            privacyState: PrivacyGuardrails.State(hasAcceptedDisclosure: true),
+            microphonePermission: .authorized,
+            hasMicrophoneInput: true
+        )
+
+        let startExpectation = expectation(description: "Allow start to process")
+        DispatchQueue.main.async { startExpectation.fulfill() }
+        wait(for: [startExpectation], timeout: 1.0)
+
+        now = Date(timeIntervalSince1970: 60)
+        analyzer.handleTranscription(makeTranscript(wordCount: 120))
+        let firstUpdateExpectation = expectation(description: "Allow first transcription to process")
+        DispatchQueue.main.async { firstUpdateExpectation.fulfill() }
+        wait(for: [firstUpdateExpectation], timeout: 1.0)
+
+        now = Date(timeIntervalSince1970: 120)
+        analyzer.handleTranscription(makeTranscript(wordCount: 360))
+        let secondUpdateExpectation = expectation(description: "Allow second transcription to process")
+        DispatchQueue.main.async { secondUpdateExpectation.fulfill() }
+        wait(for: [secondUpdateExpectation], timeout: 1.0)
+
+        audioCapture.stopRecording()
+
+        let stopExpectation = expectation(description: "Allow stop to process")
+        DispatchQueue.main.async { stopExpectation.fulfill() }
+        wait(for: [stopExpectation], timeout: 1.0)
+
+        guard let summary = summaryWriter.lastSummary else {
+            XCTFail("Expected summary to be written")
+            return
+        }
+
+        XCTAssertEqual(summary.pace.minWPM, 120, accuracy: 0.001)
+        XCTAssertEqual(summary.pace.maxWPM, 180, accuracy: 0.001)
+        XCTAssertEqual(summary.pace.averageWPM, 150, accuracy: 0.001)
+        XCTAssertEqual(summary.pace.totalWords, 360)
+    }
+
     func testIntegrityValidationRunsOnStopForAllRecordingURLs() {
         let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
             UUID().uuidString,
@@ -512,6 +584,11 @@ final class AudioAnalyzerTests: XCTestCase {
         XCTAssertEqual(analyzer.pauseAverageDuration, 0)
     }
     #endif
+}
+
+private func makeTranscript(wordCount: Int) -> String {
+    guard wordCount > 0 else { return "" }
+    return Array(repeating: "word", count: wordCount).joined(separator: " ")
 }
 
 private final class FakeSpeechTranscriber: SpeechTranscribing {
