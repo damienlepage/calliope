@@ -31,8 +31,13 @@ struct FeedbackPanel: View {
             pauseCount: pauseCount,
             durationSeconds: sessionDurationSeconds
         )
-        VStack(alignment: .leading, spacing: 15) {
-            HStack {
+        let metricColumns = [
+            GridItem(.flexible(), spacing: 12),
+            GridItem(.flexible(), spacing: 12)
+        ]
+        let crutchLevel = CrutchWordFeedback.level(for: crutchWords)
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .firstTextBaseline) {
                 Text("Real-time Feedback")
                     .font(.headline)
                 Spacer()
@@ -42,27 +47,19 @@ struct FeedbackPanel: View {
                         .foregroundColor(.secondary)
                 }
             }
-            .padding(.bottom, 5)
-            
-            // Pace indicator
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    HStack(spacing: 6) {
-                        Text("Pace:")
-                            .font(.subheadline)
-                        Text(PaceFeedback.targetRangeText(minPace: paceMin, maxPace: paceMax))
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
+
+            FeedbackCard(title: "Pace") {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(PaceFeedback.valueText(for: pace))
+                        .font(.title3)
+                        .foregroundColor(paceColor(pace))
+                    Text(PaceFeedback.label(for: pace, minPace: paceMin, maxPace: paceMax))
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
                     Spacer()
-                    HStack(spacing: 6) {
-                        Text(PaceFeedback.valueText(for: pace))
-                            .font(.subheadline)
-                            .foregroundColor(paceColor(pace))
-                        Text(PaceFeedback.label(for: pace, minPace: paceMin, maxPace: paceMax))
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
+                    Text(PaceFeedback.targetRangeText(minPace: paceMin, maxPace: paceMax))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
                 PaceRangeBar(
                     pace: pace,
@@ -71,95 +68,72 @@ struct FeedbackPanel: View {
                     indicatorColor: paceColor(pace)
                 )
             }
-            
-            // Crutch words indicator
-            HStack {
-                Text("Crutch Words:")
-                    .font(.subheadline)
-                Spacer()
-                Text("\(crutchWords)")
-                    .font(.subheadline)
-                    .foregroundColor(crutchWords > 5 ? .orange : .green)
-            }
-            
-            // Pauses indicator
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Text("Pauses:")
-                        .font(.subheadline)
-                    Spacer()
-                    HStack(spacing: 6) {
-                        Text("\(pauseCount)")
-                            .font(.subheadline)
-                        Text(pauseDetailsText(rateText: pauseRateText))
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+
+            LazyVGrid(columns: metricColumns, spacing: 12) {
+                FeedbackStatCard(
+                    title: "Crutch Words",
+                    value: "\(crutchWords)",
+                    valueColor: crutchColor(crutchLevel),
+                    subtitle: "Target: \u{2264} 5"
+                )
+                FeedbackStatCard(
+                    title: "Pauses",
+                    value: "\(pauseCount)",
+                    valueColor: .primary,
+                    subtitle: pauseDetailsText(rateText: pauseRateText)
+                ) {
+                    if let pauseRateText {
+                        PauseRateBadge(text: pauseRateText)
+                            .padding(.top, 2)
                     }
-                }
-                if let pauseRateText {
-                    PauseRateBadge(text: pauseRateText)
                 }
             }
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Input Level")
-                    .font(.subheadline)
-                InputLevelMeterView(level: inputLevel)
-                HStack(spacing: 6) {
-                    Text("Processing:")
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
-                    Text(ProcessingLatencyFormatter.statusText(
-                        status: processingLatencyStatus,
-                        average: processingLatencyAverage
-                    ))
-                        .font(.footnote)
-                        .foregroundColor(processingStatusColor(processingLatencyStatus))
-                }
-                HStack(spacing: 6) {
-                    Text("Load:")
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
-                    Text(ProcessingUtilizationFormatter.statusText(
-                        status: processingUtilizationStatus,
-                        average: processingUtilizationAverage
-                    ))
-                        .font(.footnote)
-                        .foregroundColor(utilizationStatusColor(processingUtilizationStatus))
-                }
-                if let warningText = ProcessingLatencyFormatter.warningText(status: processingLatencyStatus) {
-                    Text(warningText)
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
-                }
-                if let warningText = ProcessingUtilizationFormatter.warningText(status: processingUtilizationStatus) {
-                    Text(warningText)
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
-                }
-                if let warningText = RecordingStorageWarningFormatter.warningText(status: storageStatus) {
-                    Text(warningText)
-                        .font(.footnote)
-                        .foregroundColor(.orange)
-                }
-                if showSilenceWarning {
-                    Text("No mic input detected")
-                        .font(.footnote)
-                        .foregroundColor(.orange)
-                    Text("Check your microphone or input selection in Settings.")
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
-                }
-                if showWaitingForSpeech {
-                    Text("Waiting for speech")
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
+            FeedbackCard(title: "Input & Processing") {
+                VStack(alignment: .leading, spacing: 8) {
+                    InputLevelMeterView(level: inputLevel)
+                    statusLine(
+                        label: "Processing",
+                        value: ProcessingLatencyFormatter.statusText(
+                            status: processingLatencyStatus,
+                            average: processingLatencyAverage
+                        ),
+                        color: processingStatusColor(processingLatencyStatus)
+                    )
+                    statusLine(
+                        label: "Load",
+                        value: ProcessingUtilizationFormatter.statusText(
+                            status: processingUtilizationStatus,
+                            average: processingUtilizationAverage
+                        ),
+                        color: utilizationStatusColor(processingUtilizationStatus)
+                    )
+                    if let warningText = ProcessingLatencyFormatter.warningText(status: processingLatencyStatus) {
+                        feedbackNote(warningText)
+                    }
+                    if let warningText = ProcessingUtilizationFormatter.warningText(status: processingUtilizationStatus) {
+                        feedbackNote(warningText)
+                    }
+                    if let warningText = RecordingStorageWarningFormatter.warningText(status: storageStatus) {
+                        feedbackWarning(warningText)
+                    }
+                    if showSilenceWarning {
+                        feedbackWarning("No mic input detected")
+                        feedbackNote("Check your microphone or input selection in Settings.")
+                    }
+                    if showWaitingForSpeech {
+                        feedbackNote("Waiting for speech")
+                    }
                 }
             }
         }
-        .padding()
+        .padding(16)
         .background(Color(NSColor.controlBackgroundColor))
-        .cornerRadius(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.secondary.opacity(0.15))
+        )
+        .cornerRadius(12)
     }
     
     private func paceColor(_ pace: Double) -> Color {
@@ -183,6 +157,15 @@ struct FeedbackPanel: View {
         )
     }
 
+    private func crutchColor(_ level: CrutchWordFeedbackLevel) -> Color {
+        switch level {
+        case .calm:
+            return .green
+        case .caution:
+            return .orange
+        }
+    }
+
     private func processingStatusColor(_ status: ProcessingLatencyStatus) -> Color {
         switch status {
         case .ok:
@@ -203,6 +186,29 @@ struct FeedbackPanel: View {
         case .critical:
             return .red
         }
+    }
+
+    private func statusLine(label: String, value: String, color: Color) -> some View {
+        HStack(spacing: 6) {
+            Text("\(label):")
+                .font(.footnote)
+                .foregroundColor(.secondary)
+            Text(value)
+                .font(.footnote)
+                .foregroundColor(color)
+        }
+    }
+
+    private func feedbackNote(_ text: String) -> some View {
+        Text(text)
+            .font(.footnote)
+            .foregroundColor(.secondary)
+    }
+
+    private func feedbackWarning(_ text: String) -> some View {
+        Text(text)
+            .font(.footnote)
+            .foregroundColor(.orange)
     }
 }
 
@@ -231,9 +237,9 @@ private struct PaceRangeBar: View {
 
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(Color.secondary.opacity(0.15))
+                    .fill(Color.secondary.opacity(0.12))
                 Capsule()
-                    .fill(Color.green.opacity(0.28))
+                    .fill(Color.green.opacity(0.24))
                     .frame(width: barWidth * CGFloat(layout.targetWidth))
                     .offset(x: barWidth * CGFloat(layout.targetStart))
                 Circle()
@@ -242,10 +248,76 @@ private struct PaceRangeBar: View {
                     .offset(x: indicatorOffset, y: -1)
             }
         }
-        .frame(height: 6)
+        .frame(height: 8)
         .accessibilityHidden(true)
     }
 
+}
+
+private struct FeedbackCard<Content: View>: View {
+    let title: String
+    let content: Content
+
+    init(title: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondary)
+            content
+        }
+        .padding(12)
+        .background(Color(NSColor.windowBackgroundColor).opacity(0.85))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.secondary.opacity(0.12))
+        )
+        .cornerRadius(10)
+    }
+}
+
+private struct FeedbackStatCard<Accessory: View>: View {
+    let title: String
+    let value: String
+    let valueColor: Color
+    let subtitle: String?
+    let accessory: Accessory?
+
+    init(
+        title: String,
+        value: String,
+        valueColor: Color,
+        subtitle: String? = nil,
+        @ViewBuilder accessory: () -> Accessory? = { nil }
+    ) {
+        self.title = title
+        self.value = value
+        self.valueColor = valueColor
+        self.subtitle = subtitle
+        self.accessory = accessory()
+    }
+
+    var body: some View {
+        FeedbackCard(title: title) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(value)
+                    .font(.title3)
+                    .foregroundColor(valueColor)
+                if let subtitle {
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                if let accessory {
+                    accessory
+                }
+            }
+        }
+    }
 }
 
 private struct PauseRateBadge: View {
