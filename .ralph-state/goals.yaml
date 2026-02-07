@@ -130,9 +130,10 @@ goals:
       - "Validated 2026-02-06: Recordings list and detail sheet now show speaking time, turns, and speaking percentage."
   - id: G24
     title: Session metadata robustness and clarity
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "2026-02-06: Goal created to harden session metadata entry, normalization, and display consistency."
+      - "Validated 2026-02-07: Display names now prefer metadata createdAt over filename timestamps, aligning with session-date sorting and adding unit coverage."
   - id: G25
     title: Performance and energy usage validation
     status: AT_TARGET

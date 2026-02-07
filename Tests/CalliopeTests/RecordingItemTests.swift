@@ -45,6 +45,21 @@ final class RecordingItemTests: XCTestCase {
         XCTAssertEqual(displayName, RecordingItem.defaultSessionTitle(for: date))
     }
 
+    func testDisplayNamePrefersMetadataCreatedAtOverInferredTimestamp() {
+        let inferredTimestampMs = 1_700_000_000_000.0
+        let inferredDate = Date(timeIntervalSince1970: inferredTimestampMs / 1000)
+        let metadataDate = Date(timeIntervalSince1970: 1_600_000_000)
+        let url = URL(
+            fileURLWithPath: "/tmp/recording_\(Int(inferredTimestampMs))_ABC.m4a"
+        )
+        let metadata = RecordingMetadata(title: "  \n ", createdAt: metadataDate)
+
+        let displayName = RecordingItem.displayName(for: url, metadata: metadata)
+
+        XCTAssertEqual(displayName, RecordingItem.defaultSessionTitle(for: metadataDate))
+        XCTAssertNotEqual(displayName, RecordingItem.defaultSessionTitle(for: inferredDate))
+    }
+
     func testDisplayNameUsesMetadataTitleForSingleSegment() {
         let url = URL(fileURLWithPath: "/tmp/recording_123_ABC.m4a")
         let metadata = RecordingMetadata(title: "Team Sync")

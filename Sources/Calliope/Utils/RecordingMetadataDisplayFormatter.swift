@@ -30,7 +30,9 @@ struct RecordingMetadataDisplayFormatter {
             }
             return normalizedTitle
         }
-        if let sessionDate = RecordingMetadata.inferredCreatedAt(from: url) ?? metadata?.createdAt ?? modifiedAt {
+        if let sessionDate = metadata?.createdAt
+            ?? RecordingMetadata.inferredCreatedAt(from: url)
+            ?? modifiedAt {
             let sessionTitle = RecordingMetadata.defaultSessionTitle(for: sessionDate)
             if let segmentInfo = segmentInfo(from: name) {
                 return "\(sessionTitle) (Part \(segmentInfo.partLabel))"
