@@ -1,6 +1,6 @@
 ---
 id: cal-cw32
-status: ready
+status: closed
 deps: [cal-cw31]
 links: []
 created: 2026-02-07T12:05:00Z

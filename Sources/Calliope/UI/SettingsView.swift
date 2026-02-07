@@ -361,8 +361,15 @@ struct SettingsView: View {
                                 .foregroundColor(.secondary)
                             Menu("Choose") {
                                 ForEach(AnalysisPreferencesStore.crutchWordPresets) { preset in
-                                    Button(preset.name) {
+                                    Button {
                                         preferencesStore.applyCrutchWordPreset(preset)
+                                    } label: {
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(preset.name)
+                                            Text(preset.description)
+                                                .font(.caption)
+                                                .foregroundColor(.secondary)
+                                        }
                                     }
                                 }
                             }
@@ -370,6 +377,11 @@ struct SettingsView: View {
                         Text("Current preset: \(AnalysisPreferencesStore.crutchWordPresetLabel(for: preferencesStore.crutchWords))")
                             .font(.footnote)
                             .foregroundColor(.secondary)
+                        if let description = AnalysisPreferencesStore.crutchWordPresetDescription(for: preferencesStore.crutchWords) {
+                            Text(description)
+                                .font(.footnote)
+                                .foregroundColor(.secondary)
+                        }
                         Text("Selecting a preset replaces the current list.")
                             .font(.footnote)
                             .foregroundColor(.secondary)

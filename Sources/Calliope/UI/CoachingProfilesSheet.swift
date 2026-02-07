@@ -191,8 +191,15 @@ private struct CoachingProfileEditor: View {
                         .foregroundColor(.secondary)
                     Menu("Choose") {
                         ForEach(AnalysisPreferencesStore.crutchWordPresets) { preset in
-                            Button(preset.name) {
+                            Button {
                                 profile.preferences.crutchWords = preset.words
+                            } label: {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(preset.name)
+                                    Text(preset.description)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
                             }
                         }
                     }
@@ -200,6 +207,11 @@ private struct CoachingProfileEditor: View {
                 Text("Current preset: \(AnalysisPreferencesStore.crutchWordPresetLabel(for: profile.preferences.crutchWords))")
                     .font(.footnote)
                     .foregroundColor(.secondary)
+                if let description = AnalysisPreferencesStore.crutchWordPresetDescription(for: profile.preferences.crutchWords) {
+                    Text(description)
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                }
                 Text("Selecting a preset replaces the current list.")
                     .font(.footnote)
                     .foregroundColor(.secondary)

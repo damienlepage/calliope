@@ -10,6 +10,7 @@ import Foundation
 
 struct CrutchWordPreset: Identifiable, Equatable {
     let name: String
+    let description: String
     let words: [String]
 
     var id: String { name }
@@ -33,14 +34,17 @@ final class AnalysisPreferencesStore: ObservableObject {
     static let crutchWordPresets: [CrutchWordPreset] = {
         let defaultPreset = CrutchWordPreset(
             name: "Default",
+            description: "A balanced list of common filler words for everyday calls.",
             words: normalizeCrutchWords(Constants.crutchWords)
         )
         let focusedPreset = CrutchWordPreset(
             name: "Focused",
+            description: "A short core set for tighter, more disciplined feedback.",
             words: normalizeCrutchWords(["uh", "um", "ah", "er", "hmm"])
         )
         let extendedPreset = CrutchWordPreset(
             name: "Extended",
+            description: "A broader list that includes softer phrases like \"kind of\" and \"i mean\".",
             words: normalizeCrutchWords(Constants.crutchWords + ["kind of", "sort of", "i mean", "right", "okay"])
         )
         return [defaultPreset, focusedPreset, extendedPreset]
@@ -195,6 +199,10 @@ final class AnalysisPreferencesStore: ObservableObject {
 
     static func crutchWordPresetLabel(for words: [String]) -> String {
         matchingCrutchWordPreset(for: words)?.name ?? "Custom list"
+    }
+
+    static func crutchWordPresetDescription(for words: [String]) -> String? {
+        matchingCrutchWordPreset(for: words)?.description
     }
 
     private static func normalize(

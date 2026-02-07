@@ -155,6 +155,17 @@ final class AnalysisPreferencesStoreTests: XCTestCase {
         }
     }
 
+    func testCrutchWordPresetsHaveDescriptions() {
+        let presets = AnalysisPreferencesStore.crutchWordPresets
+
+        for preset in presets {
+            XCTAssertFalse(
+                preset.description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                "Expected preset \(preset.name) to have a description"
+            )
+        }
+    }
+
     func testMatchingCrutchWordPresetIgnoresOrderAndCase() {
         guard let focusedPreset = AnalysisPreferencesStore.crutchWordPresets.first(where: { $0.name == "Focused" }) else {
             XCTFail("Expected Focused preset")
