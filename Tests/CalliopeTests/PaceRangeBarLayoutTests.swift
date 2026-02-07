@@ -46,4 +46,22 @@ final class PaceRangeBarLayoutTests: XCTestCase {
 
         XCTAssertEqual(layout.pacePosition, 1, accuracy: 0.0001)
     }
+
+    func testLayoutPacePositionUpdatesWithChangingPace() {
+        let slowLayout = PaceRangeBarLayout.compute(
+            pace: 110,
+            minPace: 120,
+            maxPace: 180,
+            padding: 40
+        )
+        let fastLayout = PaceRangeBarLayout.compute(
+            pace: 190,
+            minPace: 120,
+            maxPace: 180,
+            padding: 40
+        )
+
+        XCTAssertLessThan(slowLayout.pacePosition, fastLayout.pacePosition)
+        XCTAssertNotEqual(slowLayout.pacePosition, fastLayout.pacePosition)
+    }
 }

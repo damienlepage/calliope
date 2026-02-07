@@ -57,6 +57,9 @@ struct PaceRangeBar: View {
                     .frame(width: indicatorSize, height: indicatorSize)
                     .offset(x: indicatorOffset, y: -1)
             }
+            .animation(.easeInOut(duration: 0.2), value: layout.pacePosition)
+            .animation(.easeInOut(duration: 0.2), value: layout.targetStart)
+            .animation(.easeInOut(duration: 0.2), value: layout.targetWidth)
         }
         .frame(height: barHeight)
         .accessibilityHidden(true)

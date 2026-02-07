@@ -1,6 +1,6 @@
 ---
 id: cal-nx6u
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-07T22:15:58Z
