@@ -179,4 +179,34 @@ final class RecordingItemTests: XCTestCase {
             ["Speaking time: 01:30", "Speaking turns: 4", "Speaking %: 30%"]
         )
     }
+
+    func testMetadataTextConsistentForStandardDuration() {
+        let date = Date(timeIntervalSince1970: 1_700_000_000)
+        let item = RecordingItem(
+            url: URL(fileURLWithPath: "/tmp/recording.m4a"),
+            modifiedAt: date,
+            duration: 180,
+            fileSizeBytes: nil,
+            summary: nil,
+            integrityReport: nil
+        )
+
+        XCTAssertEqual(item.detailText, item.detailMetadataText)
+        XCTAssertTrue(item.detailText.contains("• 03:00"))
+    }
+
+    func testMetadataTextConsistentForLongDuration() {
+        let date = Date(timeIntervalSince1970: 1_700_000_000)
+        let item = RecordingItem(
+            url: URL(fileURLWithPath: "/tmp/recording.m4a"),
+            modifiedAt: date,
+            duration: 3661,
+            fileSizeBytes: nil,
+            summary: nil,
+            integrityReport: nil
+        )
+
+        XCTAssertEqual(item.detailText, item.detailMetadataText)
+        XCTAssertTrue(item.detailText.contains("• 1:01:01"))
+    }
 }

@@ -80,7 +80,11 @@ struct RecordingItem: Identifiable, Equatable {
 
     var id: URL { url }
     var displayName: String {
-        RecordingItem.displayName(for: url, metadata: metadata, modifiedAt: modifiedAt)
+        RecordingMetadataDisplayFormatter.displayName(
+            for: url,
+            metadata: metadata,
+            modifiedAt: modifiedAt
+        )
     }
     var sessionDate: Date {
         metadata?.createdAt
@@ -88,15 +92,7 @@ struct RecordingItem: Identifiable, Equatable {
             ?? modifiedAt
     }
     var detailText: String {
-        let dateText = sessionDate.formatted(date: .abbreviated, time: .shortened)
-        let details = [
-            RecordingItem.formatDuration(duration),
-            RecordingItem.formatFileSize(fileSizeBytes)
-        ].compactMap { $0 }
-        guard !details.isEmpty else {
-            return dateText
-        }
-        return ([dateText] + details).joined(separator: " • ")
+        metadataDetailText()
     }
     var summaryText: String? {
         guard let summary else { return nil }
@@ -174,15 +170,7 @@ struct RecordingItem: Identifiable, Equatable {
     }
 
     var detailMetadataText: String {
-        let dateText = sessionDate.formatted(date: .abbreviated, time: .shortened)
-        let details = [
-            RecordingItem.formatDuration(duration),
-            RecordingItem.formatFileSize(fileSizeBytes)
-        ].compactMap { $0 }
-        guard !details.isEmpty else {
-            return dateText
-        }
-        return ([dateText] + details).joined(separator: " • ")
+        metadataDetailText()
     }
 
     var paceDetailLines: [String] {
@@ -281,25 +269,11 @@ struct RecordingItem: Identifiable, Equatable {
         metadata: RecordingMetadata? = nil,
         modifiedAt: Date? = nil
     ) -> String {
-        let name = url.deletingPathExtension().lastPathComponent
-        if let title = metadata?.title,
-           let normalizedTitle = RecordingMetadata.normalizedTitle(title) {
-            if let segmentInfo = segmentInfo(from: name) {
-                return "\(normalizedTitle) (Part \(segmentInfo.partLabel))"
-            }
-            return normalizedTitle
-        }
-        if let sessionDate = RecordingMetadata.inferredCreatedAt(from: url) ?? metadata?.createdAt ?? modifiedAt {
-            let sessionTitle = defaultSessionTitle(for: sessionDate)
-            if let segmentInfo = segmentInfo(from: name) {
-                return "\(sessionTitle) (Part \(segmentInfo.partLabel))"
-            }
-            return sessionTitle
-        }
-        if let segmentLabel = segmentLabel(from: name) {
-            return segmentLabel
-        }
-        return name
+        RecordingMetadataDisplayFormatter.displayName(
+            for: url,
+            metadata: metadata,
+            modifiedAt: modifiedAt
+        )
     }
 
     static func defaultSessionTitle(for date: Date) -> String {
@@ -409,30 +383,17 @@ struct RecordingItem: Identifiable, Equatable {
         return parts.joined(separator: " • ")
     }
 
-    private struct SegmentInfo {
-        let sessionID: String
-        let partLabel: String
+    private func metadataDetailText() -> String {
+        let dateText = RecordingMetadataDisplayFormatter.dateTimeText(for: sessionDate)
+        let details = [
+            RecordingItem.formatDuration(duration),
+            RecordingItem.formatFileSize(fileSizeBytes)
+        ].compactMap { $0 }
+        guard !details.isEmpty else {
+            return dateText
+        }
+        return ([dateText] + details).joined(separator: " • ")
     }
-
-    private static func segmentInfo(from name: String) -> SegmentInfo? {
-        guard let sessionRange = name.range(of: "_session-") else { return nil }
-        let sessionPart = name[sessionRange.upperBound...]
-        guard let partRange = sessionPart.range(of: "_part-") else { return nil }
-        let sessionID = String(sessionPart[..<partRange.lowerBound])
-        let partLabel = String(sessionPart[partRange.upperBound...])
-        guard !sessionID.isEmpty, !partLabel.isEmpty else { return nil }
-        return SegmentInfo(sessionID: sessionID, partLabel: partLabel)
-    }
-
-    private static func segmentLabel(from name: String) -> String? {
-        guard let segmentInfo = segmentInfo(from: name) else { return nil }
-        let shortSessionID = segmentInfo.sessionID.count > 8
-            ? String(segmentInfo.sessionID.prefix(8))
-            : segmentInfo.sessionID
-        return "Session \(shortSessionID) Part \(segmentInfo.partLabel)"
-    }
-
-    
 }
 
 enum RecordingDeleteRequest: Identifiable, Equatable {

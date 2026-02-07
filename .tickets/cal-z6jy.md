@@ -1,6 +1,6 @@
 ---
 id: cal-z6jy
-status: open
+status: closed
 deps: [cal-3r4u]
 links: []
 created: 2026-02-06T23:50:13Z
