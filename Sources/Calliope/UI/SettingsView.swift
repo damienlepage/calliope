@@ -36,10 +36,12 @@ struct SettingsView: View {
                 Text("Settings")
                     .font(.largeTitle)
                     .fontWeight(.bold)
+                    .accessibilityAddTraits(.isHeader)
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Microphone Access")
                         .font(.headline)
+                        .accessibilityAddTraits(.isHeader)
                     Text(microphonePermission.state.description)
                         .font(.subheadline)
                         .foregroundColor(.secondary)
@@ -116,6 +118,11 @@ struct SettingsView: View {
                                     }
                                 }
                                 .accessibilityElement(children: .combine)
+                                .accessibilityLabel(
+                                    name == microphoneDevices.defaultMicrophoneName
+                                        ? "\(name), Default input"
+                                        : name
+                                )
                             }
                         }
                     }
@@ -125,6 +132,7 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Speech Recognition")
                         .font(.headline)
+                        .accessibilityAddTraits(.isHeader)
                     Text(speechPermission.state.description)
                         .font(.subheadline)
                         .foregroundColor(.secondary)
@@ -153,6 +161,7 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(PrivacyGuardrails.disclosureTitle)
                         .font(.headline)
+                        .accessibilityAddTraits(.isHeader)
                     Text(PrivacyGuardrails.disclosureBody)
                         .font(.subheadline)
                         .foregroundColor(.secondary)
@@ -183,6 +192,7 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Sensitivity Preferences")
                         .font(.headline)
+                        .accessibilityAddTraits(.isHeader)
                     ViewThatFits(in: .horizontal) {
                         HStack {
                             Text("Pace Min")
@@ -330,6 +340,7 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Coaching Profiles")
                         .font(.headline)
+                        .accessibilityAddTraits(.isHeader)
                     Text("Create named profiles for different coaching targets per session.")
                         .font(.footnote)
                         .foregroundColor(.secondary)
@@ -357,6 +368,7 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Overlay")
                         .font(.headline)
+                        .accessibilityAddTraits(.isHeader)
                     Toggle("Show compact overlay", isOn: $overlayPreferencesStore.showCompactOverlay)
                         .accessibilityHint("Show a smaller live feedback overlay while recording.")
                     Toggle("Always on top", isOn: $overlayPreferencesStore.alwaysOnTop)
@@ -367,6 +379,7 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("About")
                         .font(.headline)
+                        .accessibilityAddTraits(.isHeader)
                     Text(appVersionText)
                         .font(.footnote)
                         .foregroundColor(.secondary)

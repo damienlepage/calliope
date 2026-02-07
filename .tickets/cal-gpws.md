@@ -1,6 +1,6 @@
 ---
 id: cal-gpws
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-07T06:11:05Z
