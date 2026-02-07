@@ -124,7 +124,10 @@ final class CoreFlowEndToEndTests: XCTestCase {
         )
 
         viewModel.refreshRecordings()
-        let item = try XCTUnwrap(viewModel.recordings.first(where: { $0.url == recordingURL }))
+        let normalizedRecordingURL = recordingURL.resolvingSymlinksInPath()
+        let item = try XCTUnwrap(
+            viewModel.recordings.first(where: { $0.url.resolvingSymlinksInPath() == normalizedRecordingURL })
+        )
 
         let availability = viewModel.actionAvailability(for: item)
         XCTAssertTrue(availability.canPlay)
@@ -133,9 +136,12 @@ final class CoreFlowEndToEndTests: XCTestCase {
 
         viewModel.togglePlayPause(item)
 
-        XCTAssertEqual(viewModel.activePlaybackURL, recordingURL)
+        XCTAssertEqual(
+            viewModel.activePlaybackURL?.resolvingSymlinksInPath(),
+            recordingURL.resolvingSymlinksInPath()
+        )
         XCTAssertFalse(viewModel.isPlaybackPaused)
-        XCTAssertEqual(playbackStore.players[recordingURL]?.playCount, 1)
+        XCTAssertEqual(playbackStore.players[item.url]?.playCount, 1)
     }
 }
 
