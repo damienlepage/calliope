@@ -12,6 +12,7 @@ struct RecordingEligibility {
         case microphonePermissionRestricted
         case microphoneUnavailable
         case disclosureNotAccepted
+        case voiceIsolationRiskUnacknowledged
 
         var message: String {
             switch self {
@@ -25,6 +26,8 @@ struct RecordingEligibility {
                 return "No microphone input detected. Check your input devices in Settings."
             case .disclosureNotAccepted:
                 return "Review the privacy disclosure in Settings."
+            case .voiceIsolationRiskUnacknowledged:
+                return "Voice Isolation is unavailable and speaker output may bleed into the mic. Acknowledge that other participants could be captured."
             }
         }
     }
@@ -32,7 +35,9 @@ struct RecordingEligibility {
     static func blockingReasons(
         privacyState: PrivacyGuardrails.State,
         microphonePermission: MicrophonePermissionState,
-        hasMicrophoneInput: Bool = true
+        hasMicrophoneInput: Bool = true,
+        requiresVoiceIsolationAcknowledgement: Bool = false,
+        hasAcknowledgedVoiceIsolationRisk: Bool = false
     ) -> [Reason] {
         var reasons: [Reason] = []
         if microphonePermission != .authorized {
@@ -53,18 +58,25 @@ struct RecordingEligibility {
         if !privacyState.hasAcceptedDisclosure {
             reasons.append(.disclosureNotAccepted)
         }
+        if requiresVoiceIsolationAcknowledgement, !hasAcknowledgedVoiceIsolationRisk {
+            reasons.append(.voiceIsolationRiskUnacknowledged)
+        }
         return reasons
     }
 
     static func canStart(
         privacyState: PrivacyGuardrails.State,
         microphonePermission: MicrophonePermissionState,
-        hasMicrophoneInput: Bool = true
+        hasMicrophoneInput: Bool = true,
+        requiresVoiceIsolationAcknowledgement: Bool = false,
+        hasAcknowledgedVoiceIsolationRisk: Bool = false
     ) -> Bool {
         blockingReasons(
             privacyState: privacyState,
             microphonePermission: microphonePermission,
-            hasMicrophoneInput: hasMicrophoneInput
+            hasMicrophoneInput: hasMicrophoneInput,
+            requiresVoiceIsolationAcknowledgement: requiresVoiceIsolationAcknowledgement,
+            hasAcknowledgedVoiceIsolationRisk: hasAcknowledgedVoiceIsolationRisk
         ).isEmpty
     }
 }

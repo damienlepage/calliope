@@ -119,4 +119,28 @@ final class RecordingEligibilityTests: XCTestCase {
 
         XCTAssertTrue(reasons.isEmpty)
     }
+
+    func testBlockingReasonsIncludeVoiceIsolationRiskWhenUnacknowledged() {
+        let privacySatisfied = PrivacyGuardrails.State(
+            hasAcceptedDisclosure: true
+        )
+
+        let reasons = RecordingEligibility.blockingReasons(
+            privacyState: privacySatisfied,
+            microphonePermission: .authorized,
+            requiresVoiceIsolationAcknowledgement: true,
+            hasAcknowledgedVoiceIsolationRisk: false
+        )
+
+        XCTAssertEqual(reasons, [.voiceIsolationRiskUnacknowledged])
+
+        let acknowledgedReasons = RecordingEligibility.blockingReasons(
+            privacyState: privacySatisfied,
+            microphonePermission: .authorized,
+            requiresVoiceIsolationAcknowledgement: true,
+            hasAcknowledgedVoiceIsolationRisk: true
+        )
+
+        XCTAssertTrue(acknowledgedReasons.isEmpty)
+    }
 }

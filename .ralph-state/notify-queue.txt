@@ -1,1 +1,1 @@
-Goal completed: Session profile presets and manual selection
+Goal completed: Privacy enforcement for risky audio routes

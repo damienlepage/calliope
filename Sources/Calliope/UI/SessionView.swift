@@ -17,6 +17,7 @@ struct SessionView: View {
     let sessionDurationSeconds: Int?
     let canStartRecording: Bool
     let blockingReasonsText: String?
+    let voiceIsolationAcknowledgementMessage: String?
     let storageStatus: RecordingStorageStatus
     let activeProfileLabel: String?
     let showTitlePrompt: Bool
@@ -24,6 +25,7 @@ struct SessionView: View {
     @Binding var sessionTitleDraft: String
     let onSaveSessionTitle: () -> Void
     let onSkipSessionTitle: () -> Void
+    let onAcknowledgeVoiceIsolationRisk: () -> Void
     let onToggleRecording: () -> Void
 
     var body: some View {
@@ -175,6 +177,18 @@ struct SessionView: View {
                     .accessibilityLabel("Session title prompt")
                 }
 
+                if let voiceIsolationAcknowledgementMessage {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(voiceIsolationAcknowledgementMessage)
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Button("I Understand", action: onAcknowledgeVoiceIsolationRisk)
+                            .buttonStyle(.bordered)
+                    }
+                    .frame(maxWidth: 320, alignment: .leading)
+                }
+
                 HStack(spacing: 20) {
                     Button(action: onToggleRecording) {
                         Text(viewState.primaryButtonTitle)
@@ -234,6 +248,7 @@ private struct SessionViewPreview: View {
             sessionDurationSeconds: 32,
             canStartRecording: true,
             blockingReasonsText: nil,
+            voiceIsolationAcknowledgementMessage: nil,
             storageStatus: .ok,
             activeProfileLabel: "Profile: Default (App: Default)",
             showTitlePrompt: true,
@@ -241,6 +256,7 @@ private struct SessionViewPreview: View {
             sessionTitleDraft: $sessionTitle,
             onSaveSessionTitle: {},
             onSkipSessionTitle: {},
+            onAcknowledgeVoiceIsolationRisk: {},
             onToggleRecording: {}
         )
     }

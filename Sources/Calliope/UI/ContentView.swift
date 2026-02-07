@@ -29,6 +29,7 @@ struct ContentView: View {
     @State private var privacyDisclosureStore: PrivacyDisclosureStore
     @State private var quickStartStore: QuickStartStore
     @State private var hasAcceptedDisclosure: Bool
+    @State private var hasAcknowledgedVoiceIsolationRisk: Bool
     @State private var isDisclosureSheetPresented: Bool
     @State private var isQuickStartSheetPresented: Bool
     @State private var isQuickStartPending: Bool
@@ -83,6 +84,7 @@ struct ContentView: View {
         let accepted = privacyDisclosureStore.hasAcceptedDisclosure
         let hasSeenQuickStart = quickStartStore.hasSeenQuickStart
         _hasAcceptedDisclosure = State(initialValue: accepted)
+        _hasAcknowledgedVoiceIsolationRisk = State(initialValue: false)
         _isDisclosureSheetPresented = State(
             initialValue: PrivacyDisclosureGate.requiresDisclosure(hasAcceptedDisclosure: accepted)
         )
@@ -114,10 +116,13 @@ struct ContentView: View {
         let defaultSessionTitle = pendingSessionForTitle.map {
             RecordingMetadata.defaultSessionTitle(for: $0.createdAt)
         }
+        let requiresVoiceIsolationAcknowledgement = voiceIsolationAcknowledgementRequired()
         let blockingReasons = RecordingEligibility.blockingReasons(
             privacyState: privacyState,
             microphonePermission: microphonePermission.state,
-            hasMicrophoneInput: microphoneDevices.hasMicrophoneInput
+            hasMicrophoneInput: microphoneDevices.hasMicrophoneInput,
+            requiresVoiceIsolationAcknowledgement: requiresVoiceIsolationAcknowledgement,
+            hasAcknowledgedVoiceIsolationRisk: hasAcknowledgedVoiceIsolationRisk
         )
         let canStartRecording = blockingReasons.isEmpty
         let showOpenSettingsAction = settingsActionModel.shouldShow(for: blockingReasons)
@@ -126,6 +131,9 @@ struct ContentView: View {
             state: speechPermission.state
         )
         let blockingReasonsText = blockingReasonsText(blockingReasons)
+        let voiceIsolationAcknowledgementMessage = blockingReasons.first(
+            where: { $0 == .voiceIsolationRiskUnacknowledged }
+        )?.message
         ZStack(alignment: .topTrailing) {
             Group {
                 switch navigationState.selection {
@@ -143,6 +151,7 @@ struct ContentView: View {
                         sessionDurationSeconds: sessionDurationSeconds,
                         canStartRecording: canStartRecording,
                         blockingReasonsText: blockingReasonsText,
+                        voiceIsolationAcknowledgementMessage: voiceIsolationAcknowledgementMessage,
                         storageStatus: audioCapture.storageStatus,
                         activeProfileLabel: activeProfileLabel,
                         showTitlePrompt: pendingSessionForTitle != nil,
@@ -150,6 +159,7 @@ struct ContentView: View {
                         sessionTitleDraft: $sessionTitleDraft,
                         onSaveSessionTitle: saveSessionTitle,
                         onSkipSessionTitle: skipSessionTitle,
+                        onAcknowledgeVoiceIsolationRisk: acknowledgeVoiceIsolationRisk,
                         onToggleRecording: toggleRecording
                     )
                 case .recordings:
@@ -247,6 +257,7 @@ struct ContentView: View {
             speechPermission.refresh()
             microphoneDevices.refresh()
             frontmostAppMonitor.refresh()
+            audioCapture.refreshDiagnostics()
             WindowLevelController.apply(alwaysOnTop: overlayPreferencesStore.alwaysOnTop)
         }
         .onChange(of: preferencesStore.paceMin) { newValue in
@@ -279,6 +290,11 @@ struct ContentView: View {
             writeDefaultMetadata(for: newValue)
             pendingSessionForTitle = newValue
             sessionTitleDraft = ""
+        }
+        .onChange(of: audioCapture.isRecording) { isRecording in
+            if !isRecording {
+                hasAcknowledgedVoiceIsolationRisk = false
+            }
         }
         .onChange(of: overlayPreferencesStore.alwaysOnTop) { newValue in
             WindowLevelController.apply(alwaysOnTop: newValue)
@@ -325,7 +341,9 @@ struct ContentView: View {
             audioCapture.startRecording(
                 privacyState: privacyState,
                 microphonePermission: microphonePermission.state,
-                hasMicrophoneInput: microphoneDevices.hasMicrophoneInput
+                hasMicrophoneInput: microphoneDevices.hasMicrophoneInput,
+                requiresVoiceIsolationAcknowledgement: voiceIsolationAcknowledgementRequired(),
+                hasAcknowledgedVoiceIsolationRisk: hasAcknowledgedVoiceIsolationRisk
             )
         }
     }
@@ -391,6 +409,18 @@ struct ContentView: View {
         }
         let details = reasons.map(\.message).joined(separator: " ")
         return "Start is disabled. \(details)"
+    }
+
+    private func acknowledgeVoiceIsolationRisk() {
+        hasAcknowledgedVoiceIsolationRisk = true
+    }
+
+    private func voiceIsolationAcknowledgementRequired() -> Bool {
+        AudioRouteWarningEvaluator.requiresVoiceIsolationAcknowledgement(
+            inputDeviceName: audioCapture.inputDeviceName,
+            outputDeviceName: audioCapture.outputDeviceName,
+            backendStatus: audioCapture.backendStatus
+        )
     }
 }
 

@@ -65,6 +65,27 @@ struct AudioRouteWarningEvaluator {
         }
     }
 
+    static func requiresVoiceIsolationAcknowledgement(
+        inputDeviceName: String,
+        outputDeviceName: String,
+        backendStatus: AudioCaptureBackendStatus
+    ) -> Bool {
+        guard backendStatus == .voiceIsolationUnavailable else {
+            return false
+        }
+
+        switch warningState(
+            inputDeviceName: inputDeviceName,
+            outputDeviceName: outputDeviceName,
+            backendStatus: backendStatus
+        ) {
+        case .ok:
+            return false
+        case .warning:
+            return true
+        }
+    }
+
     private static func isHeadphones(output: String) -> Bool {
         output.contains("headphone")
             || output.contains("headphones")

@@ -50,4 +50,34 @@ final class AudioRouteWarningEvaluatorTests: XCTestCase {
 
         XCTAssertEqual(result, .ok)
     }
+
+    func testRequiresAcknowledgementWhenVoiceIsolationUnavailableAndWarning() {
+        let result = AudioRouteWarningEvaluator.requiresVoiceIsolationAcknowledgement(
+            inputDeviceName: "Built-in Microphone",
+            outputDeviceName: "MacBook Pro Speakers",
+            backendStatus: .voiceIsolationUnavailable
+        )
+
+        XCTAssertTrue(result)
+    }
+
+    func testDoesNotRequireAcknowledgementWhenVoiceIsolationUnavailableButHeadphones() {
+        let result = AudioRouteWarningEvaluator.requiresVoiceIsolationAcknowledgement(
+            inputDeviceName: "Built-in Microphone",
+            outputDeviceName: "AirPods Max",
+            backendStatus: .voiceIsolationUnavailable
+        )
+
+        XCTAssertFalse(result)
+    }
+
+    func testDoesNotRequireAcknowledgementWhenVoiceIsolationAvailable() {
+        let result = AudioRouteWarningEvaluator.requiresVoiceIsolationAcknowledgement(
+            inputDeviceName: "Built-in Microphone",
+            outputDeviceName: "MacBook Pro Speakers",
+            backendStatus: .voiceIsolation
+        )
+
+        XCTAssertFalse(result)
+    }
 }

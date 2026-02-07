@@ -18,4 +18,9 @@ final class RecordingEligibilityMessageTests: XCTestCase {
             )
         }
     }
+
+    func testVoiceIsolationRiskMessageMentionsOtherParticipants() {
+        let message = RecordingEligibility.Reason.voiceIsolationRiskUnacknowledged.message
+        XCTAssertTrue(message.lowercased().contains("other participants"))
+    }
 }

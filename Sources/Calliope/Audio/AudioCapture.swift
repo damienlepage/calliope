@@ -16,6 +16,7 @@ enum AudioCaptureError: Equatable {
     case microphonePermissionRestricted
     case microphoneUnavailable
     case privacyGuardrailsNotSatisfied
+    case voiceIsolationRiskNotAcknowledged
     case systemAudioCaptureNotAllowed
     case audioFileCreationFailed
     case engineStartFailed
@@ -36,6 +37,8 @@ enum AudioCaptureError: Equatable {
             return "No microphone input detected. Connect or enable a microphone."
         case .privacyGuardrailsNotSatisfied:
             return "Privacy guardrails must be accepted to start."
+        case .voiceIsolationRiskNotAcknowledged:
+            return "Acknowledge the voice isolation risk before starting."
         case .systemAudioCaptureNotAllowed:
             return "System audio capture is not allowed."
         case .audioFileCreationFailed:
@@ -532,7 +535,9 @@ class AudioCapture: NSObject, ObservableObject {
     func startRecording(
         privacyState: PrivacyGuardrails.State,
         microphonePermission: MicrophonePermissionState,
-        hasMicrophoneInput: Bool = true
+        hasMicrophoneInput: Bool = true,
+        requiresVoiceIsolationAcknowledgement: Bool = false,
+        hasAcknowledgedVoiceIsolationRisk: Bool = false
     ) {
         guard !isRecording, !awaitingRecordingStart else { return }
         guard !isTestingMic else { return }
@@ -542,7 +547,9 @@ class AudioCapture: NSObject, ObservableObject {
         let blockingReasons = RecordingEligibility.blockingReasons(
             privacyState: privacyState,
             microphonePermission: microphonePermission,
-            hasMicrophoneInput: hasMicrophoneInput
+            hasMicrophoneInput: hasMicrophoneInput,
+            requiresVoiceIsolationAcknowledgement: requiresVoiceIsolationAcknowledgement,
+            hasAcknowledgedVoiceIsolationRisk: hasAcknowledgedVoiceIsolationRisk
         )
         guard blockingReasons.isEmpty else {
             if let reason = blockingReasons.first {
@@ -709,13 +716,17 @@ class AudioCapture: NSObject, ObservableObject {
     func startRecording(
         privacyState: PrivacyGuardrails.State,
         microphonePermissionProvider: MicrophonePermissionProviding,
-        hasMicrophoneInput: Bool = true
+        hasMicrophoneInput: Bool = true,
+        requiresVoiceIsolationAcknowledgement: Bool = false,
+        hasAcknowledgedVoiceIsolationRisk: Bool = false
     ) {
         let state = microphonePermissionProvider.authorizationState()
         startRecording(
             privacyState: privacyState,
             microphonePermission: state,
-            hasMicrophoneInput: hasMicrophoneInput
+            hasMicrophoneInput: hasMicrophoneInput,
+            requiresVoiceIsolationAcknowledgement: requiresVoiceIsolationAcknowledgement,
+            hasAcknowledgedVoiceIsolationRisk: hasAcknowledgedVoiceIsolationRisk
         )
     }
 
@@ -952,6 +963,8 @@ class AudioCapture: NSObject, ObservableObject {
             return .microphoneUnavailable
         case .disclosureNotAccepted:
             return .privacyGuardrailsNotSatisfied
+        case .voiceIsolationRiskUnacknowledged:
+            return .voiceIsolationRiskNotAcknowledged
         }
     }
 
