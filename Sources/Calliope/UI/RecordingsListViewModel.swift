@@ -847,6 +847,18 @@ final class RecordingListViewModel: ObservableObject {
             .store(in: &cancellables)
     }
 
+    func item(for url: URL) -> RecordingItem {
+        RecordingItem(
+            url: url,
+            modifiedAt: modificationDateProvider(url),
+            duration: durationProvider(url),
+            fileSizeBytes: fileSizeProvider(url),
+            summary: summaryProvider(url),
+            integrityReport: integrityReportProvider(url),
+            metadata: metadataProvider(url)
+        )
+    }
+
     func reveal(_ item: RecordingItem) {
         workspace.activateFileViewerSelecting([item.url])
     }

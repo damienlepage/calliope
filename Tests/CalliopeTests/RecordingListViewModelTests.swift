@@ -167,6 +167,64 @@ final class RecordingListViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.recordings.map(\.fileSizeBytes), [sizes[urlB]!, sizes[urlA]!])
     }
 
+    func testItemForURLUsesProviders() {
+        let url = URL(fileURLWithPath: "/tmp/review.m4a")
+        let expectedDate = Date(timeIntervalSince1970: 42)
+        let expectedDuration: TimeInterval = 180
+        let expectedSize = 2048
+        let expectedSummary = AnalysisSummary(
+            version: 1,
+            createdAt: Date(timeIntervalSince1970: 10),
+            durationSeconds: 180,
+            pace: AnalysisSummary.PaceStats(
+                averageWPM: 140,
+                minWPM: 100,
+                maxWPM: 180,
+                totalWords: 420
+            ),
+            pauses: AnalysisSummary.PauseStats(
+                count: 6,
+                thresholdSeconds: 0.8,
+                averageDurationSeconds: 1.4
+            ),
+            crutchWords: AnalysisSummary.CrutchWordStats(
+                totalCount: 5,
+                counts: ["um": 3, "you know": 2]
+            ),
+            speaking: AnalysisSummary.SpeakingStats(timeSeconds: 72, turnCount: 6)
+        )
+        let expectedReport = RecordingIntegrityReport(
+            createdAt: Date(timeIntervalSince1970: 11),
+            issues: [.missingSummary]
+        )
+        let expectedMetadata = RecordingMetadata(
+            title: "Session Review",
+            createdAt: Date(timeIntervalSince1970: 12),
+            coachingProfileID: UUID(),
+            coachingProfileName: "Focused"
+        )
+        let viewModel = RecordingListViewModel(
+            manager: MockRecordingManager(recordings: []),
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { _ in expectedDate },
+            durationProvider: { _ in expectedDuration },
+            fileSizeProvider: { _ in expectedSize },
+            summaryProvider: { _ in expectedSummary },
+            integrityReportProvider: { _ in expectedReport },
+            metadataProvider: { _ in expectedMetadata }
+        )
+
+        let item = viewModel.item(for: url)
+
+        XCTAssertEqual(item.url, url)
+        XCTAssertEqual(item.modifiedAt, expectedDate)
+        XCTAssertEqual(item.duration, expectedDuration)
+        XCTAssertEqual(item.fileSizeBytes, expectedSize)
+        XCTAssertEqual(item.summary, expectedSummary)
+        XCTAssertEqual(item.integrityReport, expectedReport)
+        XCTAssertEqual(item.metadata, expectedMetadata)
+    }
+
     func testSortUsesSessionDateFromMetadata() {
         let urlA = URL(fileURLWithPath: "/tmp/a.m4a")
         let urlB = URL(fileURLWithPath: "/tmp/b.m4a")

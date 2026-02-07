@@ -1,6 +1,6 @@
 ---
 id: cal-kv0b
-status: open
+status: closed
 deps: [cal-mecl]
 links: []
 created: 2026-02-07T01:54:45Z

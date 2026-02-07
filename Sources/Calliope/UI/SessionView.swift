@@ -22,15 +22,21 @@ struct SessionView: View {
     let activeProfileLabel: String?
     let showTitlePrompt: Bool
     let defaultSessionTitle: String?
-    let titleSummary: SessionTitleSummary?
+    let postSessionReview: PostSessionReview?
+    let postSessionRecordingItem: RecordingItem?
+    let isPostSessionPlaybackActive: Bool
+    let isPostSessionPlaybackPaused: Bool
     @Binding var sessionTitleDraft: String
     let onSaveSessionTitle: () -> Void
     let onSkipSessionTitle: () -> Void
     let onViewRecordings: () -> Void
+    let onPostSessionPlayPause: () -> Void
+    let onPostSessionReveal: () -> Void
     let onAcknowledgeVoiceIsolationRisk: () -> Void
     let onOpenSettings: () -> Void
     let onRetryCapture: () -> Void
     let onToggleRecording: () -> Void
+    @State private var postSessionDetailItem: RecordingItem?
 
     var body: some View {
         let viewState = SessionViewState(
@@ -44,6 +50,10 @@ struct SessionView: View {
             defaultTitle: defaultSessionTitle
         )
         let titleHintColor: Color = titlePromptState.helperTone == .warning ? .orange : .secondary
+        let isPostSessionPlaying = isPostSessionPlaybackActive && !isPostSessionPlaybackPaused
+        let isPostSessionPaused = isPostSessionPlaybackActive && isPostSessionPlaybackPaused
+        let postSessionActionsDisabled = audioCapture.isRecording
+        let postSessionItemUnavailable = postSessionRecordingItem == nil
         let captureStatusText = CaptureStatusFormatter.statusText(
             inputDeviceName: audioCapture.inputDeviceName,
             backendStatus: audioCapture.backendStatus,
@@ -172,35 +182,63 @@ struct SessionView: View {
                     .frame(maxWidth: 320, alignment: .leading)
                 }
 
+                if let postSessionReview {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Session recap")
+                            .font(.headline)
+                        VStack(alignment: .leading, spacing: 4) {
+                            ForEach(postSessionReview.summaryLines, id: \.self) { line in
+                                Text(line)
+                            }
+                        }
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel("Session recap")
+                        .accessibilityValue(postSessionReview.summaryLines.joined(separator: ", "))
+                        HStack(spacing: 12) {
+                            Button("View Recordings", action: onViewRecordings)
+                                .buttonStyle(.bordered)
+                                .disabled(postSessionActionsDisabled)
+                            Button(isPostSessionPlaying ? "Pause" : "Play", action: onPostSessionPlayPause)
+                                .buttonStyle(.bordered)
+                                .disabled(postSessionActionsDisabled || postSessionItemUnavailable)
+                                .accessibilityLabel(isPostSessionPlaying ? "Pause playback" : "Play recording")
+                            Button("Reveal", action: onPostSessionReveal)
+                                .buttonStyle(.bordered)
+                                .disabled(postSessionActionsDisabled || postSessionItemUnavailable)
+                            Button("Details") {
+                                postSessionDetailItem = postSessionRecordingItem
+                            }
+                            .buttonStyle(.bordered)
+                            .disabled(postSessionActionsDisabled || postSessionItemUnavailable)
+                        }
+                        if isPostSessionPlaying {
+                            Text("Playing")
+                                .font(.footnote)
+                                .foregroundColor(.secondary)
+                        } else if isPostSessionPaused {
+                            Text("Paused")
+                                .font(.footnote)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .frame(maxWidth: 320, alignment: .leading)
+                    .padding()
+                    .background(Color.secondary.opacity(0.08))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.secondary.opacity(0.15))
+                    )
+                    .accessibilityElement(children: .contain)
+                    .accessibilityLabel("Post-session review")
+                }
+
                 if showTitlePrompt {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Name this session")
                             .font(.headline)
-                        if let titleSummary {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Session summary")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                Text(titleSummary.paceText)
-                                Text(titleSummary.crutchText)
-                                Text(titleSummary.pauseText)
-                                Text(titleSummary.speakingText)
-                            }
-                            .font(.footnote)
-                            .foregroundColor(.secondary)
-                            .accessibilityElement(children: .combine)
-                            .accessibilityLabel("Session summary")
-                            .accessibilityValue(
-                                [titleSummary.paceText,
-                                 titleSummary.crutchText,
-                                 titleSummary.pauseText,
-                                 titleSummary.speakingText].joined(separator: ", ")
-                            )
-                        } else {
-                            Text("Summary is still processing. You can review stats in Recordings.")
-                                .font(.footnote)
-                                .foregroundColor(.secondary)
-                        }
                         TextField("Optional title", text: $sessionTitleDraft)
                             .textFieldStyle(.roundedBorder)
                         Text(titlePromptState.helperText)
@@ -213,8 +251,6 @@ struct SessionView: View {
                             Button("Skip", action: onSkipSessionTitle)
                                 .buttonStyle(.bordered)
                         }
-                        Button("View Recordings", action: onViewRecordings)
-                            .buttonStyle(.link)
                     }
                     .frame(maxWidth: 320, alignment: .leading)
                     .padding()
@@ -262,6 +298,9 @@ struct SessionView: View {
             .padding()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .sheet(item: $postSessionDetailItem) { item in
+            RecordingDetailView(item: item)
+        }
     }
 
     private func statusColor(for status: AudioCaptureStatus) -> Color {
@@ -315,7 +354,41 @@ private struct SessionViewPreview: View {
             activeProfileLabel: "Profile: Default (App: Default)",
             showTitlePrompt: true,
             defaultSessionTitle: "Session Jan 1, 2026 at 9:00 AM",
-            titleSummary: SessionTitleSummary(
+            postSessionReview: PostSessionReview(
+                session: CompletedRecordingSession(
+                    sessionID: "preview",
+                    recordingURLs: [URL(fileURLWithPath: "/tmp/sample.m4a")],
+                    createdAt: Date()
+                ),
+                summaryProvider: { _ in
+                    AnalysisSummary(
+                        version: 1,
+                        createdAt: Date(),
+                        durationSeconds: 180,
+                        pace: AnalysisSummary.PaceStats(
+                            averageWPM: 140,
+                            minWPM: 100,
+                            maxWPM: 180,
+                            totalWords: 420
+                        ),
+                        pauses: AnalysisSummary.PauseStats(
+                            count: 6,
+                            thresholdSeconds: 0.8,
+                            averageDurationSeconds: 1.4
+                        ),
+                        crutchWords: AnalysisSummary.CrutchWordStats(
+                            totalCount: 5,
+                            counts: ["um": 3, "you know": 2]
+                        ),
+                        speaking: AnalysisSummary.SpeakingStats(timeSeconds: 72, turnCount: 6)
+                    )
+                }
+            ),
+            postSessionRecordingItem: RecordingItem(
+                url: URL(fileURLWithPath: "/tmp/sample.m4a"),
+                modifiedAt: Date(),
+                duration: 180,
+                fileSizeBytes: 1024,
                 summary: AnalysisSummary(
                     version: 1,
                     createdAt: Date(),
@@ -336,12 +409,18 @@ private struct SessionViewPreview: View {
                         counts: ["um": 3, "you know": 2]
                     ),
                     speaking: AnalysisSummary.SpeakingStats(timeSeconds: 72, turnCount: 6)
-                )
+                ),
+                integrityReport: nil,
+                metadata: nil
             ),
+            isPostSessionPlaybackActive: false,
+            isPostSessionPlaybackPaused: false,
             sessionTitleDraft: $sessionTitle,
             onSaveSessionTitle: {},
             onSkipSessionTitle: {},
             onViewRecordings: {},
+            onPostSessionPlayPause: {},
+            onPostSessionReveal: {},
             onAcknowledgeVoiceIsolationRisk: {},
             onOpenSettings: {},
             onRetryCapture: {},

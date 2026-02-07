@@ -117,6 +117,11 @@ struct ContentView: View {
         let defaultSessionTitle = pendingSessionForTitle.map {
             RecordingMetadata.defaultSessionTitle(for: $0.createdAt)
         }
+        let postSessionRecordingItem = postSessionReview.map {
+            recordingsViewModel.item(for: $0.recordingURL)
+        }
+        let isPostSessionActive = postSessionReview?.recordingURL == recordingsViewModel.activePlaybackURL
+        let isPostSessionPaused = isPostSessionActive && recordingsViewModel.isPlaybackPaused
         let requiresVoiceIsolationAcknowledgement = voiceIsolationAcknowledgementRequired()
         let blockingReasons = RecordingEligibility.blockingReasons(
             privacyState: privacyState,
@@ -157,11 +162,22 @@ struct ContentView: View {
                         activeProfileLabel: activeProfileLabel,
                         showTitlePrompt: pendingSessionForTitle != nil,
                         defaultSessionTitle: defaultSessionTitle,
-                        titleSummary: postSessionReview?.summary,
+                        postSessionReview: postSessionReview,
+                        postSessionRecordingItem: postSessionRecordingItem,
+                        isPostSessionPlaybackActive: isPostSessionActive,
+                        isPostSessionPlaybackPaused: isPostSessionPaused,
                         sessionTitleDraft: $sessionTitleDraft,
                         onSaveSessionTitle: saveSessionTitle,
                         onSkipSessionTitle: skipSessionTitle,
                         onViewRecordings: { navigationState.selection = .recordings },
+                        onPostSessionPlayPause: {
+                            guard let postSessionRecordingItem else { return }
+                            recordingsViewModel.togglePlayPause(postSessionRecordingItem)
+                        },
+                        onPostSessionReveal: {
+                            guard let postSessionRecordingItem else { return }
+                            recordingsViewModel.reveal(postSessionRecordingItem)
+                        },
                         onAcknowledgeVoiceIsolationRisk: acknowledgeVoiceIsolationRisk,
                         onOpenSettings: { navigationState.selection = .settings },
                         onRetryCapture: toggleRecording,
