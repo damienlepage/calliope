@@ -26,5 +26,7 @@ per-version table row with the helper below (defaults to the latest QA report
 in `release/`):
 
 ```bash
-./scripts/packaged-app-qa-update-row.sh "macOS 14 (Sonoma)" "Apple Silicon, MacBookPro18,3" "Yes" "Yes" "Yes" "Yes" "Notes"
+./scripts/packaged-app-qa-update-row.sh "macOS 14 (Sonoma)" "Physical" "Apple Silicon, MacBookPro18,3" "Yes" "Yes" "Yes" "Yes" "Notes"
 ```
+
+Use "Physical" or "VM" for the environment argument based on how the check was run.

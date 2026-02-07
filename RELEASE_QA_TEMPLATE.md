@@ -6,6 +6,7 @@ Use this template to record a release candidate QA run. Store completed reports 
 - Date:
 - Calliope version/build:
 - macOS version:
+- Environment (Physical/VM):
 - Hardware (Apple Silicon/Intel + model):
 - Microphone device:
 - Reviewer:
@@ -52,12 +53,13 @@ Use this template to record a release candidate QA run. Store completed reports 
 
 ## Packaged App Verification (Per macOS Version)
 Fill one line per macOS version tested. Validate launch, permissions, recordings storage, and session flows.
+Note whether the verification ran on physical hardware or a VM, and capture any virtualization caveats (for example, microphone passthrough or audio routing limits).
 
-| macOS Version | Machine | Launches | Permissions | Session Flow | Recordings Storage | Notes |
-| --- | --- | --- | --- | --- | --- | --- |
-| macOS 13 (Ventura) |  | Pass/Fail | Pass/Fail | Pass/Fail | Pass/Fail |  |
-| macOS 14 (Sonoma) |  | Pass/Fail | Pass/Fail | Pass/Fail | Pass/Fail |  |
-| macOS 15 (Sequoia) |  | Pass/Fail | Pass/Fail | Pass/Fail | Pass/Fail |  |
+| macOS Version | Environment | Machine | Launches | Permissions | Session Flow | Recordings Storage | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| macOS 13 (Ventura) |  |  | Pass/Fail | Pass/Fail | Pass/Fail | Pass/Fail |  |
+| macOS 14 (Sonoma) |  |  | Pass/Fail | Pass/Fail | Pass/Fail | Pass/Fail |  |
+| macOS 15 (Sequoia) |  |  | Pass/Fail | Pass/Fail | Pass/Fail | Pass/Fail |  |
 
 ## Notarization & Signing
 - Notarization submission command recorded (if applicable)

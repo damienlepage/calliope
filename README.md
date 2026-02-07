@@ -172,7 +172,7 @@ Generate a new report with `./scripts/new-release-qa-report.sh`, which stores th
 
 Use these scripts to update the latest release QA report during packaged app verification:
 - `./scripts/packaged-app-qa-preflight.sh` updates the report metadata (macOS version, hardware, and app version/build) based on the current machine.
-- `./scripts/packaged-app-qa-update-row.sh "macOS 14 (Sonoma)" "Machine" "Pass" "Pass" "Pass" "Pass" "Notes"` updates the packaged app verification row for the specified macOS version.
+- `./scripts/packaged-app-qa-update-row.sh "macOS 14 (Sonoma)" "Physical" "Machine" "Pass" "Pass" "Pass" "Pass" "Notes"` updates the packaged app verification row for the specified macOS version.
 
 ### Development Workflow
 

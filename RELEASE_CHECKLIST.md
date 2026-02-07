@@ -51,12 +51,13 @@ Record results in `RELEASE_QA_TEMPLATE.md` for each release candidate.
 ## Packaged App Verification (Supported macOS Versions)
 Fill one line per macOS version tested.
 Validate launch, permissions, recordings storage, and session flows per version.
+Record whether validation ran on physical hardware or a VM and capture any virtualization caveats.
 
-| macOS Version | Machine | Launches | Permissions | Session Flow | Recordings Storage | Notes |
-| --- | --- | --- | --- | --- | --- | --- |
-| macOS 13 (Ventura) |  | Pass/Fail | Pass/Fail | Pass/Fail | Pass/Fail |  |
-| macOS 14 (Sonoma) |  | Pass/Fail | Pass/Fail | Pass/Fail | Pass/Fail |  |
-| macOS 15 (Sequoia) |  | Pass/Fail | Pass/Fail | Pass/Fail | Pass/Fail |  |
+| macOS Version | Environment | Machine | Launches | Permissions | Session Flow | Recordings Storage | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| macOS 13 (Ventura) |  |  | Pass/Fail | Pass/Fail | Pass/Fail | Pass/Fail |  |
+| macOS 14 (Sonoma) |  |  | Pass/Fail | Pass/Fail | Pass/Fail | Pass/Fail |  |
+| macOS 15 (Sequoia) |  |  | Pass/Fail | Pass/Fail | Pass/Fail | Pass/Fail |  |
 
 ## Packaged App Flow Checklist
 Run these steps in the packaged app on each supported macOS version.

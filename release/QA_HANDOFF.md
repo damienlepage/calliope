@@ -12,6 +12,18 @@ we can track each macOS version tested.
   provided).
 - This repository checked out locally.
 
+## VM Verification Notes (If Using Virtualization)
+
+VM-based verification is acceptable when physical hardware is unavailable. If
+you run the packaged app in a VM, capture the environment as "VM" in the
+verification table and note any virtualization limitations.
+
+Before running Calliope:
+- Confirm the VM exposes a microphone device and audio input permissions.
+- Open macOS Sound settings in the VM to verify the input device is selected.
+- In Calliope, start a session and confirm the input level reacts to your voice
+  before proceeding with the rest of the checklist.
+
 ## Hardware Access Request (Template)
 
 Use this template to request access to a macOS 13/14/15 test machine so we can
@@ -72,11 +84,12 @@ Update the per-version packaged app verification row with the helper script.
 Use the macOS version label that matches the table row in the QA report.
 
 ```bash
-./scripts/packaged-app-qa-update-row.sh "macOS 14 (Sonoma)" "Apple Silicon, MacBookPro18,3" "Yes" "Yes" "Yes" "Yes" "Notes"
+./scripts/packaged-app-qa-update-row.sh "macOS 14 (Sonoma)" "Physical" "Apple Silicon, MacBookPro18,3" "Yes" "Yes" "Yes" "Yes" "Notes"
 ```
 
 The arguments are:
 - macOS version label
+- environment ("Physical" or "VM")
 - machine description
 - launches (Yes/No)
 - permissions (Yes/No)
