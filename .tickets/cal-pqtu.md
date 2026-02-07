@@ -1,6 +1,6 @@
 ---
 id: cal-pqtu
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-07T06:22:33Z

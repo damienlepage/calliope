@@ -269,9 +269,10 @@ goals:
       - "Validated 2026-02-07: Removed session ScrollView, kept capture details recording-only, and ensured fixed layout without default scrolling."
   - id: G47
     title: Accessibility compliance across core surfaces
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "New 2026-02-07: PRD requires Dynamic Type, accessibility contrast, no color-only messaging, and full VoiceOver support for live metrics and controls; audit and ensure Session, Recordings, and Settings meet these requirements."
+      - "Validated 2026-02-07: Settings now provides clearer accessibility labels/values for privacy, storage, and controls with Dynamic Type-friendly text."
   - id: G48
     title: Session lifecycle resilience when backgrounded or reopened
     status: AT_TARGET

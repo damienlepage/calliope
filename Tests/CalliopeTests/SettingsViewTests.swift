@@ -65,4 +65,15 @@ final class SettingsViewTests: XCTestCase {
 
         _ = view.body
     }
+
+    func testDisclosureAccessibilityValue() {
+        XCTAssertEqual(
+            SettingsAccessibilityStrings.disclosureStatusValue(hasAcceptedDisclosure: true),
+            "Accepted"
+        )
+        XCTAssertEqual(
+            SettingsAccessibilityStrings.disclosureStatusValue(hasAcceptedDisclosure: false),
+            "Required before starting a session"
+        )
+    }
 }

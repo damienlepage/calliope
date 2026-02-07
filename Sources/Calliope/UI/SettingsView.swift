@@ -31,6 +31,9 @@ struct SettingsView: View {
         let availableDevices = microphoneDevices.availableMicrophoneDevices
         let preferredName = audioCapturePreferencesStore.preferredMicrophoneName
         let appVersionText = AppVersionInfo().displayText
+        let currentPresetLabel = AnalysisPreferencesStore.crutchWordPresetLabel(
+            for: preferencesStore.crutchWords
+        )
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 Text("Settings")
@@ -52,6 +55,7 @@ struct SettingsView: View {
                             onRequestMicAccess()
                         }
                         .buttonStyle(.bordered)
+                        .accessibilityLabel("Grant microphone access")
                         .accessibilityHint("Request microphone permission for Calliope.")
                     }
                     if showOpenSettingsAction {
@@ -59,6 +63,7 @@ struct SettingsView: View {
                             onOpenSystemSettings()
                         }
                         .buttonStyle(.bordered)
+                        .accessibilityLabel("Open microphone privacy settings")
                         .accessibilityHint("Open macOS privacy settings.")
                     }
                     if showOpenSoundSettingsAction {
@@ -66,6 +71,7 @@ struct SettingsView: View {
                             onOpenSoundSettings()
                         }
                         .buttonStyle(.bordered)
+                        .accessibilityLabel("Open sound input settings")
                         .accessibilityHint("Open macOS sound input settings.")
                     }
                     if !microphoneDevices.hasMicrophoneInput {
@@ -102,6 +108,7 @@ struct SettingsView: View {
                             .accessibilityHint("Choose which microphone Calliope uses.")
                             Text("Available Inputs")
                                 .font(.subheadline)
+                                .accessibilityAddTraits(.isHeader)
                             ForEach(microphoneDevices.availableMicrophoneNames, id: \.self) { name in
                                 HStack(spacing: 8) {
                                     Text(name)
@@ -143,6 +150,7 @@ struct SettingsView: View {
                             onRequestSpeechAccess()
                         }
                         .buttonStyle(.bordered)
+                        .accessibilityLabel("Grant speech recognition access")
                         .accessibilityHint("Request speech recognition permission.")
                     }
                     if showOpenSpeechSettingsAction {
@@ -150,6 +158,7 @@ struct SettingsView: View {
                             onOpenSpeechSettings()
                         }
                         .buttonStyle(.bordered)
+                        .accessibilityLabel("Open speech recognition privacy settings")
                         .accessibilityHint("Open macOS speech recognition settings.")
                     }
                     Text("Speech recognition runs on-device and never leaves your Mac.")
@@ -173,6 +182,8 @@ struct SettingsView: View {
                     Text("Recordings are stored locally at \(recordingsPath).")
                         .font(.footnote)
                         .foregroundColor(.secondary)
+                        .accessibilityLabel("Recordings storage path")
+                        .accessibilityValue(recordingsPath)
                     Text(
                         hasAcceptedDisclosure
                             ? "Disclosure accepted."
@@ -182,9 +193,9 @@ struct SettingsView: View {
                     .foregroundColor(.secondary)
                     .accessibilityLabel("Privacy disclosure status")
                     .accessibilityValue(
-                        hasAcceptedDisclosure
-                            ? "Accepted"
-                            : "Required before starting a session"
+                        SettingsAccessibilityStrings.disclosureStatusValue(
+                            hasAcceptedDisclosure: hasAcceptedDisclosure
+                        )
                     )
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -312,11 +323,14 @@ struct SettingsView: View {
                                 }
                             }
                             .accessibilityLabel("Crutch word presets")
+                            .accessibilityValue(currentPresetLabel)
                             .accessibilityHint("Choose a preset list of crutch words.")
                         }
-                        Text("Current preset: \(AnalysisPreferencesStore.crutchWordPresetLabel(for: preferencesStore.crutchWords))")
+                        Text("Current preset: \(currentPresetLabel)")
                             .font(.footnote)
                             .foregroundColor(.secondary)
+                            .accessibilityLabel("Current crutch word preset")
+                            .accessibilityValue(currentPresetLabel)
                         if let description = AnalysisPreferencesStore.crutchWordPresetDescription(for: preferencesStore.crutchWords) {
                             Text(description)
                                 .font(.footnote)
@@ -383,6 +397,8 @@ struct SettingsView: View {
                     Text(appVersionText)
                         .font(.footnote)
                         .foregroundColor(.secondary)
+                        .accessibilityLabel("App version")
+                        .accessibilityValue(appVersionText)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -401,6 +417,12 @@ struct SettingsView: View {
         )
     }
 
+}
+
+enum SettingsAccessibilityStrings {
+    static func disclosureStatusValue(hasAcceptedDisclosure: Bool) -> String {
+        hasAcceptedDisclosure ? "Accepted" : "Required before starting a session"
+    }
 }
 
 #Preview {
