@@ -43,6 +43,13 @@ struct SessionView: View {
             backendStatus: audioCapture.backendStatus,
             isRecording: audioCapture.isRecording
         )
+        let routeWarningText = audioCapture.isRecording
+            ? AudioRouteWarningEvaluator.warningText(
+                inputDeviceName: audioCapture.inputDeviceName,
+                outputDeviceName: audioCapture.outputDeviceName,
+                backendStatus: audioCapture.backendStatus
+            )
+            : nil
         ScrollView {
             VStack(spacing: 20) {
                 if viewState.shouldShowTitle {
@@ -76,6 +83,15 @@ struct SessionView: View {
                         .foregroundColor(.secondary)
                         .accessibilityLabel("Capture status")
                         .accessibilityValue(captureStatusText)
+                }
+                if let routeWarningText {
+                    Text(routeWarningText)
+                        .font(.footnote)
+                        .foregroundColor(.orange)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 320)
+                        .accessibilityLabel("Audio route warning")
+                        .accessibilityValue(routeWarningText)
                 }
                 if viewState.shouldShowActiveProfileLabel, let activeProfileLabel {
                     Text(activeProfileLabel)

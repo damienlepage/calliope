@@ -153,6 +153,7 @@ goals:
       - "2026-02-07: Goal created to let users define named coaching profiles and manually select one per session."
   - id: G28
     title: Voice isolation confidence warnings
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "2026-02-07: Goal created to detect risky audio routes (e.g., speaker bleed) and warn users during sessions."
+      - "Validated 2026-02-07: Session view shows audio route warnings when speaker output risks bleed; evaluator covered by unit tests."

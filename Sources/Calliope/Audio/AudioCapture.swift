@@ -342,6 +342,7 @@ class AudioCapture: NSObject, ObservableObject {
     @Published private(set) var currentRecordingURL: URL?
     @Published private(set) var completedRecordingSession: CompletedRecordingSession?
     @Published private(set) var inputDeviceName: String = "Unknown Microphone"
+    @Published private(set) var outputDeviceName: String = "Unknown Output"
     @Published private(set) var backendStatus: AudioCaptureBackendStatus = .standard
     @Published private(set) var deviceSelectionMessage: String?
     @Published private(set) var inputFormatSnapshot: AudioInputFormatSnapshot?
@@ -564,6 +565,7 @@ class AudioCapture: NSObject, ObservableObject {
             backend: backend
         )
         refreshInputDeviceName(from: backend)
+        refreshOutputDeviceName()
         refreshInputFormat(from: backend)
         let recordingFormat = backend.inputFormat
         backend.setConfigurationChangeHandler { [weak self] in
@@ -676,6 +678,7 @@ class AudioCapture: NSObject, ObservableObject {
             backend: backend
         )
         refreshInputDeviceName(from: backend)
+        refreshOutputDeviceName()
         refreshInputFormat(from: backend)
         backend.setConfigurationChangeHandler { [weak self] in
             self?.handleMicTestConfigurationChange()
@@ -791,6 +794,7 @@ class AudioCapture: NSObject, ObservableObject {
         DispatchQueue.main.async { [weak self] in
             guard let self, self.isRecording else { return }
             self.refreshInputDeviceName(from: self.backend)
+            self.refreshOutputDeviceName()
             self.noteInterruption(.inputRouteChanged)
         }
     }
@@ -799,6 +803,7 @@ class AudioCapture: NSObject, ObservableObject {
         DispatchQueue.main.async { [weak self] in
             guard let self, self.isTestingMic else { return }
             self.refreshInputDeviceName(from: self.micTestBackend)
+            self.refreshOutputDeviceName()
             self.stopMicTest(status: .failure(AudioCaptureError.engineConfigurationChanged.message))
         }
     }
@@ -869,6 +874,17 @@ class AudioCapture: NSObject, ObservableObject {
         }
     }
 
+    private func refreshOutputDeviceName() {
+        let deviceName = AudioOutputDeviceLookup.defaultOutputDevice()?.name ?? "Unknown Output"
+        if Thread.isMainThread {
+            outputDeviceName = deviceName
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                self?.outputDeviceName = deviceName
+            }
+        }
+    }
+
     private func refreshInputFormat(from backend: AudioCaptureBackend?) {
         guard let backend else { return }
         let format = backend.inputFormat
@@ -899,12 +915,14 @@ class AudioCapture: NSObject, ObservableObject {
     func refreshDiagnostics() {
         if isRecording, let backend {
             refreshInputDeviceName(from: backend)
+            refreshOutputDeviceName()
             refreshInputFormat(from: backend)
             return
         }
 
         if isTestingMic, let micTestBackend {
             refreshInputDeviceName(from: micTestBackend)
+            refreshOutputDeviceName()
             refreshInputFormat(from: micTestBackend)
             return
         }
@@ -918,6 +936,7 @@ class AudioCapture: NSObject, ObservableObject {
             backend: backend
         )
         refreshInputDeviceName(from: backend)
+        refreshOutputDeviceName()
         refreshInputFormat(from: backend)
     }
 
