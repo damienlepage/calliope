@@ -36,4 +36,9 @@ enum AccessibilityFormatting {
         let percentValue = Int((clamped * 100).rounded())
         return "\(percentValue)%"
     }
+
+    static func warningValue(text: String) -> String {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "Warning" : trimmed
+    }
 }

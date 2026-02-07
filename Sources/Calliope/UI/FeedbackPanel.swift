@@ -217,6 +217,9 @@ struct FeedbackPanel: View {
             RoundedRectangle(cornerRadius: 8)
                 .fill(Color(NSColor.systemOrange).opacity(0.12))
         )
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Warning")
+        .accessibilityValue(AccessibilityFormatting.warningValue(text: text))
     }
 
     private func inputLevelStatusText() -> String {

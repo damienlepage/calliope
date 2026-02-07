@@ -109,6 +109,7 @@ struct SessionView: View {
                 )
                 .accessibilityElement(children: .contain)
                 .accessibilityLabel("Capture recovery")
+                .accessibilityValue("\(captureRecoveryBanner.title). \(captureRecoveryBanner.message)")
             }
             if viewState.shouldShowRecordingDetails, let interruptionMessage = audioCapture.interruptionMessage {
                 Text(interruptionMessage)
@@ -306,7 +307,8 @@ struct SessionView: View {
                 HStack(spacing: 20) {
                     Button(action: onToggleRecording) {
                         Text(viewState.primaryButtonTitle)
-                            .frame(width: 100, height: 40)
+                            .frame(minWidth: 100, minHeight: 40)
+                            .padding(.horizontal, 8)
                     }
                     .buttonStyle(.borderedProminent)
                     .disabled(

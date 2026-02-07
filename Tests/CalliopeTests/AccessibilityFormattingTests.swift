@@ -41,4 +41,9 @@ final class AccessibilityFormattingTests: XCTestCase {
         XCTAssertEqual(AccessibilityFormatting.percentText(for: -0.1), "0%")
         XCTAssertEqual(AccessibilityFormatting.percentText(for: 1.2), "100%")
     }
+
+    func testWarningValueFallsBackWhenEmpty() {
+        XCTAssertEqual(AccessibilityFormatting.warningValue(text: "  "), "Warning")
+        XCTAssertEqual(AccessibilityFormatting.warningValue(text: "Low storage"), "Low storage")
+    }
 }

@@ -64,7 +64,8 @@ struct RecordingsListView: View {
                 Spacer()
                 TextField("Search recordings", text: $viewModel.searchText)
                     .textFieldStyle(.roundedBorder)
-                    .frame(width: 220)
+                    .frame(minWidth: 200, idealWidth: 220, maxWidth: 260)
+                    .layoutPriority(1)
                     .accessibilityLabel("Search recordings")
                     .accessibilityHint("Filters recordings by name.")
                 Picker("Sort recordings", selection: $viewModel.sortOption) {
