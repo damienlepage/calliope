@@ -357,7 +357,6 @@ struct ContentView: View {
                 canStartRecording: viewState.canStartRecording,
                 blockingReasonsText: viewState.blockingReasonsText,
                 voiceIsolationAcknowledgementMessage: viewState.voiceIsolationAcknowledgementMessage,
-                storageStatus: audioCapture.storageStatus,
                 activeProfileLabel: viewState.activeProfileLabel,
                 showTitlePrompt: viewState.pendingSessionForTitle != nil,
                 defaultSessionTitle: viewState.defaultSessionTitle,

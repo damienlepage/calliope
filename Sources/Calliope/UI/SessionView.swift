@@ -18,7 +18,6 @@ struct SessionView: View {
     let canStartRecording: Bool
     let blockingReasonsText: String?
     let voiceIsolationAcknowledgementMessage: String?
-    let storageStatus: RecordingStorageStatus
     let activeProfileLabel: String?
     let showTitlePrompt: Bool
     let defaultSessionTitle: String?
@@ -53,13 +52,6 @@ struct SessionView: View {
         let postSessionActionsDisabled = audioCapture.isRecording
         let postSessionItemUnavailable = postSessionRecordingItem == nil
         let shouldShowVoiceIsolationAcknowledgement = voiceIsolationAcknowledgementMessage != nil
-        let routeWarningText = audioCapture.isRecording
-            ? AudioRouteWarningEvaluator.warningText(
-                inputDeviceName: audioCapture.inputDeviceName,
-                outputDeviceName: audioCapture.outputDeviceName,
-                backendStatus: audioCapture.backendStatus
-            )
-            : nil
         let isSessionActive = audioCapture.isRecording
         VStack(spacing: 16) {
             HStack(spacing: 12) {
@@ -85,16 +77,6 @@ struct SessionView: View {
                     .accessibilityAddTraits(.isHeader)
             }
 
-            if let routeWarningText {
-                Text(routeWarningText)
-                    .font(.footnote)
-                    .foregroundColor(.orange)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 320)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .accessibilityLabel("Audio route warning")
-                    .accessibilityValue(routeWarningText)
-            }
             if viewState.shouldShowIdlePrompt {
                 Text("Ready when you are. Press Start to begin coaching.")
                     .font(.title3)
@@ -112,13 +94,10 @@ struct SessionView: View {
                     speakingTimeSeconds: feedbackViewModel.state.speakingTimeSeconds,
                     speakingTimeTargetPercent: analysisPreferences.speakingTimeTargetPercent,
                     inputLevel: feedbackViewModel.state.inputLevel,
-                    showSilenceWarning: feedbackViewModel.state.showSilenceWarning,
-                    showWaitingForSpeech: feedbackViewModel.showWaitingForSpeech,
                     paceMin: analysisPreferences.paceMin,
                     paceMax: analysisPreferences.paceMax,
                     sessionDurationText: sessionDurationText,
                     sessionDurationSeconds: sessionDurationSeconds,
-                    storageStatus: storageStatus,
                     liveTranscript: feedbackViewModel.liveTranscript,
                     coachingProfiles: coachingProfiles,
                     activeProfileLabel: activeProfileLabel,
@@ -219,14 +198,6 @@ struct SessionView: View {
                 .accessibilityValue(voiceIsolationAcknowledgementMessage)
             }
 
-            if viewState.shouldShowBlockingReasons, let blockingReasonsText {
-                Text(blockingReasonsText)
-                    .font(.footnote)
-                    .foregroundColor(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .accessibilityLabel("Session blocked")
-                    .accessibilityValue(blockingReasonsText)
-            }
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -266,7 +237,6 @@ private struct SessionViewPreview: View {
             canStartRecording: true,
             blockingReasonsText: nil,
             voiceIsolationAcknowledgementMessage: nil,
-            storageStatus: .ok,
             activeProfileLabel: "Profile: Default (App: Default)",
             showTitlePrompt: true,
             defaultSessionTitle: "Session Jan 1, 2026 at 9:00 AM",
@@ -378,7 +348,6 @@ private struct SessionViewRecordingPreview: View {
             canStartRecording: true,
             blockingReasonsText: nil,
             voiceIsolationAcknowledgementMessage: nil,
-            storageStatus: .ok,
             activeProfileLabel: "Profile: Default (App: Zoom)",
             showTitlePrompt: false,
             defaultSessionTitle: nil,

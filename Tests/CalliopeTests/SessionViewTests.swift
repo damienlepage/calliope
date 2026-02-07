@@ -18,7 +18,6 @@ final class SessionViewTests: XCTestCase {
             canStartRecording: true,
             blockingReasonsText: nil,
             voiceIsolationAcknowledgementMessage: nil,
-            storageStatus: .ok,
             activeProfileLabel: nil,
             showTitlePrompt: false,
             defaultSessionTitle: nil,
@@ -64,7 +63,6 @@ final class SessionViewTests: XCTestCase {
             canStartRecording: true,
             blockingReasonsText: nil,
             voiceIsolationAcknowledgementMessage: nil,
-            storageStatus: .ok,
             activeProfileLabel: ActiveProfileLabelFormatter.labelText(
                 isRecording: true,
                 coachingProfileName: defaultProfile.name,

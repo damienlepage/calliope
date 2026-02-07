@@ -16,13 +16,10 @@ struct FeedbackPanel: View {
     let speakingTimeSeconds: TimeInterval
     let speakingTimeTargetPercent: Double
     let inputLevel: Double
-    let showSilenceWarning: Bool
-    let showWaitingForSpeech: Bool
     let paceMin: Double
     let paceMax: Double
     let sessionDurationText: String?
     let sessionDurationSeconds: Int?
-    let storageStatus: RecordingStorageStatus
     let liveTranscript: String
     let coachingProfiles: [CoachingProfile]
     let activeProfileLabel: String?
@@ -49,12 +46,6 @@ struct FeedbackPanel: View {
             spacing: cardSpacing
         )
         let crutchLevel = CrutchWordFeedback.level(for: crutchWords)
-        let statusMessages = FeedbackStatusMessages.build(
-            storageStatus: storageStatus,
-            interruptionMessage: nil,
-            showSilenceWarning: showSilenceWarning,
-            showWaitingForSpeech: showWaitingForSpeech
-        )
         let crutchStatusText = CrutchWordFeedback.statusText(for: crutchWords)
         VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .firstTextBaseline) {
@@ -171,26 +162,6 @@ struct FeedbackPanel: View {
                 }
             }
 
-            if !statusMessages.isEmpty {
-                FeedbackCard(title: "Session Status") {
-                    VStack(alignment: .leading, spacing: 8) {
-                        ForEach(statusMessages.warnings, id: \.self) { message in
-                            feedbackWarning(message)
-                        }
-                        ForEach(statusMessages.notes, id: \.self) { message in
-                            feedbackNote(message)
-                        }
-                    }
-                }
-                .accessibilityElement(children: .combine)
-                .accessibilityLabel("Session status")
-                .accessibilityValue(
-                    AccessibilityFormatting.statusValue(
-                        warnings: statusMessages.warnings,
-                        notes: statusMessages.notes
-                    )
-                )
-            }
         }
         .padding(16)
         .background(Color(NSColor.controlBackgroundColor))
@@ -301,34 +272,9 @@ struct FeedbackPanel: View {
         }
     }
 
-    private func feedbackNote(_ text: String) -> some View {
-        Text(text)
-            .font(.footnote)
-            .foregroundColor(.secondary)
-    }
-
     private func captionBodyText(for transcript: String) -> String {
         let trimmed = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? "Listening for speech..." : trimmed
-    }
-
-    private func feedbackWarning(_ text: String) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.footnote)
-            Text(text)
-                .font(.footnote)
-        }
-        .foregroundColor(Color(NSColor.systemOrange))
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color(NSColor.systemOrange).opacity(0.12))
-        )
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Warning")
-        .accessibilityValue(AccessibilityFormatting.warningValue(text: text))
     }
 
     private func inputLevelStatusText() -> String {
@@ -487,13 +433,10 @@ struct FeedbackPanel_Previews: PreviewProvider {
                 speakingTimeSeconds: 72,
                 speakingTimeTargetPercent: Constants.speakingTimeTargetPercent,
                 inputLevel: 0.4,
-                showSilenceWarning: false,
-                showWaitingForSpeech: false,
                 paceMin: Constants.targetPaceMin,
                 paceMax: Constants.targetPaceMax,
                 sessionDurationText: "02:15",
                 sessionDurationSeconds: 135,
-                storageStatus: .ok,
                 liveTranscript: "Let's focus on the key takeaways for the next steps.",
                 coachingProfiles: profiles,
                 activeProfileLabel: "Profile: Default (App: Default)",
