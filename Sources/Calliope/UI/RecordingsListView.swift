@@ -49,138 +49,14 @@ struct RecordingsListView: View {
                 Text("No recordings yet.")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
+                    .accessibilityLabel("No recordings yet")
+                    .accessibilityHint("Start a session to create a recording.")
             } else {
-                let isRecording = viewModel.isRecording
-                Table(viewModel.recordings) {
-                    TableColumn("Recording") { item in
-                        Text(item.displayName)
-                            .font(.subheadline)
-                            .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .accessibilityLabel("Recording name")
-                            .accessibilityValue(item.displayName)
-                    }
-                    .width(
-                        min: Layout.recordingColumnMin,
-                        ideal: Layout.recordingColumnIdeal,
-                        max: Layout.recordingColumnMax
-                    )
-                    TableColumn("Date") { item in
-                        Text(item.dateText)
-                            .font(.footnote)
-                            .foregroundColor(.secondary)
-                            .accessibilityLabel("Recording date")
-                            .accessibilityValue(item.dateText)
-                    }
-                    .width(
-                        min: Layout.dateColumnMin,
-                        ideal: Layout.dateColumnIdeal,
-                        max: Layout.dateColumnMax
-                    )
-                    TableColumn("Duration") { item in
-                        Text(item.durationText)
-                            .font(.footnote)
-                            .foregroundColor(.secondary)
-                            .accessibilityLabel("Recording duration")
-                            .accessibilityValue(item.durationText)
-                    }
-                    .width(
-                        min: Layout.durationColumnMin,
-                        ideal: Layout.durationColumnIdeal,
-                        max: Layout.durationColumnMax
-                    )
-                    TableColumn("Speaking %") { item in
-                        Text(item.speakingPercentText)
-                            .font(.footnote)
-                            .foregroundColor(.secondary)
-                            .accessibilityLabel("Speaking time percentage")
-                            .accessibilityValue(item.speakingPercentText)
-                    }
-                    .width(
-                        min: Layout.speakingColumnMin,
-                        ideal: Layout.speakingColumnIdeal,
-                        max: Layout.speakingColumnMax
-                    )
-                    TableColumn("Status") { item in
-                        if let integrityText = item.integrityStatusText {
-                            Label {
-                                Text(integrityText)
-                                    .font(.footnote)
-                                    .foregroundColor(.primary)
-                                    .lineLimit(1)
-                            } icon: {
-                                Image(systemName: "exclamationmark.triangle.fill")
-                                    .foregroundColor(.orange)
-                            }
-                            .help(integrityText)
-                            .accessibilityLabel("Recording status")
-                            .accessibilityValue(integrityText)
-                            .accessibilityHint("Status for \(item.displayName).")
-                        } else {
-                            Label {
-                                Text("OK")
-                                    .font(.footnote)
-                                    .foregroundColor(.primary)
-                            } icon: {
-                                Image(systemName: "checkmark.circle")
-                                    .foregroundColor(.secondary)
-                            }
-                            .accessibilityLabel("Recording status")
-                            .accessibilityValue("No issues detected")
-                            .accessibilityHint("Status for \(item.displayName).")
-                        }
-                    }
-                    .width(
-                        min: Layout.statusColumnMin,
-                        ideal: Layout.statusColumnIdeal,
-                        max: Layout.statusColumnMax
-                    )
-                    TableColumn("Actions") { item in
-                        let isActive = viewModel.activePlaybackURL == item.url
-                        let isPlaying = isActive && !viewModel.isPlaybackPaused
-                        HStack(spacing: 8) {
-                            Button {
-                                viewModel.togglePlayPause(item)
-                            } label: {
-                                Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                            }
-                            .buttonStyle(.bordered)
-                            .disabled(isRecording)
-                            .accessibilityLabel(isPlaying ? "Pause playback" : "Play recording")
-                            .accessibilityHint("Controls playback for \(item.displayName).")
-
-                            Menu {
-                                Button("Stop") {
-                                    viewModel.stopPlayback()
-                                }
-                                .disabled(!isActive || isRecording)
-                                Button("Reveal") {
-                                    viewModel.reveal(item)
-                                }
-                                Button("Details") {
-                                    viewModel.detailItem = item
-                                }
-                                Button("Delete", role: .destructive) {
-                                    viewModel.requestDelete(item)
-                                }
-                                .disabled(isRecording)
-                            } label: {
-                                Image(systemName: "ellipsis.circle")
-                            }
-                            .menuStyle(.borderedButton)
-                            .accessibilityLabel("Recording actions")
-                            .accessibilityHint("Show actions for \(item.displayName).")
-                        }
-                    }
-                    .width(
-                        min: Layout.actionsColumnMin,
-                        ideal: Layout.actionsColumnIdeal,
-                        max: Layout.actionsColumnMax
-                    )
+                if RecordingsListLayout.usesAccessibilityLayout(dynamicTypeSize: dynamicTypeSize) {
+                    accessibleList
+                } else {
+                    tableList
                 }
-                .accessibilityElement(children: .contain)
-                .accessibilityLabel("Recordings list")
-                .accessibilityHint("Shows recording name, date, duration, speaking percentage, status, and actions.")
             }
             if let deleteErrorMessage = viewModel.deleteErrorMessage {
                 Label {
@@ -262,6 +138,8 @@ private extension RecordingsListView {
                 .foregroundColor(.secondary)
         }
         .accessibilityElement(children: .combine)
+        .accessibilityLabel("Recordings summary")
+        .accessibilityValue(summaryAccessibilityValue)
     }
 
     var controlsExpanded: some View {
@@ -347,6 +225,221 @@ private extension RecordingsListView {
         .disabled(viewModel.isRecording || viewModel.recordings.isEmpty)
         .accessibilityLabel("Delete all recordings")
         .accessibilityHint("Deletes every recording in the list.")
+    }
+}
+
+private extension RecordingsListView {
+    var summaryAccessibilityValue: String {
+        var lines: [String] = []
+        if let summaryText = viewModel.recordingsSummaryText {
+            lines.append(summaryText)
+        }
+        if let recentSummaryText = viewModel.recentSummaryText {
+            lines.append(recentSummaryText)
+        }
+        if let trendSummaryText = viewModel.trendSummaryText {
+            lines.append(trendSummaryText)
+        }
+        if let mostRecentText = viewModel.mostRecentRecordingText {
+            lines.append(mostRecentText)
+        }
+        lines.append("Stored in \(viewModel.recordingsPath)")
+        return AccessibilityFormatting.detailLinesValue(lines)
+    }
+
+    var tableList: some View {
+        let isRecording = viewModel.isRecording
+        return Table(viewModel.recordings) {
+            TableColumn("Recording") { item in
+                Text(item.displayName)
+                    .font(.subheadline)
+                    .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityLabel("Recording name")
+                    .accessibilityValue(item.displayName)
+            }
+            .width(
+                min: Layout.recordingColumnMin,
+                ideal: Layout.recordingColumnIdeal,
+                max: Layout.recordingColumnMax
+            )
+            TableColumn("Date") { item in
+                Text(item.dateText)
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+                    .accessibilityLabel("Recording date")
+                    .accessibilityValue(item.dateText)
+            }
+            .width(
+                min: Layout.dateColumnMin,
+                ideal: Layout.dateColumnIdeal,
+                max: Layout.dateColumnMax
+            )
+            TableColumn("Duration") { item in
+                Text(item.durationText)
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+                    .accessibilityLabel("Recording duration")
+                    .accessibilityValue(item.durationText)
+            }
+            .width(
+                min: Layout.durationColumnMin,
+                ideal: Layout.durationColumnIdeal,
+                max: Layout.durationColumnMax
+            )
+            TableColumn("Speaking %") { item in
+                Text(item.speakingPercentText)
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+                    .accessibilityLabel("Speaking time percentage")
+                    .accessibilityValue(item.speakingPercentText)
+            }
+            .width(
+                min: Layout.speakingColumnMin,
+                ideal: Layout.speakingColumnIdeal,
+                max: Layout.speakingColumnMax
+            )
+            TableColumn("Status") { item in
+                recordingStatusLabel(for: item)
+            }
+            .width(
+                min: Layout.statusColumnMin,
+                ideal: Layout.statusColumnIdeal,
+                max: Layout.statusColumnMax
+            )
+            TableColumn("Actions") { item in
+                recordingActions(for: item, isRecording: isRecording)
+            }
+            .width(
+                min: Layout.actionsColumnMin,
+                ideal: Layout.actionsColumnIdeal,
+                max: Layout.actionsColumnMax
+            )
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Recordings list")
+        .accessibilityHint("Shows recording name, date, duration, speaking percentage, status, and actions.")
+    }
+
+    var accessibleList: some View {
+        let isRecording = viewModel.isRecording
+        return LazyVStack(alignment: .leading, spacing: 12) {
+            ForEach(viewModel.recordings) { item in
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(item.displayName)
+                        .font(.headline)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Date: \(item.dateText)")
+                        Text("Duration: \(item.durationText)")
+                        Text("Speaking: \(item.speakingPercentText)")
+                        Text("Status: \(item.integrityStatusText ?? "OK")")
+                    }
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                    recordingActions(for: item, isRecording: isRecording)
+                }
+                .padding(12)
+                .background(Color(NSColor.windowBackgroundColor).opacity(0.85))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.secondary.opacity(0.12))
+                )
+                .cornerRadius(10)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(item.displayName)
+                .accessibilityValue(
+                    AccessibilityFormatting.detailLinesValue([
+                        "Date: \(item.dateText)",
+                        "Duration: \(item.durationText)",
+                        "Speaking: \(item.speakingPercentText)",
+                        "Status: \(item.integrityStatusText ?? "OK")"
+                    ])
+                )
+            }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Recordings list")
+        .accessibilityHint("Shows recording details and actions in a stacked layout.")
+    }
+
+    @ViewBuilder
+    func recordingStatusLabel(for item: RecordingItem) -> some View {
+        if let integrityText = item.integrityStatusText {
+            Label {
+                Text(integrityText)
+                    .font(.footnote)
+                    .foregroundColor(.primary)
+                    .lineLimit(1)
+            } icon: {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.orange)
+            }
+            .help(integrityText)
+            .accessibilityLabel("Recording status")
+            .accessibilityValue(integrityText)
+            .accessibilityHint("Status for \(item.displayName).")
+        } else {
+            Label {
+                Text("OK")
+                    .font(.footnote)
+                    .foregroundColor(.primary)
+            } icon: {
+                Image(systemName: "checkmark.circle")
+                    .foregroundColor(.secondary)
+            }
+            .accessibilityLabel("Recording status")
+            .accessibilityValue("No issues detected")
+            .accessibilityHint("Status for \(item.displayName).")
+        }
+    }
+
+    @ViewBuilder
+    func recordingActions(for item: RecordingItem, isRecording: Bool) -> some View {
+        let isActive = viewModel.activePlaybackURL == item.url
+        let isPlaying = isActive && !viewModel.isPlaybackPaused
+        HStack(spacing: 8) {
+            Button {
+                viewModel.togglePlayPause(item)
+            } label: {
+                Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+            }
+            .buttonStyle(.bordered)
+            .disabled(isRecording)
+            .accessibilityLabel(isPlaying ? "Pause playback" : "Play recording")
+            .accessibilityHint("Controls playback for \(item.displayName).")
+
+            Menu {
+                Button("Stop") {
+                    viewModel.stopPlayback()
+                }
+                .disabled(!isActive || isRecording)
+                Button("Reveal") {
+                    viewModel.reveal(item)
+                }
+                Button("Details") {
+                    viewModel.detailItem = item
+                }
+                Button("Delete", role: .destructive) {
+                    viewModel.requestDelete(item)
+                }
+                .disabled(isRecording)
+            } label: {
+                Image(systemName: "ellipsis.circle")
+            }
+            .menuStyle(.borderedButton)
+            .accessibilityLabel("Recording actions")
+            .accessibilityHint("Show actions for \(item.displayName).")
+        }
+    }
+}
+
+enum RecordingsListLayout {
+    static func usesAccessibilityLayout(dynamicTypeSize: DynamicTypeSize) -> Bool {
+        dynamicTypeSize.isAccessibilitySize
     }
 }
 

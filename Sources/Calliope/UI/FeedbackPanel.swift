@@ -23,6 +23,7 @@ struct FeedbackPanel: View {
     let sessionDurationText: String?
     let sessionDurationSeconds: Int?
     let storageStatus: RecordingStorageStatus
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     
     var body: some View {
         let pauseRateText = PauseRateFormatter.rateText(
@@ -33,10 +34,10 @@ struct FeedbackPanel: View {
             seconds: max(0, Int(speakingTimeSeconds.rounded()))
         )
         let cardSpacing: CGFloat = 12
-        let metricColumns = [
-            GridItem(.flexible(), spacing: cardSpacing),
-            GridItem(.flexible(), spacing: cardSpacing)
-        ]
+        let metricColumns = FeedbackPanelLayout.metricColumns(
+            dynamicTypeSize: dynamicTypeSize,
+            spacing: cardSpacing
+        )
         let crutchLevel = CrutchWordFeedback.level(for: crutchWords)
         let statusMessages = FeedbackStatusMessages.build(
             storageStatus: storageStatus,
@@ -238,6 +239,25 @@ struct FeedbackPanel: View {
 
     private func inputLevelStatusText() -> String {
         inputLevel < InputLevelMeter.meaningfulThreshold ? "Low signal" : "Active"
+    }
+}
+
+enum FeedbackPanelLayout {
+    static func usesSingleColumn(dynamicTypeSize: DynamicTypeSize) -> Bool {
+        dynamicTypeSize.isAccessibilitySize
+    }
+
+    static func metricColumns(
+        dynamicTypeSize: DynamicTypeSize,
+        spacing: CGFloat
+    ) -> [GridItem] {
+        if usesSingleColumn(dynamicTypeSize: dynamicTypeSize) {
+            return [GridItem(.flexible(), spacing: spacing)]
+        }
+        return [
+            GridItem(.flexible(), spacing: spacing),
+            GridItem(.flexible(), spacing: spacing)
+        ]
     }
 }
 

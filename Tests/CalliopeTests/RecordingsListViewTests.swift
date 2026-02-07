@@ -1,3 +1,4 @@
+import SwiftUI
 import XCTest
 @testable import Calliope
 
@@ -20,5 +21,14 @@ final class RecordingsListViewTests: XCTestCase {
         let view = RecordingsListView(viewModel: viewModel) {}
 
         _ = view.body
+    }
+
+    func testRecordingsListLayoutUsesAccessibilitySizes() {
+        XCTAssertTrue(
+            RecordingsListLayout.usesAccessibilityLayout(dynamicTypeSize: .accessibility3)
+        )
+        XCTAssertFalse(
+            RecordingsListLayout.usesAccessibilityLayout(dynamicTypeSize: .large)
+        )
     }
 }

@@ -1,1 +1,1 @@
-Goal completed: Launch-to-session readiness under 2 seconds
+Goal completed: Accessibility-ready Session and Recordings surfaces
