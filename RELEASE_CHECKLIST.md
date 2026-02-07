@@ -46,6 +46,22 @@ Record results in `RELEASE_QA_TEMPLATE.md` for each release candidate.
 1. `./scripts/build-app.sh` produces `dist/Calliope.app`.
 2. `./scripts/package-release.sh` produces `dist/Calliope.app` and a versioned zip.
 3. If signing is enabled, verify the signing identity is applied to the app bundle.
+4. Launch the packaged app from `dist/Calliope.app` on each supported macOS version and confirm it opens without Gatekeeper warnings (beyond expected first-run verification).
+
+## Packaged App Verification (Supported macOS Versions)
+Fill one line per macOS version tested.
+
+| macOS Version | Machine | Launches | Permissions Prompt | Session Start/Stop | Recordings Flow | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+|  |  | Pass/Fail | Pass/Fail | Pass/Fail | Pass/Fail |  |
+|  |  | Pass/Fail | Pass/Fail | Pass/Fail | Pass/Fail |  |
+
+## Packaged App Flow Checklist
+Run these steps in the packaged app on each supported macOS version.
+1. Launch `dist/Calliope.app` and confirm it defaults to the Session screen.
+2. Start a session and confirm the microphone permission prompt appears if not previously granted.
+3. Confirm Session start/stop works and the post-session recap appears.
+4. Confirm a recording appears in the Recordings view and playback works.
 
 ## Notarization & Signing Reminders
 1. Notarization is required for distribution outside the App Store.
