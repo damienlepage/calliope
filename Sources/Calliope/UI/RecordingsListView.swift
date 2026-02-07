@@ -103,9 +103,10 @@ struct RecordingsListView: View {
                     TableColumn("Status") { item in
                         if let integrityText = item.integrityStatusText {
                             Label {
-                                Text("Issue")
+                                Text(integrityText)
                                     .font(.footnote)
                                     .foregroundColor(.primary)
+                                    .lineLimit(1)
                             } icon: {
                                 Image(systemName: "exclamationmark.triangle.fill")
                                     .foregroundColor(.orange)
@@ -113,6 +114,7 @@ struct RecordingsListView: View {
                             .help(integrityText)
                             .accessibilityLabel("Recording status")
                             .accessibilityValue(integrityText)
+                            .accessibilityHint("Status for \(item.displayName).")
                         } else {
                             Label {
                                 Text("OK")
@@ -124,6 +126,7 @@ struct RecordingsListView: View {
                             }
                             .accessibilityLabel("Recording status")
                             .accessibilityValue("No issues detected")
+                            .accessibilityHint("Status for \(item.displayName).")
                         }
                     }
                     .width(
