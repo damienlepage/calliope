@@ -64,107 +64,110 @@ struct SessionView: View {
                 backendStatus: audioCapture.backendStatus
             )
             : nil
-        ScrollView {
-            VStack(spacing: 20) {
-                if viewState.shouldShowTitle {
-                    Text("Calliope")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                }
+        VStack(spacing: 20) {
+            if viewState.shouldShowTitle {
+                Text("Calliope")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+            }
 
-                if viewState.shouldShowStatus {
-                    HStack {
-                        Circle()
-                            .fill(statusColor(for: audioCapture.status))
-                            .frame(width: 12, height: 12)
-                        Text(audioCapture.statusText)
-                            .font(.headline)
+            if viewState.shouldShowStatus {
+                HStack {
+                    Circle()
+                        .fill(statusColor(for: audioCapture.status))
+                        .frame(width: 12, height: 12)
+                    Text(audioCapture.statusText)
+                        .font(.headline)
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Session status")
+                .accessibilityValue(audioCapture.statusText)
+            }
+            if let captureRecoveryBanner {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(captureRecoveryBanner.title)
+                        .font(.headline)
+                    Text(captureRecoveryBanner.message)
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    HStack(spacing: 12) {
+                        Button(captureRecoveryBanner.primaryActionTitle, action: onRetryCapture)
+                            .buttonStyle(.borderedProminent)
+                            .disabled(audioCapture.isTestingMic || !canStartRecording)
+                        Button(captureRecoveryBanner.secondaryActionTitle, action: onOpenSettings)
+                            .buttonStyle(.bordered)
                     }
-                    .accessibilityElement(children: .combine)
-                    .accessibilityLabel("Session status")
-                    .accessibilityValue(audioCapture.statusText)
                 }
-                if let captureRecoveryBanner {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(captureRecoveryBanner.title)
-                            .font(.headline)
-                        Text(captureRecoveryBanner.message)
-                            .font(.footnote)
-                            .foregroundColor(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                        HStack(spacing: 12) {
-                            Button(captureRecoveryBanner.primaryActionTitle, action: onRetryCapture)
-                                .buttonStyle(.borderedProminent)
-                                .disabled(audioCapture.isTestingMic || !canStartRecording)
-                            Button(captureRecoveryBanner.secondaryActionTitle, action: onOpenSettings)
-                                .buttonStyle(.bordered)
-                        }
-                    }
-                    .frame(maxWidth: 340, alignment: .leading)
-                    .padding()
-                    .background(Color.orange.opacity(0.12))
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.orange.opacity(0.25))
-                    )
-                    .accessibilityElement(children: .contain)
-                    .accessibilityLabel("Capture recovery")
-                }
-                if let interruptionMessage = audioCapture.interruptionMessage {
-                    Text(interruptionMessage)
-                        .font(.footnote)
-                        .foregroundColor(.orange)
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: 320)
-                }
-                if let captureStatusText {
-                    Text(captureStatusText)
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
-                        .accessibilityLabel("Capture status")
-                        .accessibilityValue(captureStatusText)
-                }
-                if let routeWarningText {
-                    Text(routeWarningText)
-                        .font(.footnote)
-                        .foregroundColor(.orange)
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: 320)
-                        .accessibilityLabel("Audio route warning")
-                        .accessibilityValue(routeWarningText)
-                }
-                if viewState.shouldShowActiveProfileLabel, let activeProfileLabel {
-                    Text(activeProfileLabel)
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
-                        .accessibilityLabel("Active profile")
-                        .accessibilityValue(activeProfileLabel)
-                }
-                if viewState.shouldShowIdlePrompt {
-                    Text("Ready when you are. Press Start to begin coaching.")
-                        .font(.title3)
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(.secondary)
-                        .frame(maxWidth: 320)
-                }
-                if viewState.shouldShowFeedbackPanel {
-                    FeedbackPanel(
-                        pace: feedbackViewModel.state.pace,
-                        crutchWords: feedbackViewModel.state.crutchWords,
-                        pauseCount: feedbackViewModel.state.pauseCount,
-                        pauseAverageDuration: feedbackViewModel.state.pauseAverageDuration,
-                        speakingTimeSeconds: feedbackViewModel.state.speakingTimeSeconds,
-                        inputLevel: feedbackViewModel.state.inputLevel,
-                        showSilenceWarning: feedbackViewModel.state.showSilenceWarning,
-                        showWaitingForSpeech: feedbackViewModel.showWaitingForSpeech,
-                        paceMin: analysisPreferences.paceMin,
-                        paceMax: analysisPreferences.paceMax,
-                        sessionDurationText: sessionDurationText,
-                        sessionDurationSeconds: sessionDurationSeconds,
-                        storageStatus: storageStatus
-                    )
-                }
+                .frame(maxWidth: 340, alignment: .leading)
+                .padding()
+                .background(Color.orange.opacity(0.12))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.orange.opacity(0.25))
+                )
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel("Capture recovery")
+            }
+            if viewState.shouldShowRecordingDetails, let interruptionMessage = audioCapture.interruptionMessage {
+                Text(interruptionMessage)
+                    .font(.footnote)
+                    .foregroundColor(.orange)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 320)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if viewState.shouldShowRecordingDetails, let captureStatusText {
+                Text(captureStatusText)
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityLabel("Capture status")
+                    .accessibilityValue(captureStatusText)
+            }
+            if let routeWarningText {
+                Text(routeWarningText)
+                    .font(.footnote)
+                    .foregroundColor(.orange)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 320)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityLabel("Audio route warning")
+                    .accessibilityValue(routeWarningText)
+            }
+            if viewState.shouldShowActiveProfileLabel, let activeProfileLabel {
+                Text(activeProfileLabel)
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+                    .accessibilityLabel("Active profile")
+                    .accessibilityValue(activeProfileLabel)
+            }
+            if viewState.shouldShowIdlePrompt {
+                Text("Ready when you are. Press Start to begin coaching.")
+                    .font(.title3)
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: 320)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if viewState.shouldShowFeedbackPanel {
+                FeedbackPanel(
+                    pace: feedbackViewModel.state.pace,
+                    crutchWords: feedbackViewModel.state.crutchWords,
+                    pauseCount: feedbackViewModel.state.pauseCount,
+                    pauseAverageDuration: feedbackViewModel.state.pauseAverageDuration,
+                    speakingTimeSeconds: feedbackViewModel.state.speakingTimeSeconds,
+                    inputLevel: feedbackViewModel.state.inputLevel,
+                    showSilenceWarning: feedbackViewModel.state.showSilenceWarning,
+                    showWaitingForSpeech: feedbackViewModel.showWaitingForSpeech,
+                    paceMin: analysisPreferences.paceMin,
+                    paceMax: analysisPreferences.paceMax,
+                    sessionDurationText: sessionDurationText,
+                    sessionDurationSeconds: sessionDurationSeconds,
+                    storageStatus: storageStatus
+                )
+            }
 
                 if audioCapture.isRecording {
                     VStack(alignment: .leading, spacing: 8) {
@@ -177,6 +180,7 @@ struct SessionView: View {
                                 .labelsHidden()
                                 .accessibilityLabel("Closed captions")
                                 .accessibilityValue(showCaptions ? "On" : "Off")
+                                .accessibilityHint("Toggle live captions on or off.")
                         }
                         if showCaptions {
                             Text(captionBodyText(for: feedbackViewModel.liveTranscript))
@@ -191,6 +195,9 @@ struct SessionView: View {
                                         .stroke(Color.secondary.opacity(0.12))
                                 )
                                 .accessibilityLabel("Live captions")
+                                .accessibilityValue(
+                                    captionBodyText(for: feedbackViewModel.liveTranscript)
+                                )
                         }
                     }
                     .frame(maxWidth: 320, alignment: .leading)
@@ -309,15 +316,16 @@ struct SessionView: View {
                     .accessibilityHint(viewState.primaryButtonAccessibilityHint)
                 }
 
-                if viewState.shouldShowBlockingReasons, let blockingReasonsText {
-                    Text(blockingReasonsText)
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
-                }
+            if viewState.shouldShowBlockingReasons, let blockingReasonsText {
+                Text(blockingReasonsText)
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .padding()
+            Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .padding()
         .sheet(item: $postSessionDetailItem) { item in
             RecordingDetailView(item: item)
         }

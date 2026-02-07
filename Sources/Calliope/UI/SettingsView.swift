@@ -43,28 +43,34 @@ struct SettingsView: View {
                     Text(microphonePermission.state.description)
                         .font(.subheadline)
                         .foregroundColor(.secondary)
+                        .accessibilityLabel("Microphone access status")
+                        .accessibilityValue(microphonePermission.state.description)
                     if microphonePermission.state.shouldShowGrantAccess {
                         Button("Grant Microphone Access") {
                             onRequestMicAccess()
                         }
                         .buttonStyle(.bordered)
+                        .accessibilityHint("Request microphone permission for Calliope.")
                     }
                     if showOpenSettingsAction {
                         Button("Open System Settings") {
                             onOpenSystemSettings()
                         }
                         .buttonStyle(.bordered)
+                        .accessibilityHint("Open macOS privacy settings.")
                     }
                     if showOpenSoundSettingsAction {
                         Button("Open Sound Settings") {
                             onOpenSoundSettings()
                         }
                         .buttonStyle(.bordered)
+                        .accessibilityHint("Open macOS sound input settings.")
                     }
                     if !microphoneDevices.hasMicrophoneInput {
-                        Text("No microphone input device detected.")
+                        Label("No microphone input device detected.", systemImage: "exclamationmark.triangle.fill")
                             .font(.footnote)
                             .foregroundColor(.secondary)
+                            .accessibilityLabel("No microphone input device detected")
                     } else {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("Preferred Input")
@@ -85,6 +91,8 @@ struct SettingsView: View {
                                 }
                             }
                             .pickerStyle(.menu)
+                            .accessibilityLabel("Preferred microphone input")
+                            .accessibilityHint("Choose which microphone Calliope uses.")
                             Text("Available Inputs")
                                 .font(.subheadline)
                             ForEach(microphoneDevices.availableMicrophoneNames, id: \.self) { name in
@@ -99,8 +107,10 @@ struct SettingsView: View {
                                             .padding(.vertical, 2)
                                             .background(Color.secondary.opacity(0.15))
                                             .clipShape(Capsule())
+                                            .accessibilityLabel("Default input")
                                     }
                                 }
+                                .accessibilityElement(children: .combine)
                             }
                         }
                     }
@@ -113,17 +123,21 @@ struct SettingsView: View {
                     Text(speechPermission.state.description)
                         .font(.subheadline)
                         .foregroundColor(.secondary)
+                        .accessibilityLabel("Speech recognition status")
+                        .accessibilityValue(speechPermission.state.description)
                     if speechPermission.state.shouldShowGrantAccess {
                         Button("Grant Speech Access") {
                             onRequestSpeechAccess()
                         }
                         .buttonStyle(.bordered)
+                        .accessibilityHint("Request speech recognition permission.")
                     }
                     if showOpenSpeechSettingsAction {
                         Button("Open System Settings") {
                             onOpenSpeechSettings()
                         }
                         .buttonStyle(.bordered)
+                        .accessibilityHint("Open macOS speech recognition settings.")
                     }
                     Text("Speech recognition runs on-device and never leaves your Mac.")
                         .font(.footnote)
@@ -152,6 +166,12 @@ struct SettingsView: View {
                     )
                     .font(.footnote)
                     .foregroundColor(.secondary)
+                    .accessibilityLabel("Privacy disclosure status")
+                    .accessibilityValue(
+                        hasAcceptedDisclosure
+                            ? "Accepted"
+                            : "Required before starting a session"
+                    )
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -202,6 +222,8 @@ struct SettingsView: View {
                             .font(.subheadline)
                         TextField("uh, um, you know", text: crutchWordsBinding())
                             .textFieldStyle(.roundedBorder)
+                            .accessibilityLabel("Crutch words list")
+                            .accessibilityHint("Enter crutch words separated by commas or new lines.")
                         HStack {
                             Text("Presets")
                                 .font(.footnote)
@@ -220,6 +242,8 @@ struct SettingsView: View {
                                     }
                                 }
                             }
+                            .accessibilityLabel("Crutch word presets")
+                            .accessibilityHint("Choose a preset list of crutch words.")
                         }
                         Text("Current preset: \(AnalysisPreferencesStore.crutchWordPresetLabel(for: preferencesStore.crutchWords))")
                             .font(.footnote)
@@ -240,6 +264,7 @@ struct SettingsView: View {
                         preferencesStore.resetToDefaults()
                     }
                     .buttonStyle(.bordered)
+                    .accessibilityHint("Reset pace, pause, and crutch word settings.")
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -266,6 +291,7 @@ struct SettingsView: View {
                         isCoachingProfilesPresented = true
                     }
                     .buttonStyle(.bordered)
+                    .accessibilityHint("Open the coaching profile manager.")
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 

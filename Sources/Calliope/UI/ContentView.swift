@@ -36,6 +36,12 @@ struct ContentView: View {
     private let settingsActionModel: MicrophoneSettingsActionModel
     private let soundSettingsActionModel: SoundSettingsActionModel
     private let speechSettingsActionModel: SpeechSettingsActionModel
+    private enum Layout {
+        static let sessionWidth: CGFloat = 420
+        static let recordingsWidth: CGFloat = 760
+        static let settingsWidth: CGFloat = 520
+        static let height: CGFloat = 760
+    }
 
     init(
         audioCapturePreferencesStore: AudioCapturePreferencesStore = AudioCapturePreferencesStore(),
@@ -223,7 +229,7 @@ struct ContentView: View {
                 .padding(.trailing, 12)
             }
         }
-        .frame(width: 420, height: 760)
+        .frame(width: contentWidth, height: Layout.height)
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Picker("View", selection: $navigationState.selection) {
@@ -328,6 +334,17 @@ struct ContentView: View {
                 quickStartStore.hasSeenQuickStart = true
                 isQuickStartSheetPresented = false
             }
+        }
+    }
+
+    private var contentWidth: CGFloat {
+        switch navigationState.selection {
+        case .session:
+            return Layout.sessionWidth
+        case .recordings:
+            return Layout.recordingsWidth
+        case .settings:
+            return Layout.settingsWidth
         }
     }
 

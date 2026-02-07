@@ -56,27 +56,55 @@ struct CompactFeedbackOverlay: View {
                 Text(captureStatusText)
                     .font(.footnote)
                     .foregroundColor(.secondary)
+                    .accessibilityLabel("Capture status")
+                    .accessibilityValue(captureStatusText)
+                    .fixedSize(horizontal: false, vertical: true)
                 if let activeProfileLabel {
                     Text(activeProfileLabel)
                         .font(.footnote)
                         .foregroundColor(.secondary)
+                        .accessibilityLabel("Active profile")
+                        .accessibilityValue(activeProfileLabel)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
 
             OverlayCard(title: "Pace") {
-                HStack(alignment: .firstTextBaseline) {
-                    Text(PaceFeedback.valueText(for: pace))
-                        .font(.title3)
-                        .foregroundColor(paceColor(pace))
-                    Text(PaceFeedback.label(for: pace, minPace: paceMin, maxPace: paceMax))
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                    Spacer()
-                    Text(PaceFeedback.targetRangeText(minPace: paceMin, maxPace: paceMax))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(PaceFeedback.valueText(for: pace))
+                            .font(.title3)
+                            .foregroundColor(paceColor(pace))
+                        Text(PaceFeedback.label(for: pace, minPace: paceMin, maxPace: paceMax))
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text(PaceFeedback.targetRangeText(minPace: paceMin, maxPace: paceMax))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(PaceFeedback.valueText(for: pace))
+                            .font(.title3)
+                            .foregroundColor(paceColor(pace))
+                        Text(PaceFeedback.label(for: pace, minPace: paceMin, maxPace: paceMax))
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        Text(PaceFeedback.targetRangeText(minPace: paceMin, maxPace: paceMax))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                 }
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Pace")
+            .accessibilityValue(
+                AccessibilityFormatting.paceValue(
+                    pace: pace,
+                    minPace: paceMin,
+                    maxPace: paceMax
+                )
+            )
 
             LazyVGrid(columns: metricColumns, spacing: cardSpacing) {
                 OverlayStatCard(
@@ -89,7 +117,8 @@ struct CompactFeedbackOverlay: View {
                     title: "Pauses",
                     value: "\(pauseCount)",
                     valueColor: .primary,
-                    subtitle: pauseSubtitleText(rateText: pauseRateText)
+                    subtitle: pauseSubtitleText(rateText: pauseRateText),
+                    accessibilitySupplement: pauseRateText
                 )
                 OverlayStatCard(
                     title: "Speaking",
@@ -104,8 +133,17 @@ struct CompactFeedbackOverlay: View {
                         Text(inputLevelStatusText())
                             .font(.caption)
                             .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Input level")
+                .accessibilityValue(
+                    AccessibilityFormatting.inputLevelValue(
+                        level: inputLevel,
+                        statusText: inputLevelStatusText()
+                    )
+                )
                 OverlayStatCard(
                     title: "Elapsed",
                     value: sessionDurationText ?? "—",
@@ -125,6 +163,8 @@ struct CompactFeedbackOverlay: View {
                         }
                     }
                 }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Session status")
             }
         }
         .padding(12)
@@ -225,17 +265,20 @@ private struct OverlayStatCard: View {
     let value: String
     let valueColor: Color
     let subtitle: String?
+    let accessibilitySupplement: String?
 
     init(
         title: String,
         value: String,
         valueColor: Color,
-        subtitle: String? = nil
+        subtitle: String? = nil,
+        accessibilitySupplement: String? = nil
     ) {
         self.title = title
         self.value = value
         self.valueColor = valueColor
         self.subtitle = subtitle
+        self.accessibilitySupplement = accessibilitySupplement
     }
 
     var body: some View {
@@ -244,13 +287,24 @@ private struct OverlayStatCard: View {
                 Text(value)
                     .font(.title3)
                     .foregroundColor(valueColor)
+                    .fixedSize(horizontal: false, vertical: true)
                 if let subtitle {
                     Text(subtitle)
                         .font(.caption)
                         .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(title)
+        .accessibilityValue(
+            AccessibilityFormatting.metricValue(
+                value: value,
+                subtitle: subtitle,
+                accessory: accessibilitySupplement
+            )
+        )
     }
 }
 

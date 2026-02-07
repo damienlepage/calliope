@@ -15,5 +15,8 @@ struct InputLevelMeterView: View {
             .progressViewStyle(.linear)
             .frame(height: 6)
             .tint(level > 0.6 ? .green : .accentColor)
+            .accessibilityLabel("Input level")
+            .accessibilityValue(AccessibilityFormatting.percentText(for: level))
+            .accessibilityHint("Microphone signal strength.")
     }
 }

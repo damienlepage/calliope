@@ -1,6 +1,6 @@
 ---
 id: cal-hr2p
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-07T04:45:14Z

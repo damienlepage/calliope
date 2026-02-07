@@ -38,6 +38,10 @@ struct SessionViewState: Equatable {
         isRecording
     }
 
+    var shouldShowRecordingDetails: Bool {
+        isRecording
+    }
+
     var shouldShowStatus: Bool {
         if isRecording {
             return true

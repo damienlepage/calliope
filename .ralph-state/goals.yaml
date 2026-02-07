@@ -251,16 +251,29 @@ goals:
       - "Validated 2026-02-07: Settings now limits sections to microphone access/input, speech permission, privacy guardrails, sensitivity/pause controls, crutch words, coaching profiles, and overlay; removed compatibility/diagnostics/performance/retention content."
   - id: G44
     title: Recordings list readability and focused metadata
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "New 2026-02-07: Recordings list first column shows only name/title; details hidden behind a Details action; columns remain readable without horizontal scrolling."
+      - "Validated 2026-02-07: Recordings window widens for list view; table columns are constrained with integrity status compact, avoiding horizontal scrolling."
   - id: G45
     title: Recording details modal usability polish
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "New 2026-02-07: Recording details modal or sheet includes a clear Close button and follows macOS sheet conventions."
+      - "Validated 2026-02-07: Recording detail sheet uses toolbar title with Close action in the sheet toolbar."
   - id: G46
     title: Session surface simplicity and no-scroll layout
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "New 2026-02-07: Session surface remains glanceable with fixed layout and no scrolling at default window size; only session-relevant elements appear."
+      - "Validated 2026-02-07: Removed session ScrollView, kept capture details recording-only, and ensured fixed layout without default scrolling."
+  - id: G47
+    title: Accessibility compliance across core surfaces
+    status: BELOW_TARGET
+    notes:
+      - "New 2026-02-07: PRD requires Dynamic Type, accessibility contrast, no color-only messaging, and full VoiceOver support for live metrics and controls; audit and ensure Session, Recordings, and Settings meet these requirements."
+  - id: G48
+    title: Session lifecycle resilience when backgrounded or reopened
+    status: BELOW_TARGET
+    notes:
+      - "New 2026-02-07: PRD requires predictable behavior when backgrounded, minimized, or reopened; validate recording continuity, timer accuracy, and UI state restoration across app lifecycle transitions."

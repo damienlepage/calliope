@@ -12,85 +12,91 @@ struct RecordingDetailView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        VStack(spacing: 0) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(item.displayName)
-                            .font(.title2)
-                        Text(item.detailMetadataText)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(item.displayName)
+                        .font(.title2)
+                    Text(item.detailMetadataText)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    if let profileText = item.coachingProfileText {
+                        Text(profileText)
                             .font(.subheadline)
                             .foregroundColor(.secondary)
-                        if let profileText = item.coachingProfileText {
-                            Text(profileText)
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-
-                    if let warningText = item.integrityWarningText {
-                        HStack(alignment: .top, spacing: 8) {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundColor(.orange)
-                            Text(warningText)
-                                .font(.subheadline)
-                        }
-                        .padding(12)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.orange.opacity(0.12))
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                    }
-
-                    if item.summary == nil {
-                        Text("No analysis summary available for this recording.")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    } else {
-                        DetailSection(title: "Pace", lines: item.paceDetailLines)
-                        DetailSection(title: "Pauses", lines: item.pauseDetailLines)
-                        if !item.speakingDetailLines.isEmpty {
-                            DetailSection(title: "Speaking Activity", lines: item.speakingDetailLines)
-                        }
-
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Crutch Words")
-                                .font(.headline)
-                            if item.crutchBreakdown.isEmpty {
-                                Text("No crutch words detected.")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                            } else {
-                                ForEach(item.crutchBreakdown, id: \.word) { entry in
-                                    HStack {
-                                        Text(entry.word)
-                                        Spacer()
-                                        Text("\(entry.count)")
-                                            .foregroundColor(.secondary)
-                                    }
-                                    .font(.subheadline)
-                                }
-                            }
-                        }
-
-                        if !item.processingDetailLines.isEmpty {
-                            DetailSection(title: "Processing", lines: item.processingDetailLines)
-                        }
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding()
+                .accessibilityElement(children: .combine)
+
+                if let warningText = item.integrityWarningText {
+                    HStack(alignment: .top, spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.orange)
+                        Text(warningText)
+                            .font(.subheadline)
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.orange.opacity(0.12))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .accessibilityLabel("Recording issue")
+                    .accessibilityValue(warningText)
+                }
+
+                if item.summary == nil {
+                    Text("No analysis summary available for this recording.")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                } else {
+                    DetailSection(title: "Pace", lines: item.paceDetailLines)
+                    DetailSection(title: "Pauses", lines: item.pauseDetailLines)
+                    if !item.speakingDetailLines.isEmpty {
+                        DetailSection(title: "Speaking Activity", lines: item.speakingDetailLines)
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Crutch Words")
+                            .font(.headline)
+                        if item.crutchBreakdown.isEmpty {
+                            Text("No crutch words detected.")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        } else {
+                            ForEach(item.crutchBreakdown, id: \.word) { entry in
+                                HStack {
+                                    Text(entry.word)
+                                    Spacer()
+                                    Text("\(entry.count)")
+                                        .foregroundColor(.secondary)
+                                }
+                                .font(.subheadline)
+                                .accessibilityLabel(entry.word)
+                                .accessibilityValue("\(entry.count) occurrences")
+                            }
+                        }
+                    }
+
+                    if !item.processingDetailLines.isEmpty {
+                        DetailSection(title: "Processing", lines: item.processingDetailLines)
+                    }
+                }
             }
-            Divider()
-            HStack {
-                Spacer()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding()
+        }
+        .frame(minWidth: 420, minHeight: 320)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text("Recording Details")
+                    .font(.headline)
+            }
+            ToolbarItem(placement: .confirmationAction) {
                 Button("Close") {
                     dismiss()
                 }
                 .keyboardShortcut(.defaultAction)
             }
-            .padding()
         }
-        .frame(minWidth: 420, minHeight: 320)
     }
 }
 
@@ -108,6 +114,7 @@ private struct DetailSection: View {
                     .foregroundColor(.secondary)
             }
         }
+        .accessibilityElement(children: .combine)
     }
 }
 

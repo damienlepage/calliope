@@ -51,17 +51,30 @@ struct FeedbackPanel: View {
             }
 
             FeedbackCard(title: "Pace") {
-                HStack(alignment: .firstTextBaseline) {
-                    Text(PaceFeedback.valueText(for: pace))
-                        .font(.title3)
-                        .foregroundColor(paceColor(pace))
-                    Text(PaceFeedback.label(for: pace, minPace: paceMin, maxPace: paceMax))
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                    Spacer()
-                    Text(PaceFeedback.targetRangeText(minPace: paceMin, maxPace: paceMax))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(PaceFeedback.valueText(for: pace))
+                            .font(.title3)
+                            .foregroundColor(paceColor(pace))
+                        Text(PaceFeedback.label(for: pace, minPace: paceMin, maxPace: paceMax))
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text(PaceFeedback.targetRangeText(minPace: paceMin, maxPace: paceMax))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(PaceFeedback.valueText(for: pace))
+                            .font(.title3)
+                            .foregroundColor(paceColor(pace))
+                        Text(PaceFeedback.label(for: pace, minPace: paceMin, maxPace: paceMax))
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        Text(PaceFeedback.targetRangeText(minPace: paceMin, maxPace: paceMax))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                 }
                 PaceRangeBar(
                     pace: pace,
@@ -70,6 +83,15 @@ struct FeedbackPanel: View {
                     indicatorColor: paceColor(pace)
                 )
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Pace")
+            .accessibilityValue(
+                AccessibilityFormatting.paceValue(
+                    pace: pace,
+                    minPace: paceMin,
+                    maxPace: paceMax
+                )
+            )
 
             LazyVGrid(columns: metricColumns, spacing: cardSpacing) {
                 FeedbackStatCard(
@@ -82,7 +104,8 @@ struct FeedbackPanel: View {
                     title: "Pauses",
                     value: "\(pauseCount)",
                     valueColor: .primary,
-                    subtitle: pauseDetailsText(rateText: pauseRateText)
+                    subtitle: pauseDetailsText(rateText: pauseRateText),
+                    accessibilitySupplement: pauseRateText
                 ) {
                     if let pauseRateText {
                         PauseRateBadge(text: pauseRateText)
@@ -101,8 +124,17 @@ struct FeedbackPanel: View {
                         Text(inputLevelStatusText())
                             .font(.caption)
                             .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Input level")
+                .accessibilityValue(
+                    AccessibilityFormatting.inputLevelValue(
+                        level: inputLevel,
+                        statusText: inputLevelStatusText()
+                    )
+                )
                 FeedbackStatCard(
                     title: "Elapsed",
                     value: sessionDurationText ?? "—",
@@ -122,6 +154,8 @@ struct FeedbackPanel: View {
                         }
                     }
                 }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Session status")
             }
         }
         .padding(16)
@@ -263,6 +297,7 @@ private struct FeedbackStatCard<Accessory: View>: View {
     let value: String
     let valueColor: Color
     let subtitle: String?
+    let accessibilitySupplement: String?
     let accessory: Accessory
 
     init(
@@ -270,12 +305,14 @@ private struct FeedbackStatCard<Accessory: View>: View {
         value: String,
         valueColor: Color,
         subtitle: String? = nil,
+        accessibilitySupplement: String? = nil,
         @ViewBuilder accessory: () -> Accessory
     ) {
         self.title = title
         self.value = value
         self.valueColor = valueColor
         self.subtitle = subtitle
+        self.accessibilitySupplement = accessibilitySupplement
         self.accessory = accessory()
     }
 
@@ -285,14 +322,25 @@ private struct FeedbackStatCard<Accessory: View>: View {
                 Text(value)
                     .font(.title3)
                     .foregroundColor(valueColor)
+                    .fixedSize(horizontal: false, vertical: true)
                 if let subtitle {
                     Text(subtitle)
                         .font(.caption)
                         .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 accessory
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(title)
+        .accessibilityValue(
+            AccessibilityFormatting.metricValue(
+                value: value,
+                subtitle: subtitle,
+                accessory: accessibilitySupplement
+            )
+        )
     }
 }
 
@@ -301,13 +349,15 @@ private extension FeedbackStatCard where Accessory == EmptyView {
         title: String,
         value: String,
         valueColor: Color,
-        subtitle: String? = nil
+        subtitle: String? = nil,
+        accessibilitySupplement: String? = nil
     ) {
         self.init(
             title: title,
             value: value,
             valueColor: valueColor,
             subtitle: subtitle,
+            accessibilitySupplement: accessibilitySupplement,
             accessory: { EmptyView() }
         )
     }

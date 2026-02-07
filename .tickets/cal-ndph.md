@@ -1,6 +1,6 @@
 ---
 id: cal-ndph
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-07T04:45:20Z
@@ -16,3 +16,8 @@ Remove ScrollView and trim session UI to session-relevant elements so default wi
 
 Only session-relevant elements are shown; non-essential status/diagnostic elements are removed or moved.
 
+## Notes
+
+**2026-02-07T00:00:00Z**
+
+Removed the session ScrollView, gated capture status details to recording-only, and added coverage for the new session view-state flag. Default window layout no longer requires scrolling.

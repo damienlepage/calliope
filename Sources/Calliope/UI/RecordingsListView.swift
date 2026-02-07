@@ -9,6 +9,26 @@ import SwiftUI
 
 struct RecordingsListView: View {
     @ObservedObject var viewModel: RecordingListViewModel
+    private enum Layout {
+        static let recordingColumnMin: CGFloat = 180
+        static let recordingColumnIdeal: CGFloat = 240
+        static let recordingColumnMax: CGFloat = 320
+        static let dateColumnMin: CGFloat = 110
+        static let dateColumnIdeal: CGFloat = 130
+        static let dateColumnMax: CGFloat = 160
+        static let durationColumnMin: CGFloat = 80
+        static let durationColumnIdeal: CGFloat = 90
+        static let durationColumnMax: CGFloat = 110
+        static let speakingColumnMin: CGFloat = 90
+        static let speakingColumnIdeal: CGFloat = 100
+        static let speakingColumnMax: CGFloat = 120
+        static let statusColumnMin: CGFloat = 70
+        static let statusColumnIdeal: CGFloat = 90
+        static let statusColumnMax: CGFloat = 110
+        static let actionsColumnMin: CGFloat = 80
+        static let actionsColumnIdeal: CGFloat = 100
+        static let actionsColumnMax: CGFloat = 120
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -40,6 +60,7 @@ struct RecordingsListView: View {
                         .font(.footnote)
                         .foregroundColor(.secondary)
                 }
+                .accessibilityElement(children: .combine)
                 Spacer()
                 TextField("Search recordings", text: $viewModel.searchText)
                     .textFieldStyle(.roundedBorder)
@@ -82,84 +103,126 @@ struct RecordingsListView: View {
                     .foregroundColor(.secondary)
             } else {
                 let isRecording = viewModel.isRecording
-                ForEach(viewModel.recordings) { item in
-                    let isActive = viewModel.activePlaybackURL == item.url
-                    let isPaused = isActive && viewModel.isPlaybackPaused
-                    let isPlaying = isActive && !viewModel.isPlaybackPaused
-                    HStack(spacing: 12) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(item.displayName)
-                                .font(.subheadline)
-                            Text(item.detailText)
+                Table(viewModel.recordings) {
+                    TableColumn("Recording") { item in
+                        Text(item.displayName)
+                            .font(.subheadline)
+                            .lineLimit(1)
+                            .accessibilityLabel("Recording name")
+                            .accessibilityValue(item.displayName)
+                    }
+                    .width(
+                        min: Layout.recordingColumnMin,
+                        ideal: Layout.recordingColumnIdeal,
+                        max: Layout.recordingColumnMax
+                    )
+                    TableColumn("Date") { item in
+                        Text(item.dateText)
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                            .accessibilityLabel("Recording date")
+                            .accessibilityValue(item.dateText)
+                    }
+                    .width(
+                        min: Layout.dateColumnMin,
+                        ideal: Layout.dateColumnIdeal,
+                        max: Layout.dateColumnMax
+                    )
+                    TableColumn("Duration") { item in
+                        Text(item.durationText)
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                            .accessibilityLabel("Recording duration")
+                            .accessibilityValue(item.durationText)
+                    }
+                    .width(
+                        min: Layout.durationColumnMin,
+                        ideal: Layout.durationColumnIdeal,
+                        max: Layout.durationColumnMax
+                    )
+                    TableColumn("Speaking %") { item in
+                        Text(item.speakingPercentText)
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                            .accessibilityLabel("Speaking time percentage")
+                            .accessibilityValue(item.speakingPercentText)
+                    }
+                    .width(
+                        min: Layout.speakingColumnMin,
+                        ideal: Layout.speakingColumnIdeal,
+                        max: Layout.speakingColumnMax
+                    )
+                    TableColumn("Status") { item in
+                        if let integrityText = item.integrityStatusText {
+                            Label("Issue", systemImage: "exclamationmark.triangle.fill")
+                                .font(.footnote)
+                                .foregroundColor(.orange)
+                                .help(integrityText)
+                                .accessibilityLabel("Recording status")
+                                .accessibilityValue(integrityText)
+                        } else {
+                            Label("OK", systemImage: "checkmark.circle")
                                 .font(.footnote)
                                 .foregroundColor(.secondary)
-                            if let profileText = item.coachingProfileText {
-                                Text(profileText)
-                                    .font(.footnote)
-                                    .foregroundColor(.secondary)
-                            }
-                            if let summaryText = item.summaryText {
-                                Text(summaryText)
-                                    .font(.footnote)
-                                    .foregroundColor(.secondary)
-                            }
-                            if let warningText = item.integrityWarningText {
-                                Text(warningText)
-                                    .font(.footnote)
-                                    .foregroundColor(.orange)
-                            }
-                            if isPlaying {
-                                Text("Playing")
-                                    .font(.footnote)
-                                    .foregroundColor(.secondary)
-                            } else if isPaused {
-                                Text("Paused")
-                                    .font(.footnote)
-                                    .foregroundColor(.secondary)
-                            }
+                                .accessibilityLabel("Recording status")
+                                .accessibilityValue("No issues detected")
                         }
-                        Spacer()
-                        Button(isPlaying ? "Pause" : "Play") {
-                            viewModel.togglePlayPause(item)
-                        }
-                        .buttonStyle(.bordered)
-                        .disabled(isRecording)
-                        .accessibilityLabel(isPlaying ? "Pause playback" : "Play recording")
-                        .accessibilityHint("Controls playback for \(item.displayName).")
-                        Button("Stop") {
-                            viewModel.stopPlayback()
-                        }
-                        .buttonStyle(.bordered)
-                        .disabled(!isActive || isRecording)
-                        .accessibilityLabel("Stop playback")
-                        .accessibilityHint("Stops playback for \(item.displayName).")
-                        Button("Reveal") {
-                            viewModel.reveal(item)
-                        }
-                        .buttonStyle(.bordered)
-                        .accessibilityLabel("Reveal recording in Finder")
-                        .accessibilityHint("Shows \(item.displayName) in Finder.")
-                        Button("Details") {
-                            viewModel.detailItem = item
-                        }
-                        .buttonStyle(.bordered)
-                        .accessibilityLabel("Show recording details")
-                        .accessibilityHint("Opens details for \(item.displayName).")
-                        Button("Delete") {
-                            viewModel.requestDelete(item)
-                        }
-                        .buttonStyle(.bordered)
-                        .disabled(isRecording)
-                        .accessibilityLabel("Delete recording")
-                        .accessibilityHint("Deletes \(item.displayName).")
                     }
-                    .padding(.vertical, 4)
+                    .width(
+                        min: Layout.statusColumnMin,
+                        ideal: Layout.statusColumnIdeal,
+                        max: Layout.statusColumnMax
+                    )
+                    TableColumn("Actions") { item in
+                        let isActive = viewModel.activePlaybackURL == item.url
+                        let isPlaying = isActive && !viewModel.isPlaybackPaused
+                        HStack(spacing: 8) {
+                            Button {
+                                viewModel.togglePlayPause(item)
+                            } label: {
+                                Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                            }
+                            .buttonStyle(.bordered)
+                            .disabled(isRecording)
+                            .accessibilityLabel(isPlaying ? "Pause playback" : "Play recording")
+                            .accessibilityHint("Controls playback for \(item.displayName).")
+
+                            Menu {
+                                Button("Stop") {
+                                    viewModel.stopPlayback()
+                                }
+                                .disabled(!isActive || isRecording)
+                                Button("Reveal") {
+                                    viewModel.reveal(item)
+                                }
+                                Button("Details") {
+                                    viewModel.detailItem = item
+                                }
+                                Button("Delete", role: .destructive) {
+                                    viewModel.requestDelete(item)
+                                }
+                                .disabled(isRecording)
+                            } label: {
+                                Image(systemName: "ellipsis.circle")
+                            }
+                            .menuStyle(.borderedButton)
+                            .accessibilityLabel("Recording actions")
+                            .accessibilityHint("Show actions for \(item.displayName).")
+                        }
+                    }
+                    .width(
+                        min: Layout.actionsColumnMin,
+                        ideal: Layout.actionsColumnIdeal,
+                        max: Layout.actionsColumnMax
+                    )
                 }
             }
             if let deleteErrorMessage = viewModel.deleteErrorMessage {
                 Text(deleteErrorMessage)
                     .font(.footnote)
                     .foregroundColor(.orange)
+                    .accessibilityLabel("Warning")
+                    .accessibilityValue(deleteErrorMessage)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

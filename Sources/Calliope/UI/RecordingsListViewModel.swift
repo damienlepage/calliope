@@ -99,6 +99,41 @@ struct RecordingItem: Identifiable, Equatable {
     var detailText: String {
         metadataDetailText()
     }
+
+    var dateText: String {
+        RecordingMetadataDisplayFormatter.dateTimeText(for: sessionDate)
+    }
+
+    var durationText: String {
+        RecordingItem.formatDuration(duration) ?? "—"
+    }
+
+    var speakingPercentText: String {
+        guard let summary else { return "—" }
+        let speakingSeconds = summary.speaking.timeSeconds
+        let sessionDuration = summary.durationSeconds > 0 ? summary.durationSeconds : (duration ?? 0)
+        return RecordingItem.formatSpeakingPercent(
+            speakingSeconds: speakingSeconds,
+            durationSeconds: sessionDuration
+        ) ?? "—"
+    }
+
+    var integrityStatusText: String? {
+        guard let integrityReport else { return nil }
+        guard !integrityReport.issues.isEmpty else { return nil }
+        let hasAudioIssue = integrityReport.issues.contains(.missingAudioFile)
+        let hasSummaryIssue = integrityReport.issues.contains(.missingSummary)
+        switch (hasAudioIssue, hasSummaryIssue) {
+        case (true, true):
+            return "Audio + summary missing"
+        case (true, false):
+            return "Audio missing"
+        case (false, true):
+            return "Summary missing"
+        case (false, false):
+            return nil
+        }
+    }
     var summaryText: String? {
         guard let summary else { return nil }
         let pace = Int(summary.pace.averageWPM.rounded())

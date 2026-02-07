@@ -43,4 +43,22 @@ final class RecordingDetailViewTests: XCTestCase {
 
         _ = view.body
     }
+
+    func testRecordingDetailViewBuildsWithoutSummary() {
+        let item = RecordingItem(
+            url: URL(fileURLWithPath: "/tmp/recording.m4a"),
+            modifiedAt: Date(),
+            duration: 65,
+            fileSizeBytes: 512,
+            summary: nil,
+            integrityReport: RecordingIntegrityReport(
+                createdAt: Date(),
+                issues: [.missingSummary]
+            )
+        )
+
+        let view = RecordingDetailView(item: item)
+
+        _ = view.body
+    }
 }
