@@ -5,28 +5,24 @@
 //  Created on [Date]
 //
 
-import Combine
 import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject private var navigationState: AppNavigationState
-    @StateObject private var audioCapture: AudioCapture
-    @StateObject private var audioAnalyzer = AudioAnalyzer()
-    @StateObject private var feedbackViewModel = LiveFeedbackViewModel()
-    @StateObject private var microphonePermission = MicrophonePermissionManager()
-    @StateObject private var speechPermission = SpeechPermissionManager()
-    @StateObject private var microphoneDevices = MicrophoneDeviceManager()
-    @StateObject private var audioCapturePreferencesStore: AudioCapturePreferencesStore
-    @StateObject private var recordingPreferencesStore: RecordingRetentionPreferencesStore
-    @StateObject private var preferencesStore = AnalysisPreferencesStore()
-    @StateObject private var activePreferencesStore: ActiveAnalysisPreferencesStore
-    @StateObject private var frontmostAppMonitor: FrontmostAppMonitor
-    @StateObject private var recordingsViewModel: RecordingListViewModel
-    @StateObject private var overlayPreferencesStore: OverlayPreferencesStore
-    @StateObject private var perAppProfileStore: PerAppFeedbackProfileStore
-    @StateObject private var coachingProfileStore: CoachingProfileStore
-    @State private var privacyDisclosureStore: PrivacyDisclosureStore
-    @State private var quickStartStore: QuickStartStore
+    private let appState: CalliopeAppState
+    @ObservedObject private var audioCapture: AudioCapture
+    @ObservedObject private var feedbackViewModel: LiveFeedbackViewModel
+    @ObservedObject private var microphonePermission: MicrophonePermissionManager
+    @ObservedObject private var speechPermission: SpeechPermissionManager
+    @ObservedObject private var microphoneDevices: MicrophoneDeviceManager
+    @ObservedObject private var audioCapturePreferencesStore: AudioCapturePreferencesStore
+    @ObservedObject private var preferencesStore: AnalysisPreferencesStore
+    @ObservedObject private var activePreferencesStore: ActiveAnalysisPreferencesStore
+    @ObservedObject private var recordingsViewModel: RecordingListViewModel
+    @ObservedObject private var overlayPreferencesStore: OverlayPreferencesStore
+    @ObservedObject private var coachingProfileStore: CoachingProfileStore
+    private let privacyDisclosureStore: PrivacyDisclosureStore
+    private let quickStartStore: QuickStartStore
     @State private var hasAcceptedDisclosure: Bool
     @State private var hasAcknowledgedVoiceIsolationRisk: Bool
     @State private var isDisclosureSheetPresented: Bool
@@ -43,44 +39,23 @@ struct ContentView: View {
         static let height: CGFloat = 760
     }
 
-    init(
-        audioCapturePreferencesStore: AudioCapturePreferencesStore = AudioCapturePreferencesStore(),
-        recordingPreferencesStore: RecordingRetentionPreferencesStore = RecordingRetentionPreferencesStore(),
-        overlayPreferencesStore: OverlayPreferencesStore = OverlayPreferencesStore(),
-        perAppProfileStore: PerAppFeedbackProfileStore = PerAppFeedbackProfileStore(),
-        coachingProfileStore: CoachingProfileStore = CoachingProfileStore(),
-        privacyDisclosureStore: PrivacyDisclosureStore = PrivacyDisclosureStore(),
-        quickStartStore: QuickStartStore = QuickStartStore(),
-        settingsActionModel: MicrophoneSettingsActionModel = MicrophoneSettingsActionModel(),
-        soundSettingsActionModel: SoundSettingsActionModel = SoundSettingsActionModel(),
-        speechSettingsActionModel: SpeechSettingsActionModel = SpeechSettingsActionModel()
-    ) {
-        let basePreferencesStore = AnalysisPreferencesStore()
-        let frontmostAppMonitor = FrontmostAppMonitor()
-        let audioCapture = AudioCapture(
-            capturePreferencesStore: audioCapturePreferencesStore
+    init(appState: CalliopeAppState = CalliopeAppState()) {
+        self.appState = appState
+        _audioCapture = ObservedObject(initialValue: appState.audioCapture)
+        _feedbackViewModel = ObservedObject(initialValue: appState.feedbackViewModel)
+        _microphonePermission = ObservedObject(initialValue: appState.microphonePermission)
+        _speechPermission = ObservedObject(initialValue: appState.speechPermission)
+        _microphoneDevices = ObservedObject(initialValue: appState.microphoneDevices)
+        _audioCapturePreferencesStore = ObservedObject(
+            initialValue: appState.audioCapturePreferencesStore
         )
-        let activePreferencesStore = ActiveAnalysisPreferencesStore(
-            basePreferencesStore: basePreferencesStore,
-            coachingProfileStore: coachingProfileStore,
-            perAppProfileStore: perAppProfileStore,
-            frontmostAppPublisher: frontmostAppMonitor.$frontmostAppIdentifier.eraseToAnyPublisher(),
-            recordingPublisher: audioCapture.$isRecording.eraseToAnyPublisher()
-        )
-        _privacyDisclosureStore = State(initialValue: privacyDisclosureStore)
-        _quickStartStore = State(initialValue: quickStartStore)
-        _overlayPreferencesStore = StateObject(wrappedValue: overlayPreferencesStore)
-        _audioCapturePreferencesStore = StateObject(wrappedValue: audioCapturePreferencesStore)
-        _recordingPreferencesStore = StateObject(wrappedValue: recordingPreferencesStore)
-        _perAppProfileStore = StateObject(wrappedValue: perAppProfileStore)
-        _coachingProfileStore = StateObject(wrappedValue: coachingProfileStore)
-        _preferencesStore = StateObject(wrappedValue: basePreferencesStore)
-        _frontmostAppMonitor = StateObject(wrappedValue: frontmostAppMonitor)
-        _activePreferencesStore = StateObject(wrappedValue: activePreferencesStore)
-        _audioCapture = StateObject(wrappedValue: audioCapture)
-        _recordingsViewModel = StateObject(wrappedValue: RecordingListViewModel(
-            recordingPreferencesStore: recordingPreferencesStore
-        ))
+        _preferencesStore = ObservedObject(initialValue: appState.preferencesStore)
+        _activePreferencesStore = ObservedObject(initialValue: appState.activePreferencesStore)
+        _recordingsViewModel = ObservedObject(initialValue: appState.recordingsViewModel)
+        _overlayPreferencesStore = ObservedObject(initialValue: appState.overlayPreferencesStore)
+        _coachingProfileStore = ObservedObject(initialValue: appState.coachingProfileStore)
+        privacyDisclosureStore = appState.privacyDisclosureStore
+        quickStartStore = appState.quickStartStore
         let accepted = privacyDisclosureStore.hasAcceptedDisclosure
         let hasSeenQuickStart = quickStartStore.hasSeenQuickStart
         _hasAcceptedDisclosure = State(initialValue: accepted)
@@ -90,9 +65,9 @@ struct ContentView: View {
         )
         _isQuickStartSheetPresented = State(initialValue: accepted && !hasSeenQuickStart)
         _isQuickStartPending = State(initialValue: false)
-        self.settingsActionModel = settingsActionModel
-        self.soundSettingsActionModel = soundSettingsActionModel
-        self.speechSettingsActionModel = speechSettingsActionModel
+        self.settingsActionModel = appState.settingsActionModel
+        self.soundSettingsActionModel = appState.soundSettingsActionModel
+        self.speechSettingsActionModel = appState.speechSettingsActionModel
     }
 
     var body: some View {
@@ -245,25 +220,8 @@ struct ContentView: View {
             }
         }
         .onAppear {
-            audioAnalyzer.setup(
-                audioCapture: audioCapture,
-                preferencesStore: activePreferencesStore,
-                speechPermission: speechPermission
-            )
-            feedbackViewModel.bind(
-                feedbackPublisher: audioAnalyzer.feedbackPublisher,
-                recordingPublisher: audioCapture.$isRecording.eraseToAnyPublisher(),
-                transcriptionPublisher: audioAnalyzer.transcriptionPublisher
-            )
-            recordingsViewModel.bind(
-                recordingPublisher: audioCapture.$isRecording.eraseToAnyPublisher()
-            )
-            microphonePermission.refresh()
-            speechPermission.refresh()
-            microphoneDevices.refresh()
-            frontmostAppMonitor.refresh()
-            audioCapture.refreshDiagnostics()
-            WindowLevelController.apply(alwaysOnTop: overlayPreferencesStore.alwaysOnTop)
+            appState.configureIfNeeded()
+            appState.refreshOnAppear()
         }
         .onChange(of: preferencesStore.paceMin) { newValue in
             if newValue > preferencesStore.paceMax {

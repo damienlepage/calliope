@@ -1,6 +1,6 @@
 ---
 id: cal-d0cn
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-07T05:22:03Z
@@ -15,4 +15,3 @@ Ensure recording sessions remain stable when app is backgrounded, minimized, or 
 ## Acceptance Criteria
 
 App state transitions (background/foreground, window close/reopen, minimize) do not stop recording or desync timers. UI restores active session state when reopened. Added unit/integration tests or documented manual verification steps if untestable.
-

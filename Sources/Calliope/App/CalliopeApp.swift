@@ -12,10 +12,11 @@ import AppKit
 struct CalliopeApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var navigationState = AppNavigationState()
+    @StateObject private var appState = CalliopeAppState()
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(appState: appState)
                 .environmentObject(navigationState)
         }
         .windowStyle(.hiddenTitleBar)

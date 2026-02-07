@@ -225,6 +225,44 @@ final class LiveFeedbackViewModelTests: XCTestCase {
         wait(for: [expectation], timeout: 1.0)
     }
 
+    func testSessionTimerUsesElapsedTimeAcrossDelayedTicks() {
+        let feedbackSubject = PassthroughSubject<FeedbackState, Never>()
+        let recordingSubject = CurrentValueSubject<Bool, Never>(false)
+        let ticker = PassthroughSubject<Date, Never>()
+        let startDate = Date(timeIntervalSince1970: 0)
+        let viewModel = LiveFeedbackViewModel()
+
+        viewModel.bind(
+            feedbackPublisher: feedbackSubject.eraseToAnyPublisher(),
+            recordingPublisher: recordingSubject.eraseToAnyPublisher(),
+            receiveOn: .main,
+            throttleInterval: .milliseconds(0),
+            now: { startDate },
+            timerPublisherFactory: { ticker.eraseToAnyPublisher() }
+        )
+
+        let expectation = expectation(description: "Session duration uses elapsed time")
+        expectation.expectedFulfillmentCount = 1
+
+        var received: [Int?] = []
+        viewModel.$sessionDurationSeconds
+            .dropFirst()
+            .sink { value in
+                received.append(value)
+                if received.count == 2 {
+                    XCTAssertEqual(received[0], 0)
+                    XCTAssertEqual(received[1], 120)
+                    expectation.fulfill()
+                }
+            }
+            .store(in: &cancellables)
+
+        recordingSubject.send(true)
+        ticker.send(Date(timeIntervalSince1970: 120))
+
+        wait(for: [expectation], timeout: 1.0)
+    }
+
     func testUpdatesLiveTranscriptFromPublisher() {
         let feedbackSubject = PassthroughSubject<FeedbackState, Never>()
         let recordingSubject = CurrentValueSubject<Bool, Never>(true)

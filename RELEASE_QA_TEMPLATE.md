@@ -26,6 +26,8 @@ Use this template to record a release candidate QA run. Store completed reports 
 - Stop shows post-session recap
 - Optional title prompt appears and saves
 - Active coaching profile label updates during session
+- Minimize or background the app during recording; session continues and timers stay accurate
+- Close the window mid-session, reopen Calliope, and confirm the active session UI restores with correct elapsed time
 
 ## Live Feedback
 - Pace, crutch words, pauses update while speaking
