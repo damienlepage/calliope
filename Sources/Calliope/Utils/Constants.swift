@@ -29,6 +29,9 @@ enum Constants {
     // Long-session guardrails
     static let analysisCheckpointInterval: TimeInterval = 300 // seconds
     static let maxRecordingSegmentDuration: TimeInterval = 2 * 60 * 60 // seconds
+
+    // Live captions
+    static let captionMaxCharacters: Int = 240
     
     // Crutch words
     static let crutchWords: [String] = [

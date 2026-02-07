@@ -225,6 +225,69 @@ final class LiveFeedbackViewModelTests: XCTestCase {
         wait(for: [expectation], timeout: 1.0)
     }
 
+    func testUpdatesLiveTranscriptFromPublisher() {
+        let feedbackSubject = PassthroughSubject<FeedbackState, Never>()
+        let recordingSubject = CurrentValueSubject<Bool, Never>(true)
+        let transcriptionSubject = PassthroughSubject<String, Never>()
+        let viewModel = LiveFeedbackViewModel()
+
+        viewModel.bind(
+            feedbackPublisher: feedbackSubject.eraseToAnyPublisher(),
+            recordingPublisher: recordingSubject.eraseToAnyPublisher(),
+            transcriptionPublisher: transcriptionSubject.eraseToAnyPublisher(),
+            receiveOn: .main
+        )
+
+        let expectation = expectation(description: "Receives transcript update")
+
+        viewModel.$liveTranscript
+            .dropFirst()
+            .sink { value in
+                if value == "hello world" {
+                    expectation.fulfill()
+                }
+            }
+            .store(in: &cancellables)
+
+        transcriptionSubject.send("hello world")
+
+        wait(for: [expectation], timeout: 1.0)
+    }
+
+    func testResetsLiveTranscriptOnStop() {
+        let feedbackSubject = PassthroughSubject<FeedbackState, Never>()
+        let recordingSubject = CurrentValueSubject<Bool, Never>(true)
+        let transcriptionSubject = PassthroughSubject<String, Never>()
+        let viewModel = LiveFeedbackViewModel()
+
+        viewModel.bind(
+            feedbackPublisher: feedbackSubject.eraseToAnyPublisher(),
+            recordingPublisher: recordingSubject.eraseToAnyPublisher(),
+            transcriptionPublisher: transcriptionSubject.eraseToAnyPublisher(),
+            receiveOn: .main
+        )
+
+        let expectation = expectation(description: "Clears transcript on stop")
+
+        var values: [String] = []
+        viewModel.$liveTranscript
+            .dropFirst()
+            .sink { value in
+                values.append(value)
+                if values.count == 2 {
+                    XCTAssertEqual(values[0], "hello world")
+                    XCTAssertEqual(values[1], "")
+                    expectation.fulfill()
+                }
+            }
+            .store(in: &cancellables)
+
+        transcriptionSubject.send("hello world")
+        recordingSubject.send(false)
+
+        wait(for: [expectation], timeout: 1.0)
+    }
+
     func testWaitingForSpeechTogglesOnStaleFeedbackAndClearsOnUpdate() {
         let feedbackSubject = PassthroughSubject<FeedbackState, Never>()
         let recordingSubject = CurrentValueSubject<Bool, Never>(false)

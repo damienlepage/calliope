@@ -268,7 +268,8 @@ struct ContentView: View {
             )
             feedbackViewModel.bind(
                 feedbackPublisher: audioAnalyzer.feedbackPublisher,
-                recordingPublisher: audioCapture.$isRecording.eraseToAnyPublisher()
+                recordingPublisher: audioCapture.$isRecording.eraseToAnyPublisher(),
+                transcriptionPublisher: audioAnalyzer.transcriptionPublisher
             )
             recordingsViewModel.bind(
                 recordingPublisher: audioCapture.$isRecording.eraseToAnyPublisher()

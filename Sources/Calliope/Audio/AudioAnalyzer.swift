@@ -16,6 +16,7 @@ class AudioAnalyzer: ObservableObject {
     @Published var speakingTimeSeconds: TimeInterval = 0
     @Published var inputLevel: Double = 0.0
     @Published var silenceWarning: Bool = false
+    @Published var liveTranscript: String = ""
     @Published var processingLatencyStatus: ProcessingLatencyStatus = .ok
     @Published var processingLatencyAverage: TimeInterval = 0
     @Published var processingUtilizationStatus: ProcessingUtilizationStatus = .ok
@@ -61,6 +62,10 @@ class AudioAnalyzer: ObservableObject {
                 )
             }
             .eraseToAnyPublisher()
+    }
+
+    var transcriptionPublisher: AnyPublisher<String, Never> {
+        $liveTranscript.eraseToAnyPublisher()
     }
 
     private var speechTranscriber: SpeechTranscribing?
@@ -140,6 +145,7 @@ class AudioAnalyzer: ObservableObject {
                         self.speakingTimeSeconds = 0
                         self.inputLevel = 0.0
                         self.silenceWarning = false
+                        self.liveTranscript = ""
                         self.processingLatencyStatus = .ok
                         self.processingLatencyAverage = 0
                         self.processingUtilizationStatus = .ok
@@ -194,6 +200,7 @@ class AudioAnalyzer: ObservableObject {
                         self.speakingActivityTracker.reset()
                         self.latestCrutchWordCounts = [:]
                         self.latestWordCount = 0
+                        self.liveTranscript = ""
                     }
                 }
                 if Thread.isMainThread {
@@ -246,6 +253,7 @@ class AudioAnalyzer: ObservableObject {
         DispatchQueue.main.async { [weak self] in
             self?.currentPace = pace
             self?.crutchWordCount = crutchCount
+            self?.liveTranscript = Self.trimTranscript(transcript)
         }
     }
 
@@ -377,6 +385,15 @@ class AudioAnalyzer: ObservableObject {
             .components(separatedBy: CharacterSet.alphanumerics.inverted)
             .filter { !$0.isEmpty }
         return tokens.count
+    }
+
+    private static func trimTranscript(_ transcript: String) -> String {
+        let trimmed = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count > Constants.captionMaxCharacters else {
+            return trimmed
+        }
+        let startIndex = trimmed.index(trimmed.endIndex, offsetBy: -Constants.captionMaxCharacters)
+        return String(trimmed[startIndex...])
     }
 
     private func startSilenceTimer() {

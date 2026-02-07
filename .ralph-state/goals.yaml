@@ -214,9 +214,10 @@ goals:
       - "Validated 2026-02-07: Added release QA report template with user-facing notes and linked it from README and release checklist; unit test added."
   - id: G38
     title: Live closed captions with CC toggle
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "2026-02-07: PRD requires on-the-fly closed captions visible by default with a CC toggle; session UI does not yet expose captions."
+      - "Validated 2026-02-07: Session view shows live captions during recording with a CC toggle and default-on display."
   - id: G39
     title: Live speaking time in session feedback
     status: AT_TARGET

@@ -34,6 +34,7 @@ struct SessionView: View {
     let onRetryCapture: () -> Void
     let onToggleRecording: () -> Void
     @State private var postSessionDetailItem: RecordingItem?
+    @State private var showCaptions: Bool = true
 
     var body: some View {
         let viewState = SessionViewState(
@@ -169,6 +170,37 @@ struct SessionView: View {
                     )
                 }
 
+                if audioCapture.isRecording {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Live captions")
+                                .font(.headline)
+                            Spacer()
+                            Toggle("CC", isOn: $showCaptions)
+                                .toggleStyle(.switch)
+                                .labelsHidden()
+                                .accessibilityLabel("Closed captions")
+                                .accessibilityValue(showCaptions ? "On" : "Off")
+                        }
+                        if showCaptions {
+                            Text(captionBodyText(for: feedbackViewModel.liveTranscript))
+                                .font(.callout)
+                                .foregroundColor(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(12)
+                                .background(Color.secondary.opacity(0.08))
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.secondary.opacity(0.12))
+                                )
+                                .accessibilityLabel("Live captions")
+                        }
+                    }
+                    .frame(maxWidth: 320, alignment: .leading)
+                    .padding(.top, 4)
+                }
+
                 if coachingProfiles.count > 1 {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Coaching profile")
@@ -293,6 +325,11 @@ struct SessionView: View {
         .sheet(item: $postSessionDetailItem) { item in
             RecordingDetailView(item: item)
         }
+        .onChange(of: audioCapture.isRecording) { isRecording in
+            if isRecording {
+                showCaptions = true
+            }
+        }
     }
 
     private func statusColor(for status: AudioCaptureStatus) -> Color {
@@ -304,6 +341,11 @@ struct SessionView: View {
         case .error:
             return .orange
         }
+    }
+
+    private func captionBodyText(for transcript: String) -> String {
+        let trimmed = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "Listening for speech..." : trimmed
     }
 
 }

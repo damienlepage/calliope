@@ -1,1 +1,1 @@
-Goal completed: Live speaking time in session feedback
+Goal completed: Live closed captions with CC toggle

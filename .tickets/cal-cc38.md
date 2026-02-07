@@ -1,6 +1,6 @@
 ---
 id: cal-cc38
-status: ready
+status: closed
 deps: []
 links: []
 created: 2026-02-07T00:32:00Z

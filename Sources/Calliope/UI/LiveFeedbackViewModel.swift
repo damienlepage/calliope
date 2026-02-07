@@ -12,6 +12,7 @@ final class LiveFeedbackViewModel: ObservableObject {
     @Published private(set) var state: FeedbackState
     @Published private(set) var sessionDurationSeconds: Int? = nil
     @Published private(set) var showWaitingForSpeech: Bool = false
+    @Published private(set) var liveTranscript: String = ""
 
     private var cancellables = Set<AnyCancellable>()
     private var staleFeedbackWorkItem: DispatchWorkItem?
@@ -24,6 +25,7 @@ final class LiveFeedbackViewModel: ObservableObject {
     func bind(
         feedbackPublisher: AnyPublisher<FeedbackState, Never>,
         recordingPublisher: AnyPublisher<Bool, Never>,
+        transcriptionPublisher: AnyPublisher<String, Never> = Empty().eraseToAnyPublisher(),
         receiveOn queue: DispatchQueue = .main,
         throttleInterval: DispatchQueue.SchedulerTimeType.Stride = .milliseconds(200),
         staleFeedbackDelay: DispatchQueue.SchedulerTimeType.Stride = .seconds(3),
@@ -38,6 +40,7 @@ final class LiveFeedbackViewModel: ObservableObject {
         staleFeedbackWorkItem?.cancel()
         staleFeedbackWorkItem = nil
         isRecording = false
+        liveTranscript = ""
         let queueKey = DispatchSpecificKey<Void>()
         queue.setSpecific(key: queueKey, value: ())
 
@@ -48,8 +51,11 @@ final class LiveFeedbackViewModel: ObservableObject {
             .filter { $0 }
             .receive(on: queue)
             .sink { [weak self] _ in
-                guard let self, self.state != .zero else { return }
-                self.state = .zero
+                guard let self else { return }
+                self.liveTranscript = ""
+                if self.state != .zero {
+                    self.state = .zero
+                }
             }
             .store(in: &cancellables)
 
@@ -117,6 +123,15 @@ final class LiveFeedbackViewModel: ObservableObject {
                 guard let self else { return }
                 self.state = .zero
                 self.sessionDurationSeconds = nil
+                self.liveTranscript = ""
+            }
+            .store(in: &cancellables)
+
+        transcriptionPublisher
+            .removeDuplicates()
+            .receive(on: queue)
+            .sink { [weak self] transcript in
+                self?.liveTranscript = transcript
             }
             .store(in: &cancellables)
 
