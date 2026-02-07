@@ -41,4 +41,23 @@ enum AccessibilityFormatting {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? "Warning" : trimmed
     }
+
+    static func statusValue(warnings: [String], notes: [String]) -> String {
+        let warningText = warnings
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: "; ")
+        let noteText = notes
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: "; ")
+        var parts: [String] = []
+        if !warningText.isEmpty {
+            parts.append("Warnings: \(warningText)")
+        }
+        if !noteText.isEmpty {
+            parts.append("Notes: \(noteText)")
+        }
+        return parts.isEmpty ? "No status updates" : parts.joined(separator: ". ")
+    }
 }

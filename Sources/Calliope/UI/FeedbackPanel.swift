@@ -157,6 +157,12 @@ struct FeedbackPanel: View {
                 }
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("Session status")
+                .accessibilityValue(
+                    AccessibilityFormatting.statusValue(
+                        warnings: statusMessages.warnings,
+                        notes: statusMessages.notes
+                    )
+                )
             }
         }
         .padding(16)

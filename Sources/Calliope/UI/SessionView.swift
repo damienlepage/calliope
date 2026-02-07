@@ -244,12 +244,15 @@ struct SessionView: View {
                             }
                             .buttonStyle(.bordered)
                             .disabled(postSessionActionsDisabled || postSessionItemUnavailable)
+                            .accessibilityHint("Open the recording details for this session.")
                             Button("Edit Title", action: onEditSessionTitle)
                                 .buttonStyle(.bordered)
                                 .disabled(postSessionActionsDisabled || showTitlePrompt)
+                                .accessibilityHint("Edit the saved title for this session.")
                             Button("Go to Recordings", action: onViewRecordings)
                                 .buttonStyle(.bordered)
                                 .disabled(postSessionActionsDisabled)
+                                .accessibilityHint("Open the recordings list.")
                         }
                     }
                     .frame(maxWidth: 320, alignment: .leading)
@@ -270,6 +273,8 @@ struct SessionView: View {
                             .font(.headline)
                         TextField("Optional title", text: $sessionTitleDraft)
                             .textFieldStyle(.roundedBorder)
+                            .accessibilityLabel("Session title")
+                            .accessibilityHint("Optional name for this session.")
                         Text(titlePromptState.helperText)
                             .font(.footnote)
                             .foregroundColor(titleHintColor)

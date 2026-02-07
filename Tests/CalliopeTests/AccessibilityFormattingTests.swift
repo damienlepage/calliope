@@ -46,4 +46,21 @@ final class AccessibilityFormattingTests: XCTestCase {
         XCTAssertEqual(AccessibilityFormatting.warningValue(text: "  "), "Warning")
         XCTAssertEqual(AccessibilityFormatting.warningValue(text: "Low storage"), "Low storage")
     }
+
+    func testStatusValueCombinesWarningsAndNotes() {
+        let value = AccessibilityFormatting.statusValue(
+            warnings: ["Low storage", "Mic disconnected"],
+            notes: ["Waiting for speech"]
+        )
+
+        XCTAssertTrue(value.contains("Warnings: Low storage; Mic disconnected"))
+        XCTAssertTrue(value.contains("Notes: Waiting for speech"))
+    }
+
+    func testStatusValueHandlesEmptyInputs() {
+        XCTAssertEqual(
+            AccessibilityFormatting.statusValue(warnings: ["  "], notes: []),
+            "No status updates"
+        )
+    }
 }
