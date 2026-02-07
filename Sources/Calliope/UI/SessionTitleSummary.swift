@@ -28,32 +28,18 @@ struct SessionTitleSummary: Equatable {
         self.speakingText = "Speaking time: \(speakingText)"
     }
 
-    private static let durationFormatter: DateComponentsFormatter = {
-        let formatter = DateComponentsFormatter()
-        formatter.allowedUnits = [.minute, .second]
-        formatter.unitsStyle = .positional
-        formatter.zeroFormattingBehavior = .pad
-        return formatter
-    }()
-
-    private static let durationWithHoursFormatter: DateComponentsFormatter = {
-        let formatter = DateComponentsFormatter()
-        formatter.allowedUnits = [.hour, .minute, .second]
-        formatter.unitsStyle = .positional
-        formatter.zeroFormattingBehavior = [.pad, .dropLeading]
-        return formatter
-    }()
-
     private static func formatDuration(_ duration: TimeInterval) -> String {
         let clamped = max(0, duration)
-        if clamped >= 3600 {
-            let formatted = durationWithHoursFormatter.string(from: clamped) ?? "0:00"
-            if formatted.hasPrefix("0") && formatted.count > 1 {
-                return String(formatted.dropFirst())
-            }
-            return formatted
+        let totalSeconds = Int(clamped.rounded())
+        if totalSeconds >= 3600 {
+            let hours = totalSeconds / 3600
+            let minutes = (totalSeconds % 3600) / 60
+            let seconds = totalSeconds % 60
+            return String(format: "%d:%02d:%02d", hours, minutes, seconds)
         }
-        return durationFormatter.string(from: clamped) ?? "0:00"
+        let minutes = totalSeconds / 60
+        let seconds = totalSeconds % 60
+        return String(format: "%d:%02d", minutes, seconds)
     }
 
     private static func formatSpeaking(speakingSeconds: Double, durationSeconds: Double) -> String {
