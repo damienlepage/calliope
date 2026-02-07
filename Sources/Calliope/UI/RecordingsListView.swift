@@ -174,6 +174,9 @@ struct RecordingsListView: View {
                         max: Layout.actionsColumnMax
                     )
                 }
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel("Recordings list")
+                .accessibilityHint("Shows recording name, date, duration, speaking percentage, status, and actions.")
             }
             if let deleteErrorMessage = viewModel.deleteErrorMessage {
                 Label {
@@ -229,6 +232,7 @@ private extension RecordingsListView {
         VStack(alignment: .leading, spacing: 2) {
             Text("Recordings")
                 .font(.headline)
+                .accessibilityAddTraits(.isHeader)
             if let summaryText = viewModel.recordingsSummaryText {
                 Text(summaryText)
                     .font(.subheadline)

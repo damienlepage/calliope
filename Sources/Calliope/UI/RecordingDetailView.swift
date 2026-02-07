@@ -17,6 +17,7 @@ struct RecordingDetailView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(item.displayName)
                         .font(.title2)
+                        .accessibilityAddTraits(.isHeader)
                     Text(item.detailMetadataText)
                         .font(.subheadline)
                         .foregroundColor(.secondary)
@@ -57,6 +58,7 @@ struct RecordingDetailView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Crutch Words")
                             .font(.headline)
+                            .accessibilityAddTraits(.isHeader)
                         if item.crutchBreakdown.isEmpty {
                             Text("No crutch words detected.")
                                 .font(.subheadline)
@@ -108,6 +110,7 @@ private struct DetailSection: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.headline)
+                .accessibilityAddTraits(.isHeader)
             ForEach(lines, id: \.self) { line in
                 Text(line)
                     .font(.subheadline)
@@ -115,6 +118,8 @@ private struct DetailSection: View {
             }
         }
         .accessibilityElement(children: .combine)
+        .accessibilityLabel(title)
+        .accessibilityValue(AccessibilityFormatting.detailLinesValue(lines))
     }
 }
 

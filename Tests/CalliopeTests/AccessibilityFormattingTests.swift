@@ -63,4 +63,15 @@ final class AccessibilityFormattingTests: XCTestCase {
             "No status updates"
         )
     }
+
+    func testDetailLinesValueFiltersAndJoins() {
+        XCTAssertEqual(
+            AccessibilityFormatting.detailLinesValue(["Average: 120 WPM", " ", "Range: 90-140 WPM"]),
+            "Average: 120 WPM, Range: 90-140 WPM"
+        )
+        XCTAssertEqual(
+            AccessibilityFormatting.detailLinesValue(["  "]),
+            "No details available"
+        )
+    }
 }

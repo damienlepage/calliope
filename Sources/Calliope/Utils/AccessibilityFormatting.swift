@@ -60,4 +60,11 @@ enum AccessibilityFormatting {
         }
         return parts.isEmpty ? "No status updates" : parts.joined(separator: ". ")
     }
+
+    static func detailLinesValue(_ lines: [String]) -> String {
+        let trimmed = lines
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        return trimmed.isEmpty ? "No details available" : trimmed.joined(separator: ", ")
+    }
 }

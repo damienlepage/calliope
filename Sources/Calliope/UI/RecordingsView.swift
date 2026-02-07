@@ -16,6 +16,7 @@ struct RecordingsView: View {
                 Text("Recordings")
                     .font(.largeTitle)
                     .fontWeight(.bold)
+                    .accessibilityAddTraits(.isHeader)
 
                 RecordingsListView(viewModel: viewModel)
             }
