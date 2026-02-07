@@ -172,6 +172,7 @@ goals:
       - "Validated 2026-02-07: Recordings list and detail view now display the coaching profile label from metadata."
   - id: G31
     title: Crutch word list personalization and presets
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "2026-02-07: Goal created to offer preset and per-profile crutch word lists with clear guidance."
+      - "Validated 2026-02-07: Settings, coaching profiles, and per-app profiles show preset matching/labels plus guidance for multi-word phrases."

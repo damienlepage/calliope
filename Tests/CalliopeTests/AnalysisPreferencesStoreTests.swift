@@ -154,4 +154,22 @@ final class AnalysisPreferencesStoreTests: XCTestCase {
             )
         }
     }
+
+    func testMatchingCrutchWordPresetIgnoresOrderAndCase() {
+        guard let focusedPreset = AnalysisPreferencesStore.crutchWordPresets.first(where: { $0.name == "Focused" }) else {
+            XCTFail("Expected Focused preset")
+            return
+        }
+
+        let mixedWords = focusedPreset.words.reversed().map { " \($0.uppercased()) " }
+        let match = AnalysisPreferencesStore.matchingCrutchWordPreset(for: mixedWords)
+
+        XCTAssertEqual(match?.name, focusedPreset.name)
+    }
+
+    func testCrutchWordPresetLabelFallsBackToCustomList() {
+        let label = AnalysisPreferencesStore.crutchWordPresetLabel(for: ["totally", "unique"])
+
+        XCTAssertEqual(label, "Custom list")
+    }
 }

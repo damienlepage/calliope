@@ -186,6 +186,17 @@ final class AnalysisPreferencesStore: ObservableObject {
             }
     }
 
+    static func matchingCrutchWordPreset(for words: [String]) -> CrutchWordPreset? {
+        let normalized = normalizeCrutchWords(words).sorted()
+        return crutchWordPresets.first { preset in
+            preset.words.sorted() == normalized
+        }
+    }
+
+    static func crutchWordPresetLabel(for words: [String]) -> String {
+        matchingCrutchWordPreset(for: words)?.name ?? "Custom list"
+    }
+
     private static func normalize(
         paceMin: Double,
         paceMax: Double,

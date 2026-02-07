@@ -197,7 +197,13 @@ private struct CoachingProfileEditor: View {
                         }
                     }
                 }
+                Text("Current preset: \(AnalysisPreferencesStore.crutchWordPresetLabel(for: profile.preferences.crutchWords))")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
                 Text("Selecting a preset replaces the current list.")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+                Text("Tip: multi-word phrases are supported (for example, \"you know\" or \"kind of\").")
                     .font(.footnote)
                     .foregroundColor(.secondary)
             }
