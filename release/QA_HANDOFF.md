@@ -12,6 +12,36 @@ we can track each macOS version tested.
   provided).
 - This repository checked out locally.
 
+## Hardware Access Request (Template)
+
+Use this template to request access to a macOS 13/14/15 test machine so we can
+complete the packaged app verification goal and update the release QA report.
+
+```
+Subject: Calliope packaged app QA on macOS 13/14/15
+
+Hi [Name],
+
+We are verifying the packaged Calliope app across macOS 13 (Ventura), 14
+(Sonoma), and 15 (Sequoia). Could you provide access to a test machine running
+[macOS version] so we can run the packaged app QA checklist and record results
+in `release/QA-YYYY-MM-DD.md`?
+
+Checklist highlights: launch the app, confirm permissions, start/stop a
+session, verify a recording appears, and confirm local storage access.
+
+Thanks,
+[Your Name]
+```
+
+## Hardware Access Tracking
+
+| macOS Version | Owner | Access Confirmed |
+| --- | --- | --- |
+| macOS 13 (Ventura) |  |  |
+| macOS 14 (Sonoma) |  |  |
+| macOS 15 (Sequoia) |  |  |
+
 ## Run the QA Preflight
 
 From the repo root, run:
