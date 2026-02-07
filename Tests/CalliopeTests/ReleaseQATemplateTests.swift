@@ -25,4 +25,27 @@ final class ReleaseQATemplateTests: XCTestCase {
         XCTAssertTrue(contents.contains("User-Facing Release Notes"))
         XCTAssertTrue(contents.localizedCaseInsensitiveContains("No audio"))
     }
+
+    func testReleaseQAReportScaffoldingExists() throws {
+        let testFileURL = URL(fileURLWithPath: #filePath)
+        let repositoryRoot = testFileURL
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+
+        let scriptURL = repositoryRoot.appendingPathComponent("scripts/new-release-qa-report.sh")
+        let releaseReadmeURL = repositoryRoot.appendingPathComponent("release/README.md")
+        let readmeURL = repositoryRoot.appendingPathComponent("README.md")
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: scriptURL.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: releaseReadmeURL.path))
+
+        let releaseReadmeContents = try String(contentsOf: releaseReadmeURL, encoding: .utf8)
+        XCTAssertTrue(releaseReadmeContents.contains("QA-YYYY-MM-DD.md"))
+        XCTAssertTrue(releaseReadmeContents.contains("new-release-qa-report.sh"))
+
+        let readmeContents = try String(contentsOf: readmeURL, encoding: .utf8)
+        XCTAssertTrue(readmeContents.contains("new-release-qa-report.sh"))
+        XCTAssertTrue(readmeContents.contains("release/"))
+    }
 }

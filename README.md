@@ -166,6 +166,7 @@ COVERAGE_THRESHOLD=85 ./scripts/coverage.sh
 
 Release validation steps are documented in `RELEASE_CHECKLIST.md`.
 Use `RELEASE_QA_TEMPLATE.md` to capture release candidate QA results and user-facing notes.
+Generate a new report with `./scripts/new-release-qa-report.sh`, which stores the report in `release/`.
 
 ### Development Workflow
 
