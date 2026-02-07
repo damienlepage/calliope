@@ -25,7 +25,6 @@ struct ContentView: View {
     @StateObject private var overlayPreferencesStore: OverlayPreferencesStore
     @StateObject private var perAppProfileStore: PerAppFeedbackProfileStore
     @StateObject private var coachingProfileStore: CoachingProfileStore
-    @StateObject private var conferencingVerificationStore: ConferencingCompatibilityVerificationStore
     @State private var privacyDisclosureStore: PrivacyDisclosureStore
     @State private var quickStartStore: QuickStartStore
     @State private var hasAcceptedDisclosure: Bool
@@ -37,8 +36,6 @@ struct ContentView: View {
     private let settingsActionModel: MicrophoneSettingsActionModel
     private let soundSettingsActionModel: SoundSettingsActionModel
     private let speechSettingsActionModel: SpeechSettingsActionModel
-    private let recordingsFolderActionModel: RecordingsFolderActionModel
-    private let diagnosticsExportActionModel: DiagnosticsExportActionModel
 
     init(
         audioCapturePreferencesStore: AudioCapturePreferencesStore = AudioCapturePreferencesStore(),
@@ -46,14 +43,11 @@ struct ContentView: View {
         overlayPreferencesStore: OverlayPreferencesStore = OverlayPreferencesStore(),
         perAppProfileStore: PerAppFeedbackProfileStore = PerAppFeedbackProfileStore(),
         coachingProfileStore: CoachingProfileStore = CoachingProfileStore(),
-        conferencingVerificationStore: ConferencingCompatibilityVerificationStore = ConferencingCompatibilityVerificationStore(),
         privacyDisclosureStore: PrivacyDisclosureStore = PrivacyDisclosureStore(),
         quickStartStore: QuickStartStore = QuickStartStore(),
         settingsActionModel: MicrophoneSettingsActionModel = MicrophoneSettingsActionModel(),
         soundSettingsActionModel: SoundSettingsActionModel = SoundSettingsActionModel(),
-        speechSettingsActionModel: SpeechSettingsActionModel = SpeechSettingsActionModel(),
-        recordingsFolderActionModel: RecordingsFolderActionModel = RecordingsFolderActionModel(),
-        diagnosticsExportActionModel: DiagnosticsExportActionModel = DiagnosticsExportActionModel()
+        speechSettingsActionModel: SpeechSettingsActionModel = SpeechSettingsActionModel()
     ) {
         let basePreferencesStore = AnalysisPreferencesStore()
         let frontmostAppMonitor = FrontmostAppMonitor()
@@ -74,7 +68,6 @@ struct ContentView: View {
         _recordingPreferencesStore = StateObject(wrappedValue: recordingPreferencesStore)
         _perAppProfileStore = StateObject(wrappedValue: perAppProfileStore)
         _coachingProfileStore = StateObject(wrappedValue: coachingProfileStore)
-        _conferencingVerificationStore = StateObject(wrappedValue: conferencingVerificationStore)
         _preferencesStore = StateObject(wrappedValue: basePreferencesStore)
         _frontmostAppMonitor = StateObject(wrappedValue: frontmostAppMonitor)
         _activePreferencesStore = StateObject(wrappedValue: activePreferencesStore)
@@ -94,8 +87,6 @@ struct ContentView: View {
         self.settingsActionModel = settingsActionModel
         self.soundSettingsActionModel = soundSettingsActionModel
         self.speechSettingsActionModel = speechSettingsActionModel
-        self.recordingsFolderActionModel = recordingsFolderActionModel
-        self.diagnosticsExportActionModel = diagnosticsExportActionModel
     }
 
     var body: some View {
@@ -190,12 +181,7 @@ struct ContentView: View {
                         preferencesStore: preferencesStore,
                         overlayPreferencesStore: overlayPreferencesStore,
                         audioCapturePreferencesStore: audioCapturePreferencesStore,
-                        recordingPreferencesStore: recordingPreferencesStore,
-                        perAppProfileStore: perAppProfileStore,
                         coachingProfileStore: coachingProfileStore,
-                        conferencingVerificationStore: conferencingVerificationStore,
-                        audioCapture: audioCapture,
-                        audioAnalyzer: audioAnalyzer,
                         hasAcceptedDisclosure: hasAcceptedDisclosure,
                         recordingsPath: PathDisplayFormatter.displayPath(
                             RecordingManager.shared.recordingsDirectoryURL()
@@ -207,11 +193,7 @@ struct ContentView: View {
                         onRequestSpeechAccess: speechPermission.requestAccess,
                         onOpenSystemSettings: settingsActionModel.openSystemSettings,
                         onOpenSoundSettings: soundSettingsActionModel.openSoundSettings,
-                        onOpenSpeechSettings: speechSettingsActionModel.openSystemSettings,
-                        onOpenRecordingsFolder: recordingsFolderActionModel.openRecordingsFolder,
-                        onExportDiagnostics: exportDiagnostics,
-                        onRunMicTest: runMicTest,
-                        onShowQuickStart: showQuickStart
+                        onOpenSpeechSettings: speechSettingsActionModel.openSystemSettings
                     )
                 }
             }
@@ -368,42 +350,12 @@ struct ContentView: View {
         }
     }
 
-    private func runMicTest() {
-        microphonePermission.refresh()
-        microphoneDevices.refresh()
-        let privacyState = PrivacyGuardrails.State(
-            hasAcceptedDisclosure: hasAcceptedDisclosure
-        )
-        audioCapture.startMicTest(
-            privacyState: privacyState,
-            microphonePermission: microphonePermission.state,
-            hasMicrophoneInput: microphoneDevices.hasMicrophoneInput
-        )
-    }
-
     private func refreshRecordings() {
         recordingsViewModel.refreshRecordings()
     }
 
     private func openRecordingsFolder() {
         recordingsViewModel.openRecordingsFolder()
-    }
-
-    private func exportDiagnostics() {
-        let report = DiagnosticsReport.make(
-            appVersion: AppVersionInfo(),
-            systemVersion: ProcessInfo.processInfo.operatingSystemVersionString,
-            microphonePermission: microphonePermission.state,
-            speechPermission: speechPermission.state,
-            capturePreferences: audioCapturePreferencesStore.current,
-            retentionPreferences: recordingPreferencesStore.current,
-            recordingsCount: RecordingManager.shared.getAllRecordings().count
-        )
-        diagnosticsExportActionModel.export(report: report)
-    }
-
-    private func showQuickStart() {
-        isQuickStartSheetPresented = true
     }
 
     private func saveSessionTitle() {

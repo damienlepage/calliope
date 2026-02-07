@@ -243,3 +243,24 @@ goals:
     notes:
       - "New 2026-02-07: Add deterministic regression coverage to verify min/max/average WPM calculations against known elapsed times and transcript word counts."
       - "Validated 2026-02-07: Added AudioAnalyzer regression test to confirm min/max/average WPM from controlled timestamps."
+  - id: G43
+    title: Settings declutter and user-first controls only
+    status: AT_TARGET
+    notes:
+      - "New 2026-02-07: Settings must be tidy and show only user-facing controls (mic access/input, speech permission, coaching profiles, sensitivity, pause boundaries, crutch words, overlay, privacy). Remove verification status, diagnostics, and validation checklists."
+      - "Validated 2026-02-07: Settings now limits sections to microphone access/input, speech permission, privacy guardrails, sensitivity/pause controls, crutch words, coaching profiles, and overlay; removed compatibility/diagnostics/performance/retention content."
+  - id: G44
+    title: Recordings list readability and focused metadata
+    status: BELOW_TARGET
+    notes:
+      - "New 2026-02-07: Recordings list first column shows only name/title; details hidden behind a Details action; columns remain readable without horizontal scrolling."
+  - id: G45
+    title: Recording details modal usability polish
+    status: BELOW_TARGET
+    notes:
+      - "New 2026-02-07: Recording details modal or sheet includes a clear Close button and follows macOS sheet conventions."
+  - id: G46
+    title: Session surface simplicity and no-scroll layout
+    status: BELOW_TARGET
+    notes:
+      - "New 2026-02-07: Session surface remains glanceable with fixed layout and no scrolling at default window size; only session-relevant elements appear."
