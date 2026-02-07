@@ -1,1 +1,1 @@
-Goal completed: Support diagnostics export entry point
+Goal completed: PRD acceptance validation and success-metric sign-off

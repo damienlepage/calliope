@@ -27,6 +27,10 @@ Record results in `RELEASE_QA_TEMPLATE.md` for each release candidate.
 3. Warnings appear for high latency or risky audio routes when applicable.
 4. Feedback panel remains minimal and calm (no settings/permissions controls).
 
+## PRD Acceptance
+1. Complete the PRD Acceptance Checklist in `RELEASE_QA_TEMPLATE.md`.
+2. Confirm success metrics are met and record any deviations.
+
 ## Recordings & Playback
 1. A recording appears in the Recordings list after Stop.
 2. Open the recording detail sheet and verify stats are populated.

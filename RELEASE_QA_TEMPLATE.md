@@ -61,6 +61,23 @@ Use this template to record a release candidate QA run. Store completed reports 
 - No audio or transcripts leave the device
 - Only the local microphone input is captured
 
+## PRD Acceptance Checklist
+Confirm the core PRD requirements and success metrics are met during this QA run.
+
+### Core Requirements
+- Live session shows elapsed time, speaking time, pace (WPM), crutch word count, pause indicator, and input level while recording
+- Closed captions are visible by default and the CC toggle works
+- Crutch counts in live feedback match the final session summary
+- Coaching profile selection is available per session (including per-app profiles) and affects targets
+- Session recordings save locally with date/time-based default names and optional titles
+- Recordings list supports search and sorting (Date, Duration, Speaking %)
+- Recording details include speaking time, speaking turns, pace, crutch counts, and pauses
+
+### Success Metrics
+- Start a session within 2 seconds of app launch
+- Live feedback is understandable at a glance without training or docs
+- The UI feels calm, focused, and native during a live call
+
 ## User-Facing Release Notes
 ### What Changed
 - 
