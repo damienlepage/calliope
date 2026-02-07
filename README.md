@@ -168,6 +168,12 @@ Release validation steps are documented in `RELEASE_CHECKLIST.md`.
 Use `RELEASE_QA_TEMPLATE.md` to capture release candidate QA results and user-facing notes.
 Generate a new report with `./scripts/new-release-qa-report.sh`, which stores the report in `release/`.
 
+### Packaged App QA Helpers
+
+Use these scripts to update the latest release QA report during packaged app verification:
+- `./scripts/packaged-app-qa-preflight.sh` updates the report metadata (macOS version, hardware, and app version/build) based on the current machine.
+- `./scripts/packaged-app-qa-update-row.sh "macOS 14 (Sonoma)" "Machine" "Pass" "Pass" "Pass" "Pass" "Notes"` updates the packaged app verification row for the specified macOS version.
+
 ### Development Workflow
 
 1. **Write code in Cursor** - All source files are in `Sources/Calliope/`
