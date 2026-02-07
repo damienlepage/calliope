@@ -142,4 +142,16 @@ final class AnalysisPreferencesStoreTests: XCTestCase {
             XCTFail("Expected a non-default crutch word preset")
         }
     }
+
+    func testCrutchWordPresetsAreNormalized() {
+        let presets = AnalysisPreferencesStore.crutchWordPresets
+
+        for preset in presets {
+            XCTAssertEqual(
+                preset.words,
+                AnalysisPreferencesStore.normalizeCrutchWords(preset.words),
+                "Expected preset \(preset.name) to be normalized"
+            )
+        }
+    }
 }

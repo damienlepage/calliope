@@ -185,6 +185,21 @@ private struct CoachingProfileEditor: View {
                     .font(.subheadline)
                 TextField("uh, um, you know", text: crutchWordsBinding)
                     .textFieldStyle(.roundedBorder)
+                HStack {
+                    Text("Presets")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                    Menu("Choose") {
+                        ForEach(AnalysisPreferencesStore.crutchWordPresets) { preset in
+                            Button(preset.name) {
+                                profile.preferences.crutchWords = preset.words
+                            }
+                        }
+                    }
+                }
+                Text("Selecting a preset replaces the current list.")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

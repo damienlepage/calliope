@@ -1,6 +1,6 @@
 ---
 id: cal-5fkc
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-07T01:12:37Z
