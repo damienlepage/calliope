@@ -333,3 +333,18 @@ goals:
     status: BELOW_TARGET
     notes:
       - "New 2026-02-07: Confirm packaged app launches, permissions, recordings storage, and session flows on supported macOS versions; document results."
+  - id: G58
+    title: Live feedback layout is clean and glanceable
+    status: BELOW_TARGET
+    notes:
+      - "New 2026-02-07: Live feedback must be readable in under 500ms and fit without scrolling; layout is calm, uncluttered, and consistent across window sizes."
+  - id: G59
+    title: Live feedback includes all glanceable metrics
+    status: BELOW_TARGET
+    notes:
+      - "New 2026-02-07: Live feedback shows input level, WPM count with target zone indicator, elapsed time, speaking time, pauses, crutch words, live captions, and coaching profile."
+  - id: G60
+    title: Pace visualization communicates target zone at a glance
+    status: BELOW_TARGET
+    notes:
+      - "New 2026-02-07: WPM display includes a clear target zone indicator aligned with the active coaching profile range."

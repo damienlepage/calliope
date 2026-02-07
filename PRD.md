@@ -46,6 +46,7 @@ Calliope is a native macOS app that acts as a real-time communication coach duri
    - Crutch word count.
    - Pause indicator.
    - Input level meter.
+   - Coaching profile.
 4. Closed captions are captured on the fly, visible by default, and toggleable via a clearly visible CC control.
 5. Local storage of recordings and analysis artifacts on the user’s file system.
 6. Each session is saved with a default name including session date and start time.
@@ -90,13 +91,16 @@ Calliope is a native macOS app that acts as a real-time communication coach duri
 
 ### Main Session Screen (Default)
 - Prominent Start/Stop control with clear recording state.
-- Fixed-layout live feedback panel showing:
-  - Elapsed time
-  - Speaking time
-  - Pace
-  - Crutch words
-  - Pause indicator
-  - Input level
+- Fixed-layout live feedback panel that is clean, glanceable, and readable in under 500ms.
+- Live feedback must show, at a glance:
+  - Input level.
+  - WPM count with a visual indicator and target zone.
+  - Elapsed time.
+  - Speaking time.
+  - Pauses.
+  - Crutch words.
+  - Live captions.
+  - Coaching profile.
 - No scrolling at default window size.
 - Minimal idle state:
   - Short friendly prompt.
