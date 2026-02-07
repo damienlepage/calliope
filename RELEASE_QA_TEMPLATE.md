@@ -50,6 +50,14 @@ Use this template to record a release candidate QA run. Store completed reports 
 - `./scripts/package-release.sh` produces `dist/Calliope.app` + versioned zip
 - Signing identity applied when configured
 
+## Packaged App Verification (Per macOS Version)
+Fill one line per macOS version tested. Validate launch, permissions, recordings storage, and session flows.
+
+| macOS Version | Machine | Launches | Permissions | Session Flow | Recordings Storage | Notes |
+| --- | --- | --- | --- | --- | --- | --- |
+|  |  | Pass/Fail | Pass/Fail | Pass/Fail | Pass/Fail |  |
+|  |  | Pass/Fail | Pass/Fail | Pass/Fail | Pass/Fail |  |
+
 ## Notarization & Signing
 - Notarization submission command recorded (if applicable)
 - Staple step completed (if applicable)

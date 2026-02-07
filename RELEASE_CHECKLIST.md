@@ -50,8 +50,9 @@ Record results in `RELEASE_QA_TEMPLATE.md` for each release candidate.
 
 ## Packaged App Verification (Supported macOS Versions)
 Fill one line per macOS version tested.
+Validate launch, permissions, recordings storage, and session flows per version.
 
-| macOS Version | Machine | Launches | Permissions Prompt | Session Start/Stop | Recordings Flow | Notes |
+| macOS Version | Machine | Launches | Permissions | Session Flow | Recordings Storage | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 |  |  | Pass/Fail | Pass/Fail | Pass/Fail | Pass/Fail |  |
 |  |  | Pass/Fail | Pass/Fail | Pass/Fail | Pass/Fail |  |
@@ -61,7 +62,7 @@ Run these steps in the packaged app on each supported macOS version.
 1. Launch `dist/Calliope.app` and confirm it defaults to the Session screen.
 2. Start a session and confirm the microphone permission prompt appears if not previously granted.
 3. Confirm Session start/stop works and the post-session recap appears.
-4. Confirm a recording appears in the Recordings view and playback works.
+4. Confirm a recording appears in the Recordings view, playback works, and storage location is accessible via Reveal/Open Folder.
 
 ## Notarization & Signing Reminders
 1. Notarization is required for distribution outside the App Store.

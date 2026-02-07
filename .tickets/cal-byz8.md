@@ -1,6 +1,6 @@
 ---
 id: cal-byz8
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-07T08:24:00Z
