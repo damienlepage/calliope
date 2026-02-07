@@ -17,10 +17,6 @@ struct FeedbackPanel: View {
     let inputLevel: Double
     let showSilenceWarning: Bool
     let showWaitingForSpeech: Bool
-    let processingLatencyStatus: ProcessingLatencyStatus
-    let processingLatencyAverage: TimeInterval
-    let processingUtilizationStatus: ProcessingUtilizationStatus
-    let processingUtilizationAverage: Double
     let paceMin: Double
     let paceMax: Double
     let sessionDurationText: String?
@@ -41,6 +37,12 @@ struct FeedbackPanel: View {
             GridItem(.flexible(), spacing: cardSpacing)
         ]
         let crutchLevel = CrutchWordFeedback.level(for: crutchWords)
+        let statusMessages = FeedbackStatusMessages.build(
+            storageStatus: storageStatus,
+            interruptionMessage: nil,
+            showSilenceWarning: showSilenceWarning,
+            showWaitingForSpeech: showWaitingForSpeech
+        )
         VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .firstTextBaseline) {
                 Text("Real-time Feedback")
@@ -109,41 +111,15 @@ struct FeedbackPanel: View {
                 )
             }
 
-            FeedbackCard(title: "System Health") {
-                VStack(alignment: .leading, spacing: 8) {
-                    statusLine(
-                        label: "Processing",
-                        value: ProcessingLatencyFormatter.statusText(
-                            status: processingLatencyStatus,
-                            average: processingLatencyAverage
-                        ),
-                        color: processingStatusColor(processingLatencyStatus),
-                        icon: statusIconName(for: processingLatencyStatus)
-                    )
-                    statusLine(
-                        label: "Load",
-                        value: ProcessingUtilizationFormatter.statusText(
-                            status: processingUtilizationStatus,
-                            average: processingUtilizationAverage
-                        ),
-                        color: utilizationStatusColor(processingUtilizationStatus),
-                        icon: statusIconName(for: processingUtilizationStatus)
-                    )
-                    if let warningText = ProcessingLatencyFormatter.warningText(status: processingLatencyStatus) {
-                        feedbackNote(warningText)
-                    }
-                    if let warningText = ProcessingUtilizationFormatter.warningText(status: processingUtilizationStatus) {
-                        feedbackNote(warningText)
-                    }
-                    if let warningText = RecordingStorageWarningFormatter.warningText(status: storageStatus) {
-                        feedbackWarning(warningText)
-                    }
-                    if showSilenceWarning {
-                        feedbackWarning("No mic input detected")
-                        feedbackNote("Check your microphone or input selection in Settings.")
-                    }
-                    if showWaitingForSpeech {
-                        feedbackNote("Waiting for speech")
+            if !statusMessages.isEmpty {
+                FeedbackCard(title: "Session Status") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(statusMessages.warnings, id: \.self) { message in
+                            feedbackWarning(message)
+                        }
+                        ForEach(statusMessages.notes, id: \.self) { message in
+                            feedbackNote(message)
+                        }
                     }
                 }
             }
@@ -184,66 +160,6 @@ struct FeedbackPanel: View {
             return Color(NSColor.systemGreen)
         case .caution:
             return Color(NSColor.systemOrange)
-        }
-    }
-
-    private func processingStatusColor(_ status: ProcessingLatencyStatus) -> Color {
-        switch status {
-        case .ok:
-            return .secondary
-        case .high:
-            return Color(NSColor.systemOrange)
-        case .critical:
-            return Color(NSColor.systemRed)
-        }
-    }
-
-    private func utilizationStatusColor(_ status: ProcessingUtilizationStatus) -> Color {
-        switch status {
-        case .ok:
-            return .secondary
-        case .high:
-            return Color(NSColor.systemOrange)
-        case .critical:
-            return Color(NSColor.systemRed)
-        }
-    }
-
-    private func statusLine(label: String, value: String, color: Color, icon: String?) -> some View {
-        HStack(spacing: 6) {
-            if let icon {
-                Image(systemName: icon)
-                    .font(.footnote)
-                    .foregroundColor(color)
-            }
-            Text("\(label):")
-                .font(.footnote)
-                .foregroundColor(.secondary)
-            Text(value)
-                .font(.footnote)
-                .foregroundColor(color)
-        }
-    }
-
-    private func statusIconName(for status: ProcessingLatencyStatus) -> String? {
-        switch status {
-        case .ok:
-            return "checkmark.circle.fill"
-        case .high:
-            return "exclamationmark.triangle.fill"
-        case .critical:
-            return "exclamationmark.octagon.fill"
-        }
-    }
-
-    private func statusIconName(for status: ProcessingUtilizationStatus) -> String? {
-        switch status {
-        case .ok:
-            return "checkmark.circle.fill"
-        case .high:
-            return "exclamationmark.triangle.fill"
-        case .critical:
-            return "exclamationmark.octagon.fill"
         }
     }
 
@@ -426,10 +342,6 @@ struct FeedbackPanel_Previews: PreviewProvider {
             inputLevel: 0.4,
             showSilenceWarning: false,
             showWaitingForSpeech: false,
-            processingLatencyStatus: .ok,
-            processingLatencyAverage: 0.012,
-            processingUtilizationStatus: .ok,
-            processingUtilizationAverage: 0.52,
             paceMin: Constants.targetPaceMin,
             paceMax: Constants.targetPaceMax,
             sessionDurationText: "02:15",

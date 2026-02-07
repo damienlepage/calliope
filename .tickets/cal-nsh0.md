@@ -1,6 +1,6 @@
 ---
 id: cal-nsh0
-status: ready
+status: closed
 deps: []
 links: []
 created: 2026-02-07T00:34:00Z

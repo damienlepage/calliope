@@ -1,1 +1,1 @@
-Goal completed: Live closed captions with CC toggle
+Goal completed: Remove system health from live feedback surfaces

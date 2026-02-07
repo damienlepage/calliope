@@ -226,6 +226,7 @@ goals:
       - "Validated 2026-02-07: Live feedback and overlay now show speaking time during recording with audio-driven updates and unit coverage."
   - id: G40
     title: Remove system health from live feedback surfaces
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "2026-02-07: PRD specifies no system health on live feedback; current session and overlay show processing/load status."
+      - "Validated 2026-02-07: Removed processing/load system health cards from session feedback panel and compact overlay; status warnings remain in Settings/diagnostics."

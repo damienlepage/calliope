@@ -17,10 +17,6 @@ struct CompactFeedbackOverlay: View {
     let inputLevel: Double
     let showSilenceWarning: Bool
     let showWaitingForSpeech: Bool
-    let processingLatencyStatus: ProcessingLatencyStatus
-    let processingLatencyAverage: TimeInterval
-    let processingUtilizationStatus: ProcessingUtilizationStatus
-    let processingUtilizationAverage: Double
     let captureStatusText: String
     let paceMin: Double
     let paceMax: Double
@@ -44,6 +40,12 @@ struct CompactFeedbackOverlay: View {
             GridItem(.flexible(), spacing: cardSpacing),
             GridItem(.flexible(), spacing: cardSpacing)
         ]
+        let statusMessages = FeedbackStatusMessages.build(
+            storageStatus: storageStatus,
+            interruptionMessage: interruptionMessage,
+            showSilenceWarning: showSilenceWarning,
+            showWaitingForSpeech: showWaitingForSpeech
+        )
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 Text("Live Feedback")
@@ -112,44 +114,15 @@ struct CompactFeedbackOverlay: View {
                 )
             }
 
-            OverlayCard(title: "System Health") {
-                VStack(alignment: .leading, spacing: 8) {
-                    statusLine(
-                        label: "Processing",
-                        value: ProcessingLatencyFormatter.statusText(
-                            status: processingLatencyStatus,
-                            average: processingLatencyAverage
-                        ),
-                        color: processingStatusColor(processingLatencyStatus),
-                        icon: statusIconName(for: processingLatencyStatus)
-                    )
-                    statusLine(
-                        label: "Load",
-                        value: ProcessingUtilizationFormatter.statusText(
-                            status: processingUtilizationStatus,
-                            average: processingUtilizationAverage
-                        ),
-                        color: utilizationStatusColor(processingUtilizationStatus),
-                        icon: statusIconName(for: processingUtilizationStatus)
-                    )
-                    if let warningText = ProcessingLatencyFormatter.warningText(status: processingLatencyStatus) {
-                        feedbackNote(warningText)
-                    }
-                    if let warningText = ProcessingUtilizationFormatter.warningText(status: processingUtilizationStatus) {
-                        feedbackNote(warningText)
-                    }
-                    if let warningText = RecordingStorageWarningFormatter.warningText(status: storageStatus) {
-                        feedbackWarning(warningText)
-                    }
-                    if let interruptionMessage {
-                        feedbackWarning(interruptionMessage)
-                    }
-                    if showSilenceWarning {
-                        feedbackWarning("No mic input detected")
-                        feedbackNote("Check your microphone or input selection in Settings.")
-                    }
-                    if showWaitingForSpeech {
-                        feedbackNote("Waiting for speech")
+            if !statusMessages.isEmpty {
+                OverlayCard(title: "Session Status") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(statusMessages.warnings, id: \.self) { message in
+                            feedbackWarning(message)
+                        }
+                        ForEach(statusMessages.notes, id: \.self) { message in
+                            feedbackNote(message)
+                        }
                     }
                 }
             }
@@ -191,66 +164,6 @@ struct CompactFeedbackOverlay: View {
             return Color(NSColor.systemGreen)
         case .caution:
             return Color(NSColor.systemOrange)
-        }
-    }
-
-    private func processingStatusColor(_ status: ProcessingLatencyStatus) -> Color {
-        switch status {
-        case .ok:
-            return .secondary
-        case .high:
-            return Color(NSColor.systemOrange)
-        case .critical:
-            return Color(NSColor.systemRed)
-        }
-    }
-
-    private func utilizationStatusColor(_ status: ProcessingUtilizationStatus) -> Color {
-        switch status {
-        case .ok:
-            return .secondary
-        case .high:
-            return Color(NSColor.systemOrange)
-        case .critical:
-            return Color(NSColor.systemRed)
-        }
-    }
-
-    private func statusLine(label: String, value: String, color: Color, icon: String?) -> some View {
-        HStack(spacing: 6) {
-            if let icon {
-                Image(systemName: icon)
-                    .font(.footnote)
-                    .foregroundColor(color)
-            }
-            Text("\(label):")
-                .font(.footnote)
-                .foregroundColor(.secondary)
-            Text(value)
-                .font(.footnote)
-                .foregroundColor(color)
-        }
-    }
-
-    private func statusIconName(for status: ProcessingLatencyStatus) -> String? {
-        switch status {
-        case .ok:
-            return "checkmark.circle.fill"
-        case .high:
-            return "exclamationmark.triangle.fill"
-        case .critical:
-            return "exclamationmark.octagon.fill"
-        }
-    }
-
-    private func statusIconName(for status: ProcessingUtilizationStatus) -> String? {
-        switch status {
-        case .ok:
-            return "checkmark.circle.fill"
-        case .high:
-            return "exclamationmark.triangle.fill"
-        case .critical:
-            return "exclamationmark.octagon.fill"
         }
     }
 
@@ -353,10 +266,6 @@ struct CompactFeedbackOverlay_Previews: PreviewProvider {
             inputLevel: 0.6,
             showSilenceWarning: false,
             showWaitingForSpeech: false,
-            processingLatencyStatus: .ok,
-            processingLatencyAverage: 0.009,
-            processingUtilizationStatus: .ok,
-            processingUtilizationAverage: 0.47,
             captureStatusText: "Input: Built-in Microphone · Capture: Standard mic",
             paceMin: Constants.targetPaceMin,
             paceMax: Constants.targetPaceMax,
