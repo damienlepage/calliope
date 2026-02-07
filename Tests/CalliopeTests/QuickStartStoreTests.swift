@@ -11,7 +11,7 @@ final class QuickStartStoreTests: XCTestCase {
         defaults.removePersistentDomain(forName: suiteName)
         defer { defaults.removePersistentDomain(forName: suiteName) }
 
-        var store = QuickStartStore(defaults: defaults)
+        let store = QuickStartStore(defaults: defaults)
         XCTAssertFalse(store.hasSeenQuickStart)
 
         store.hasSeenQuickStart = true

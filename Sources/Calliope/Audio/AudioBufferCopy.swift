@@ -26,7 +26,7 @@ enum AudioBufferCopy {
             let frames = Int(buffer.frameLength)
             let channels = Int(buffer.format.channelCount)
             for channel in 0..<channels {
-                destination[channel].assign(from: source[channel], count: frames)
+                destination[channel].update(from: source[channel], count: frames)
             }
             return newBuffer
         }
@@ -35,7 +35,7 @@ enum AudioBufferCopy {
             let frames = Int(buffer.frameLength)
             let channels = Int(buffer.format.channelCount)
             for channel in 0..<channels {
-                destination[channel].assign(from: source[channel], count: frames)
+                destination[channel].update(from: source[channel], count: frames)
             }
             return newBuffer
         }
@@ -44,7 +44,7 @@ enum AudioBufferCopy {
             let frames = Int(buffer.frameLength)
             let channels = Int(buffer.format.channelCount)
             for channel in 0..<channels {
-                destination[channel].assign(from: source[channel], count: frames)
+                destination[channel].update(from: source[channel], count: frames)
             }
             return newBuffer
         }

@@ -26,7 +26,7 @@ enum AudioOutputDeviceLookup {
         var address = AudioObjectPropertyAddress(
             mSelector: kAudioHardwarePropertyDefaultOutputDevice,
             mScope: kAudioObjectPropertyScopeGlobal,
-            mElement: kAudioObjectPropertyElementMaster
+            mElement: kAudioObjectPropertyElementMain
         )
         let status = AudioObjectGetPropertyData(
             AudioObjectID(kAudioObjectSystemObject),
@@ -44,18 +44,20 @@ enum AudioOutputDeviceLookup {
         var address = AudioObjectPropertyAddress(
             mSelector: kAudioObjectPropertyName,
             mScope: kAudioObjectPropertyScopeGlobal,
-            mElement: kAudioObjectPropertyElementMaster
+            mElement: kAudioObjectPropertyElementMain
         )
         var dataSize = UInt32(MemoryLayout<CFString>.size)
         var name: CFString = "" as CFString
-        let status = AudioObjectGetPropertyData(
-            deviceID,
-            &address,
-            0,
-            nil,
-            &dataSize,
-            &name
-        )
+        let status = withUnsafeMutablePointer(to: &name) { pointer in
+            AudioObjectGetPropertyData(
+                deviceID,
+                &address,
+                0,
+                nil,
+                &dataSize,
+                pointer
+            )
+        }
         guard status == noErr else { return nil }
         return name as String
     }

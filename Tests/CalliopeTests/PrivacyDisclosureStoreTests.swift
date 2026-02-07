@@ -11,7 +11,7 @@ final class PrivacyDisclosureStoreTests: XCTestCase {
         defaults.removePersistentDomain(forName: suiteName)
         defer { defaults.removePersistentDomain(forName: suiteName) }
 
-        var store = PrivacyDisclosureStore(defaults: defaults)
+        let store = PrivacyDisclosureStore(defaults: defaults)
         XCTAssertFalse(store.hasAcceptedDisclosure)
 
         store.hasAcceptedDisclosure = true

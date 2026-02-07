@@ -1058,13 +1058,7 @@ final class RecordingListViewModel: ObservableObject {
     }
 
     private static func defaultDuration(_ url: URL) -> TimeInterval? {
-        let asset = AVURLAsset(url: url)
-        let duration = asset.duration
-        guard duration.isNumeric else {
-            return nil
-        }
-        let seconds = CMTimeGetSeconds(duration)
-        return seconds > 0 ? seconds : nil
+        AssetDurationLoader.loadSeconds(for: url)
     }
 
     private static func defaultFileSize(_ url: URL) -> Int? {

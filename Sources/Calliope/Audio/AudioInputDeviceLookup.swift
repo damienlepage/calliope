@@ -55,7 +55,7 @@ enum AudioInputDeviceLookup {
         var address = AudioObjectPropertyAddress(
             mSelector: kAudioHardwarePropertyDefaultInputDevice,
             mScope: kAudioObjectPropertyScopeGlobal,
-            mElement: kAudioObjectPropertyElementMaster
+            mElement: kAudioObjectPropertyElementMain
         )
         let status = AudioObjectGetPropertyData(
             AudioObjectID(kAudioObjectSystemObject),
@@ -73,7 +73,7 @@ enum AudioInputDeviceLookup {
         var address = AudioObjectPropertyAddress(
             mSelector: kAudioHardwarePropertyDevices,
             mScope: kAudioObjectPropertyScopeGlobal,
-            mElement: kAudioObjectPropertyElementMaster
+            mElement: kAudioObjectPropertyElementMain
         )
         var dataSize: UInt32 = 0
         let systemObject = AudioObjectID(kAudioObjectSystemObject)
@@ -91,18 +91,20 @@ enum AudioInputDeviceLookup {
         var address = AudioObjectPropertyAddress(
             mSelector: kAudioObjectPropertyName,
             mScope: kAudioObjectPropertyScopeGlobal,
-            mElement: kAudioObjectPropertyElementMaster
+            mElement: kAudioObjectPropertyElementMain
         )
         var dataSize = UInt32(MemoryLayout<CFString>.size)
         var name: CFString = "" as CFString
-        let status = AudioObjectGetPropertyData(
-            deviceID,
-            &address,
-            0,
-            nil,
-            &dataSize,
-            &name
-        )
+        let status = withUnsafeMutablePointer(to: &name) { pointer in
+            AudioObjectGetPropertyData(
+                deviceID,
+                &address,
+                0,
+                nil,
+                &dataSize,
+                pointer
+            )
+        }
         guard status == noErr else { return nil }
         return name as String
     }
@@ -111,7 +113,7 @@ enum AudioInputDeviceLookup {
         var address = AudioObjectPropertyAddress(
             mSelector: kAudioDevicePropertyStreamConfiguration,
             mScope: kAudioDevicePropertyScopeInput,
-            mElement: kAudioObjectPropertyElementMaster
+            mElement: kAudioObjectPropertyElementMain
         )
         var dataSize: UInt32 = 0
         guard AudioObjectGetPropertyDataSize(deviceID, &address, 0, nil, &dataSize) == noErr else {
@@ -127,11 +129,13 @@ enum AudioInputDeviceLookup {
             return false
         }
         let bufferList = audioBufferList.pointee
-        let buffers = UnsafeBufferPointer<AudioBuffer>(
-            start: &audioBufferList.pointee.mBuffers,
-            count: Int(bufferList.mNumberBuffers)
-        )
-        let channelCount = buffers.reduce(0) { $0 + Int($1.mNumberChannels) }
+        let channelCount = withUnsafePointer(to: &audioBufferList.pointee.mBuffers) { pointer in
+            let buffers = UnsafeBufferPointer<AudioBuffer>(
+                start: pointer,
+                count: Int(bufferList.mNumberBuffers)
+            )
+            return buffers.reduce(0) { $0 + Int($1.mNumberChannels) }
+        }
         return channelCount > 0
     }
 }
