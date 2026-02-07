@@ -285,14 +285,14 @@ private struct FeedbackStatCard<Accessory: View>: View {
     let value: String
     let valueColor: Color
     let subtitle: String?
-    let accessory: Accessory?
+    let accessory: Accessory
 
     init(
         title: String,
         value: String,
         valueColor: Color,
         subtitle: String? = nil,
-        @ViewBuilder accessory: () -> Accessory? = { nil }
+        @ViewBuilder accessory: () -> Accessory
     ) {
         self.title = title
         self.value = value
@@ -312,11 +312,26 @@ private struct FeedbackStatCard<Accessory: View>: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
-                if let accessory {
-                    accessory
-                }
+                accessory
             }
         }
+    }
+}
+
+private extension FeedbackStatCard where Accessory == EmptyView {
+    init(
+        title: String,
+        value: String,
+        valueColor: Color,
+        subtitle: String? = nil
+    ) {
+        self.init(
+            title: title,
+            value: value,
+            valueColor: valueColor,
+            subtitle: subtitle,
+            accessory: { EmptyView() }
+        )
     }
 }
 
