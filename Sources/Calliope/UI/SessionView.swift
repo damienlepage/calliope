@@ -128,7 +128,7 @@ struct SessionView: View {
                     )
                 }
 
-                if !coachingProfiles.isEmpty {
+                if coachingProfiles.count > 1 {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Coaching profile")
                             .font(.caption)
@@ -235,7 +235,7 @@ private struct SessionViewPreview: View {
             canStartRecording: true,
             blockingReasonsText: nil,
             storageStatus: .ok,
-            activeProfileLabel: "Profile: Default",
+            activeProfileLabel: "Profile: Default (App: Default)",
             showTitlePrompt: true,
             defaultSessionTitle: "Session Jan 1, 2026 at 9:00 AM",
             sessionTitleDraft: $sessionTitle,

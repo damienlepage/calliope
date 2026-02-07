@@ -205,7 +205,7 @@ struct CompactFeedbackOverlay_Previews: PreviewProvider {
             sessionDurationSeconds: 42,
             storageStatus: .ok,
             interruptionMessage: "Audio input changed. Recording continues with the new device.",
-            activeProfileLabel: "Profile: Default"
+            activeProfileLabel: "Profile: Default (App: Default)"
         )
         .padding()
     }

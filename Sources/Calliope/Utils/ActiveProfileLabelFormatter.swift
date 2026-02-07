@@ -8,13 +8,17 @@
 import Foundation
 
 struct ActiveProfileLabelFormatter {
-    static func labelText(isRecording: Bool, profile: PerAppFeedbackProfile?) -> String? {
+    static func labelText(
+        isRecording: Bool,
+        coachingProfileName: String?,
+        perAppProfile: PerAppFeedbackProfile?
+    ) -> String? {
         guard isRecording else {
             return nil
         }
-        if let profile {
-            return "Profile: \(profile.appIdentifier)"
-        }
-        return "Profile: Default"
+        let trimmedName = coachingProfileName?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let resolvedCoachingName = (trimmedName?.isEmpty == false) ? trimmedName! : "Default"
+        let appLabel = perAppProfile?.appIdentifier ?? "Default"
+        return "Profile: \(resolvedCoachingName) (App: \(appLabel))"
     }
 }

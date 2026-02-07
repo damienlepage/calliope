@@ -1,6 +1,6 @@
 ---
 id: cal-rxwr
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-07T00:42:57Z

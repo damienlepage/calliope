@@ -108,7 +108,8 @@ struct ContentView: View {
         )
         let activeProfileLabel = ActiveProfileLabelFormatter.labelText(
             isRecording: audioCapture.isRecording,
-            profile: activePreferencesStore.activeProfile
+            coachingProfileName: coachingProfileStore.selectedProfile?.name,
+            perAppProfile: activePreferencesStore.activeProfile
         )
         let defaultSessionTitle = pendingSessionForTitle.map {
             RecordingMetadata.defaultSessionTitle(for: $0.createdAt)

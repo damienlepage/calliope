@@ -14,23 +14,32 @@ final class ActiveProfileLabelFormatterTests: XCTestCase {
 
         XCTAssertNil(ActiveProfileLabelFormatter.labelText(
             isRecording: false,
-            profile: profile
+            coachingProfileName: "Focused",
+            perAppProfile: profile
         ))
     }
 
-    func testLabelUsesDefaultWhenRecordingWithoutProfile() {
+    func testLabelUsesCoachingDefaultAndAppDefaultWhenRecordingWithoutProfiles() {
         XCTAssertEqual(
-            ActiveProfileLabelFormatter.labelText(isRecording: true, profile: nil),
-            "Profile: Default"
+            ActiveProfileLabelFormatter.labelText(
+                isRecording: true,
+                coachingProfileName: nil,
+                perAppProfile: nil
+            ),
+            "Profile: Default (App: Default)"
         )
     }
 
-    func testLabelUsesProfileIdentifierWhenRecording() {
+    func testLabelUsesCoachingProfileAndAppIdentifierWhenRecording() {
         let profile = PerAppFeedbackProfile.default(for: "com.zoom.us")
 
         XCTAssertEqual(
-            ActiveProfileLabelFormatter.labelText(isRecording: true, profile: profile),
-            "Profile: com.zoom.us"
+            ActiveProfileLabelFormatter.labelText(
+                isRecording: true,
+                coachingProfileName: "On Air",
+                perAppProfile: profile
+            ),
+            "Profile: On Air (App: com.zoom.us)"
         )
     }
 }
