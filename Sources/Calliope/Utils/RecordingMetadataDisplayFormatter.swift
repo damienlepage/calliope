@@ -12,24 +12,38 @@ struct RecordingMetadataDisplayFormatter {
         date: .abbreviated,
         time: .shortened
     )
+    private static let conciseDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d 'at' h:mma"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.amSymbol = "am"
+        formatter.pmSymbol = "pm"
+        return formatter
+    }()
 
     static func dateTimeText(for date: Date) -> String {
         date.formatted(dateTimeFormat)
     }
 
+    static func conciseDateText(for date: Date) -> String {
+        conciseDateFormatter.string(from: date)
+    }
+
+    static func durationMinutesText(for duration: TimeInterval?) -> String? {
+        guard let duration, duration > 0 else { return nil }
+        let minutes = max(1, Int(ceil(duration / 60)))
+        return "\(minutes)min"
+    }
+
     static func displayName(
         for url: URL,
         metadata: RecordingMetadata? = nil,
-        modifiedAt: Date? = nil
+        modifiedAt: Date? = nil,
+        duration: TimeInterval? = nil
     ) -> String {
         let name = url.deletingPathExtension().lastPathComponent
-        if let title = metadata?.title,
-           let normalizedTitle = RecordingMetadata.normalizedTitle(title) {
-            if let segmentInfo = segmentInfo(from: name) {
-                return "\(normalizedTitle) (Part \(segmentInfo.partLabel))"
-            }
-            return normalizedTitle
-        }
+        let normalizedTitle = (metadata?.title).flatMap { RecordingMetadata.normalizedTitle($0) }
+        let segmentInfo = segmentInfo(from: name)
         let now = Date()
         let inferredCreatedAt = RecordingMetadata.inferredCreatedAt(from: url)
         let sessionDate = RecordingMetadata.resolvedCreatedAt(
@@ -39,11 +53,22 @@ struct RecordingMetadataDisplayFormatter {
             now: now
         )
         if let sessionDate {
-            let sessionTitle = RecordingMetadata.defaultSessionTitle(for: sessionDate)
-            if let segmentInfo = segmentInfo(from: name) {
-                return "\(sessionTitle) (Part \(segmentInfo.partLabel))"
+            let dateText = conciseDateText(for: sessionDate)
+            let durationText = durationMinutesText(for: duration) ?? "0min"
+            var parts = ["\(dateText) - \(durationText)"]
+            if let normalizedTitle {
+                parts.append(normalizedTitle)
             }
-            return sessionTitle
+            if let segmentInfo {
+                parts.append("Part \(segmentInfo.partLabel)")
+            }
+            return parts.joined(separator: " - ")
+        }
+        if let normalizedTitle {
+            if let segmentInfo {
+                return "\(normalizedTitle) (Part \(segmentInfo.partLabel))"
+            }
+            return normalizedTitle
         }
         if let segmentLabel = segmentLabel(from: name) {
             return segmentLabel

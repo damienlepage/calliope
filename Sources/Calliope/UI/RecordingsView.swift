@@ -12,21 +12,14 @@ struct RecordingsView: View {
     let onExportDiagnostics: () -> Void
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                Text("Recordings")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .accessibilityAddTraits(.isHeader)
-
-                RecordingsListView(
-                    viewModel: viewModel,
-                    onExportDiagnostics: onExportDiagnostics
-                )
-            }
-            .padding()
+        VStack(alignment: .leading, spacing: 16) {
+            RecordingsListView(
+                viewModel: viewModel,
+                onExportDiagnostics: onExportDiagnostics
+            )
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 }
 

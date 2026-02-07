@@ -83,7 +83,8 @@ struct RecordingItem: Identifiable, Equatable {
         RecordingMetadataDisplayFormatter.displayName(
             for: url,
             metadata: metadata,
-            modifiedAt: modifiedAt
+            modifiedAt: modifiedAt,
+            duration: duration
         )
     }
     var sessionDate: Date {
@@ -313,12 +314,14 @@ struct RecordingItem: Identifiable, Equatable {
     static func displayName(
         for url: URL,
         metadata: RecordingMetadata? = nil,
-        modifiedAt: Date? = nil
+        modifiedAt: Date? = nil,
+        duration: TimeInterval? = nil
     ) -> String {
         RecordingMetadataDisplayFormatter.displayName(
             for: url,
             metadata: metadata,
-            modifiedAt: modifiedAt
+            modifiedAt: modifiedAt,
+            duration: duration
         )
     }
 

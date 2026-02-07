@@ -424,17 +424,19 @@ final class RecordingListViewModelTests: XCTestCase {
     func testRecordingItemDisplayNameStripsExtension() {
         let timestampMs = 1_700_000_000_000.0
         let date = Date(timeIntervalSince1970: timestampMs / 1000)
+        let duration: TimeInterval = 180
         let url = URL(fileURLWithPath: "/tmp/recording_\(Int(timestampMs))_ABC.m4a")
         let item = RecordingItem(
             url: url,
             modifiedAt: Date(timeIntervalSince1970: 0),
-            duration: nil,
+            duration: duration,
             fileSizeBytes: nil,
             summary: nil,
             integrityReport: nil
         )
 
-        XCTAssertEqual(item.displayName, RecordingItem.defaultSessionTitle(for: date))
+        let expectedDateText = RecordingMetadataDisplayFormatter.conciseDateText(for: date)
+        XCTAssertEqual(item.displayName, "\(expectedDateText) - 3min")
     }
 
     func testLoadRecordingsSurfacesIntegrityWarnings() {
