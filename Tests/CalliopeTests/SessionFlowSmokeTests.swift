@@ -127,6 +127,19 @@ final class SessionFlowSmokeTests: XCTestCase {
 
         let review = try XCTUnwrap(PostSessionReview(session: session))
         XCTAssertEqual(review.summary, SessionTitleSummary(summary: summary))
+
+        XCTAssertNotNil(review.durationText)
+        XCTAssertNotNil(review.speakingText)
+        XCTAssertNotNil(review.turnsText)
+        XCTAssertNotNil(review.paceText)
+        XCTAssertNotNil(review.crutchText)
+        XCTAssertNotNil(review.pauseRateText)
+        XCTAssertEqual(review.summaryLines.count, 6)
+
+        var coordinator = PostSessionReviewCoordinator()
+        coordinator.handleCompletedSession(session) { _ in review }
+        XCTAssertNotNil(coordinator.postSessionReview)
+        XCTAssertNotNil(coordinator.pendingSessionForTitle)
     }
 }
 
