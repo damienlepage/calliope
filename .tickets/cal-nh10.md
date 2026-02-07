@@ -18,3 +18,9 @@ Run packaged app QA checklist on macOS 15 and capture results.
 - release/QA-2026-02-07.md row for macOS 15 is updated (Environment, Machine, Launches, Permissions, Session Flow, Recordings Storage, Notes).
 - Any failures are recorded with actionable notes.
 
+
+## Notes
+
+**2026-02-07T21:01:19Z**
+
+2026-02-07: Unable to run macOS 15 QA; current automation host is macOS 26.2 and no macOS 15 VM/test machine is available.

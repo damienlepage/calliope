@@ -24,3 +24,7 @@ Run packaged app QA checklist on macOS 14 and capture results.
 **2026-02-07T20:58:11Z**
 
 Blocked 2026-02-07: automation host lacks macOS 14; needs access to macOS 14 test machine or VM to run packaged app QA.
+
+**2026-02-07T21:01:17Z**
+
+2026-02-07: Unable to run macOS 14 QA; current automation host is macOS 26.2 and no macOS 14 VM/test machine is available.
