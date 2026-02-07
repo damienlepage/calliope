@@ -438,12 +438,20 @@ struct ContentView: View {
     }
 
     private func exportDiagnosticsReport() {
+        let captureDiagnostics = DiagnosticsReport.CaptureDiagnosticsInfo(
+            backendStatus: audioCapture.backendStatus.diagnosticsLabel,
+            inputDeviceName: audioCapture.inputDeviceName,
+            outputDeviceName: audioCapture.outputDeviceName,
+            inputSampleRateHz: audioCapture.inputFormatSnapshot?.sampleRate,
+            inputChannelCount: audioCapture.inputFormatSnapshot?.channelCount
+        )
         let report = DiagnosticsReport.make(
             appVersion: AppVersionInfo(),
             systemVersion: ProcessInfo.processInfo.operatingSystemVersionString,
             microphonePermission: microphonePermission.state,
             speechPermission: speechPermission.state,
             capturePreferences: audioCapturePreferencesStore.current,
+            captureDiagnostics: captureDiagnostics,
             retentionPreferences: recordingPreferencesStore.current,
             recordingsCount: RecordingManager.shared.getAllRecordings().count,
             appLaunchAt: appState.launchReadinessTracker.appLaunchAt,

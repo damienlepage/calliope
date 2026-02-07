@@ -21,6 +21,13 @@ final class DiagnosticsExportActionModelTests: XCTestCase {
                 preferredMicrophoneName: "Studio Mic",
                 maxSegmentDurationSeconds: 3600
             ),
+            captureDiagnostics: DiagnosticsReport.CaptureDiagnosticsInfo(
+                backendStatus: "voice_isolation",
+                inputDeviceName: "Studio Mic",
+                outputDeviceName: "Studio Output",
+                inputSampleRateHz: 48_000,
+                inputChannelCount: 1
+            ),
             retentionPreferences: DiagnosticsReport.RetentionPreferencesInfo(
                 autoCleanEnabled: false,
                 retentionDays: 30

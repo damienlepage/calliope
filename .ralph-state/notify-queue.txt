@@ -1,1 +1,1 @@
-Goal completed: Accessibility-ready Session and Recordings surfaces
+Goal completed: Privacy compliance verification and capture diagnostics context

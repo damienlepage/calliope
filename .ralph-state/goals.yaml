@@ -316,3 +316,9 @@ goals:
     notes:
       - "New 2026-02-07: PRD requires full VoiceOver coverage, Dynamic Type, and non-color-only cues for live metrics and controls across core surfaces."
       - "Validated 2026-02-07: Feedback panel switches to single-column layout at accessibility sizes; recordings list provides stacked layout with labeled summary/empty states and VoiceOver-friendly actions."
+  - id: G55
+    title: Privacy compliance verification and capture diagnostics context
+    status: AT_TARGET
+    notes:
+      - "New 2026-02-07: Ensure diagnostics exports capture device, backend, and format context to support privacy verification and troubleshooting."
+      - "Validated 2026-02-07: Diagnostics export now includes capture backend status, input/output device names, and input format snapshot with unit coverage."

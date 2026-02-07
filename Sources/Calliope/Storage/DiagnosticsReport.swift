@@ -29,6 +29,14 @@ struct DiagnosticsReport: Codable, Equatable {
         let maxSegmentDurationSeconds: TimeInterval
     }
 
+    struct CaptureDiagnosticsInfo: Codable, Equatable {
+        let backendStatus: String
+        let inputDeviceName: String
+        let outputDeviceName: String
+        let inputSampleRateHz: Double?
+        let inputChannelCount: Int?
+    }
+
     struct RetentionPreferencesInfo: Codable, Equatable {
         let autoCleanEnabled: Bool
         let retentionDays: Int
@@ -39,6 +47,7 @@ struct DiagnosticsReport: Codable, Equatable {
     let systemVersion: String
     let permissions: PermissionsInfo
     let capturePreferences: CapturePreferencesInfo
+    let captureDiagnostics: CaptureDiagnosticsInfo
     let retentionPreferences: RetentionPreferencesInfo
     let recordingsCount: Int
     let appLaunchAt: Date
@@ -52,6 +61,7 @@ struct DiagnosticsReport: Codable, Equatable {
         microphonePermission: MicrophonePermissionState,
         speechPermission: SpeechPermissionState,
         capturePreferences: AudioCapturePreferences,
+        captureDiagnostics: CaptureDiagnosticsInfo,
         retentionPreferences: RecordingRetentionPreferences,
         recordingsCount: Int,
         appLaunchAt: Date,
@@ -75,6 +85,7 @@ struct DiagnosticsReport: Codable, Equatable {
                 preferredMicrophoneName: capturePreferences.preferredMicrophoneName,
                 maxSegmentDurationSeconds: capturePreferences.maxSegmentDuration
             ),
+            captureDiagnostics: captureDiagnostics,
             retentionPreferences: RetentionPreferencesInfo(
                 autoCleanEnabled: retentionPreferences.autoCleanEnabled,
                 retentionDays: retentionPreferences.retentionOption.days

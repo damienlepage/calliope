@@ -21,6 +21,13 @@ final class DiagnosticsReportTests: XCTestCase {
                 preferredMicrophoneName: "External Mic",
                 maxSegmentDurationSeconds: 7200
             ),
+            captureDiagnostics: DiagnosticsReport.CaptureDiagnosticsInfo(
+                backendStatus: "voice_isolation",
+                inputDeviceName: "External Mic",
+                outputDeviceName: "Studio Output",
+                inputSampleRateHz: 48_000,
+                inputChannelCount: 1
+            ),
             retentionPreferences: DiagnosticsReport.RetentionPreferencesInfo(
                 autoCleanEnabled: true,
                 retentionDays: 60
@@ -60,6 +67,13 @@ final class DiagnosticsReportTests: XCTestCase {
                 preferredMicrophoneName: nil,
                 maxSegmentDurationSeconds: 3600
             ),
+            captureDiagnostics: DiagnosticsReport.CaptureDiagnosticsInfo(
+                backendStatus: "standard",
+                inputDeviceName: "Built-in Mic",
+                outputDeviceName: "Built-in Output",
+                inputSampleRateHz: nil,
+                inputChannelCount: nil
+            ),
             retentionPreferences: DiagnosticsReport.RetentionPreferencesInfo(
                 autoCleanEnabled: false,
                 retentionDays: 30
@@ -97,6 +111,13 @@ final class DiagnosticsReportTests: XCTestCase {
             microphonePermission: .authorized,
             speechPermission: .authorized,
             capturePreferences: AudioCapturePreferences.default,
+            captureDiagnostics: DiagnosticsReport.CaptureDiagnosticsInfo(
+                backendStatus: "standard",
+                inputDeviceName: "Built-in Mic",
+                outputDeviceName: "Built-in Output",
+                inputSampleRateHz: 48_000,
+                inputChannelCount: 2
+            ),
             retentionPreferences: RecordingRetentionPreferences.default,
             recordingsCount: 0,
             appLaunchAt: Date(timeIntervalSince1970: 1_700_000_000),
@@ -112,6 +133,13 @@ final class DiagnosticsReportTests: XCTestCase {
             microphonePermission: .authorized,
             speechPermission: .authorized,
             capturePreferences: AudioCapturePreferences.default,
+            captureDiagnostics: DiagnosticsReport.CaptureDiagnosticsInfo(
+                backendStatus: "standard",
+                inputDeviceName: "Built-in Mic",
+                outputDeviceName: "Built-in Output",
+                inputSampleRateHz: 48_000,
+                inputChannelCount: 2
+            ),
             retentionPreferences: RecordingRetentionPreferences.default,
             recordingsCount: 0,
             appLaunchAt: Date(timeIntervalSince1970: 1_700_000_000),
@@ -126,6 +154,13 @@ final class DiagnosticsReportTests: XCTestCase {
             microphonePermission: .authorized,
             speechPermission: .authorized,
             capturePreferences: AudioCapturePreferences.default,
+            captureDiagnostics: DiagnosticsReport.CaptureDiagnosticsInfo(
+                backendStatus: "standard",
+                inputDeviceName: "Built-in Mic",
+                outputDeviceName: "Built-in Output",
+                inputSampleRateHz: 48_000,
+                inputChannelCount: 2
+            ),
             retentionPreferences: RecordingRetentionPreferences.default,
             recordingsCount: 0,
             appLaunchAt: Date(timeIntervalSince1970: 1_700_000_000),

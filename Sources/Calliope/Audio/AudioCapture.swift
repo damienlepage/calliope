@@ -124,6 +124,17 @@ enum AudioCaptureBackendStatus: Equatable {
             return "Capture: Voice Isolation unavailable, using standard mic"
         }
     }
+
+    var diagnosticsLabel: String {
+        switch self {
+        case .standard:
+            return "standard"
+        case .voiceIsolation:
+            return "voice_isolation"
+        case .voiceIsolationUnavailable:
+            return "voice_isolation_unavailable"
+        }
+    }
 }
 
 struct CompletedRecordingSession: Equatable {
