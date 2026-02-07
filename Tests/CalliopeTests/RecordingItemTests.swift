@@ -60,6 +60,20 @@ final class RecordingItemTests: XCTestCase {
         XCTAssertNotEqual(displayName, RecordingItem.defaultSessionTitle(for: inferredDate))
     }
 
+    func testDisplayNameIgnoresUnreasonableMetadataCreatedAt() {
+        let inferredTimestampMs = 1_700_000_000_000.0
+        let inferredDate = Date(timeIntervalSince1970: inferredTimestampMs / 1000)
+        let futureDate = Date().addingTimeInterval(60 * 60 * 48)
+        let url = URL(
+            fileURLWithPath: "/tmp/recording_\(Int(inferredTimestampMs))_ABC.m4a"
+        )
+        let metadata = RecordingMetadata(title: "  \n ", createdAt: futureDate)
+
+        let displayName = RecordingItem.displayName(for: url, metadata: metadata)
+
+        XCTAssertEqual(displayName, RecordingItem.defaultSessionTitle(for: inferredDate))
+    }
+
     func testDisplayNameUsesMetadataTitleForSingleSegment() {
         let url = URL(fileURLWithPath: "/tmp/recording_123_ABC.m4a")
         let metadata = RecordingMetadata(title: "Team Sync")
@@ -120,6 +134,46 @@ final class RecordingItemTests: XCTestCase {
         )
 
         XCTAssertEqual(item.sessionDate, inferred)
+    }
+
+    func testSessionDateIgnoresUnreasonableMetadataCreatedAt() {
+        let timestampMs = 1_700_000_000_000.0
+        let inferred = Date(timeIntervalSince1970: timestampMs / 1000)
+        let url = URL(fileURLWithPath: "/tmp/recording_\(Int(timestampMs))_ABC.m4a")
+        let modifiedAt = Date(timeIntervalSince1970: 1_800_000_000)
+        let metadata = RecordingMetadata(
+            title: "Weekly Review",
+            createdAt: Date().addingTimeInterval(60 * 60 * 48)
+        )
+        let item = RecordingItem(
+            url: url,
+            modifiedAt: modifiedAt,
+            duration: nil,
+            fileSizeBytes: nil,
+            summary: nil,
+            integrityReport: nil,
+            metadata: metadata
+        )
+
+        XCTAssertEqual(item.sessionDate, inferred)
+    }
+
+    func testSessionDateFallsBackToModifiedAtWhenMetadataAndInferredUnreasonable() {
+        let metadataDate = Date(timeIntervalSince1970: 100)
+        let modifiedAt = Date(timeIntervalSince1970: 1_800_000_000)
+        let url = URL(fileURLWithPath: "/tmp/recording_no_timestamp.m4a")
+        let metadata = RecordingMetadata(title: "Weekly Review", createdAt: metadataDate)
+        let item = RecordingItem(
+            url: url,
+            modifiedAt: modifiedAt,
+            duration: nil,
+            fileSizeBytes: nil,
+            summary: nil,
+            integrityReport: nil,
+            metadata: metadata
+        )
+
+        XCTAssertEqual(item.sessionDate, modifiedAt)
     }
 
     func testIntegrityWarningTextUsesMissingSummaryMessage() {

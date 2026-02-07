@@ -99,6 +99,18 @@ struct RecordingMetadata: Codable, Equatable {
         return nil
     }
 
+    static func resolvedCreatedAt(
+        createdAt: Date?,
+        inferred: Date?,
+        modifiedAt: Date?,
+        now: Date
+    ) -> Date? {
+        if let normalized = normalizedCreatedAt(createdAt, inferred: inferred, now: now) {
+            return normalized
+        }
+        return normalizedCreatedAt(modifiedAt, inferred: nil, now: now)
+    }
+
     static func isReasonableCreatedAt(_ date: Date, now: Date) -> Bool {
         let minDate = Date(timeIntervalSince1970: earliestAllowedTimestamp)
         let maxDate = now.addingTimeInterval(maxFutureSkew)

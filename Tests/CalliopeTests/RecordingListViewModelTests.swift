@@ -175,9 +175,11 @@ final class RecordingListViewModelTests: XCTestCase {
             urlA: Date(timeIntervalSince1970: 300),
             urlB: Date(timeIntervalSince1970: 50)
         ]
+        let createdAtA = Date(timeIntervalSince1970: 1_700_000_000)
+        let createdAtB = Date(timeIntervalSince1970: 1_700_000_100)
         let metadata: [URL: RecordingMetadata] = [
-            urlA: RecordingMetadata(title: "A", createdAt: Date(timeIntervalSince1970: 100)),
-            urlB: RecordingMetadata(title: "B", createdAt: Date(timeIntervalSince1970: 200))
+            urlA: RecordingMetadata(title: "A", createdAt: createdAtA),
+            urlB: RecordingMetadata(title: "B", createdAt: createdAtB)
         ]
         let viewModel = RecordingListViewModel(
             manager: manager,
@@ -283,9 +285,9 @@ final class RecordingListViewModelTests: XCTestCase {
     }
 
     func testRecordingItemDisplayNameStripsExtension() {
-        let timestampMs = 123.0
+        let timestampMs = 1_700_000_000_000.0
         let date = Date(timeIntervalSince1970: timestampMs / 1000)
-        let url = URL(fileURLWithPath: "/tmp/recording_\(Int(timestampMs)).m4a")
+        let url = URL(fileURLWithPath: "/tmp/recording_\(Int(timestampMs))_ABC.m4a")
         let item = RecordingItem(
             url: url,
             modifiedAt: Date(timeIntervalSince1970: 0),

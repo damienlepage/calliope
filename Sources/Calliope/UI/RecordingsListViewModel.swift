@@ -87,9 +87,14 @@ struct RecordingItem: Identifiable, Equatable {
         )
     }
     var sessionDate: Date {
-        metadata?.createdAt
-            ?? RecordingMetadata.inferredCreatedAt(from: url)
-            ?? modifiedAt
+        let now = Date()
+        let inferredCreatedAt = RecordingMetadata.inferredCreatedAt(from: url)
+        return RecordingMetadata.resolvedCreatedAt(
+            createdAt: metadata?.createdAt,
+            inferred: inferredCreatedAt,
+            modifiedAt: modifiedAt,
+            now: now
+        ) ?? modifiedAt
     }
     var detailText: String {
         metadataDetailText()
