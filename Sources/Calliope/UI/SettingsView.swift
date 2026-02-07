@@ -190,6 +190,8 @@ struct SettingsView: View {
                             Text("\(Int(preferencesStore.paceMin)) WPM")
                                 .font(.subheadline)
                         }
+                        .accessibilityLabel("Pace minimum")
+                        .accessibilityValue("\(Int(preferencesStore.paceMin)) words per minute")
                     }
                     HStack {
                         Text("Pace Max")
@@ -203,6 +205,8 @@ struct SettingsView: View {
                             Text("\(Int(preferencesStore.paceMax)) WPM")
                                 .font(.subheadline)
                         }
+                        .accessibilityLabel("Pace maximum")
+                        .accessibilityValue("\(Int(preferencesStore.paceMax)) words per minute")
                     }
                     HStack {
                         Text("Pause Threshold")
@@ -216,6 +220,8 @@ struct SettingsView: View {
                             Text(String(format: "%.1f s", preferencesStore.pauseThreshold))
                                 .font(.subheadline)
                         }
+                        .accessibilityLabel("Pause threshold")
+                        .accessibilityValue(String(format: "%.1f seconds", preferencesStore.pauseThreshold))
                     }
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Crutch Words (comma or newline separated)")
@@ -299,7 +305,9 @@ struct SettingsView: View {
                     Text("Overlay")
                         .font(.headline)
                     Toggle("Show compact overlay", isOn: $overlayPreferencesStore.showCompactOverlay)
+                        .accessibilityHint("Show a smaller live feedback overlay while recording.")
                     Toggle("Always on top", isOn: $overlayPreferencesStore.alwaysOnTop)
+                        .accessibilityHint("Keep the overlay above other windows.")
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 

@@ -210,18 +210,19 @@ struct SessionView: View {
                         Text("Coaching profile")
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        Picker("Coaching profile", selection: $selectedCoachingProfileID) {
-                            ForEach(coachingProfiles) { profile in
-                                Text(profile.name)
-                                    .tag(profile.id as UUID?)
-                            }
+                    Picker("Coaching profile", selection: $selectedCoachingProfileID) {
+                        ForEach(coachingProfiles) { profile in
+                            Text(profile.name)
+                                .tag(profile.id as UUID?)
                         }
-                        .pickerStyle(.menu)
-                        .frame(maxWidth: 260, alignment: .leading)
-                        .accessibilityLabel("Coaching profile")
                     }
-                    .frame(maxWidth: 320, alignment: .leading)
+                    .pickerStyle(.menu)
+                    .frame(maxWidth: 260, alignment: .leading)
+                    .accessibilityLabel("Coaching profile")
+                    .accessibilityHint("Choose which coaching profile to apply to this session.")
                 }
+                .frame(maxWidth: 320, alignment: .leading)
+            }
 
                 if let postSessionReview, !audioCapture.isRecording {
                     VStack(alignment: .leading, spacing: 12) {
