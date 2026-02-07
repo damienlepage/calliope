@@ -1,1 +1,0 @@
-Goal completed: Session and recordings UX cleanup for clarity and visibility
