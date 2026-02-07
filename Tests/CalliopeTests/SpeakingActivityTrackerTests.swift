@@ -3,19 +3,31 @@ import XCTest
 @testable import Calliope
 
 final class SpeakingActivityTrackerTests: XCTestCase {
-    func testTracksSpeakingTimeAndTurns() {
-        let tracker = SpeakingActivityTracker(speechThreshold: 0.02)
+    func testTracksSpeakingTimeAcrossShortPauses() {
+        let tracker = SpeakingActivityTracker(speechThreshold: 0.02, pauseThreshold: 2.0)
         let speechBuffer = makeBuffer(amplitude: 0.1, sampleRate: 1000, frames: 1000)
         let silenceBuffer = makeBuffer(amplitude: 0.0, sampleRate: 1000, frames: 1000)
 
         tracker.process(speechBuffer)
-        tracker.process(speechBuffer)
-        tracker.process(silenceBuffer)
         tracker.process(silenceBuffer)
         tracker.process(speechBuffer)
 
         let summary = tracker.summary()
         XCTAssertEqual(summary.timeSeconds, 3, accuracy: 0.001)
+        XCTAssertEqual(summary.turnCount, 1)
+    }
+
+    func testStopsSpeakingTimeAfterLongPause() {
+        let tracker = SpeakingActivityTracker(speechThreshold: 0.02, pauseThreshold: 0.5)
+        let speechBuffer = makeBuffer(amplitude: 0.1, sampleRate: 1000, frames: 1000)
+        let silenceBuffer = makeBuffer(amplitude: 0.0, sampleRate: 1000, frames: 1000)
+
+        tracker.process(speechBuffer)
+        tracker.process(silenceBuffer)
+        tracker.process(speechBuffer)
+
+        let summary = tracker.summary()
+        XCTAssertEqual(summary.timeSeconds, 2.5, accuracy: 0.001)
         XCTAssertEqual(summary.turnCount, 2)
     }
 

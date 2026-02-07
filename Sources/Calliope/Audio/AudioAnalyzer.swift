@@ -238,6 +238,7 @@ class AudioAnalyzer: ObservableObject {
     func applyPreferences(_ preferences: AnalysisPreferences) {
         crutchWordDetector = CrutchWordDetector(crutchWords: preferences.crutchWords)
         pauseDetector = PauseDetector(pauseThreshold: preferences.pauseThreshold)
+        speakingActivityTracker.updatePauseThreshold(preferences.pauseThreshold)
     }
 
     func handleTranscription(_ transcript: String) {

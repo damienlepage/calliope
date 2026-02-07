@@ -1,6 +1,6 @@
 ---
 id: cal-5n64
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-07T22:16:03Z

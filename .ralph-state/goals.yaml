@@ -391,6 +391,7 @@ goals:
       - "New 2026-02-07: Users can add or modify the title of any existing recording after the fact."
   - id: G68
     title: Speaking time increments stop only after full pause threshold
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "New 2026-02-07: Speaking time should keep increasing through short pauses and only stop when a pause exceeds the high threshold that counts as a turn-ending pause."
+      - "Validated 2026-02-07: Speaking time now continues through short pauses, stops only after exceeding pause threshold, and unit coverage locks turn-count behavior."
