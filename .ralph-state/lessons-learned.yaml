@@ -5,3 +5,5 @@ lessons:
     note: "swift test also warns that SwiftPM user cache paths under /Users/dlepage/Library are not writable; build aborts with ModuleCache permission errors."
   - date: 2026-02-07
     note: "swift build for packaging hit sandbox/module cache permission errors unless build scripts pin local cache paths and use --disable-sandbox."
+  - date: 2026-02-07
+    note: "Packaged app QA on macOS 14 requires access to a macOS 14 test machine or VM; automation host cannot execute that verification."

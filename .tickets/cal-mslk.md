@@ -18,3 +18,9 @@ Run packaged app QA checklist on macOS 14 and capture results.
 - release/QA-2026-02-07.md row for macOS 14 is updated (Environment, Machine, Launches, Permissions, Session Flow, Recordings Storage, Notes).
 - Any failures are recorded with actionable notes.
 
+
+## Notes
+
+**2026-02-07T20:58:11Z**
+
+Blocked 2026-02-07: automation host lacks macOS 14; needs access to macOS 14 test machine or VM to run packaged app QA.
