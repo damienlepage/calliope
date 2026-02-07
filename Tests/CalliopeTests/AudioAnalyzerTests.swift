@@ -184,6 +184,71 @@ final class AudioAnalyzerTests: XCTestCase {
         XCTAssertEqual(transcriber.startCount, 0)
     }
 
+    func testSummaryPreservesCrutchCountsAndWordTotals() {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            UUID().uuidString,
+            isDirectory: true
+        )
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let suiteName = "AudioAnalyzerTests.AudioCapture.\(UUID().uuidString)"
+        let captureDefaults = UserDefaults(suiteName: suiteName)!
+        captureDefaults.removePersistentDomain(forName: suiteName)
+        let preferencesStore = AudioCapturePreferencesStore(defaults: captureDefaults)
+        let audioCapture = AudioCapture(
+            recordingManager: manager,
+            capturePreferencesStore: preferencesStore,
+            backendSelector: { _ in
+                AudioCaptureBackendSelection(backend: FakeAudioCaptureBackend(), status: .standard)
+            },
+            audioFileFactory: { _, _ in FakeAudioFileWriter() },
+            recordingStartConfirmation: { true }
+        )
+        let analysisSuiteName = "AudioAnalyzerTests.Analysis.\(UUID().uuidString)"
+        let analysisDefaults = UserDefaults(suiteName: analysisSuiteName)!
+        analysisDefaults.removePersistentDomain(forName: analysisSuiteName)
+        let analysisPreferences = AnalysisPreferencesStore(defaults: analysisDefaults)
+        analysisPreferences.crutchWords = ["uh", "you know"]
+        let summaryWriter = CapturingSummaryWriter()
+        let analyzer = AudioAnalyzer(
+            summaryWriter: summaryWriter,
+            speechTranscriberFactory: { FakeSpeechTranscriber() }
+        )
+
+        analyzer.setup(audioCapture: audioCapture, preferencesStore: analysisPreferences)
+
+        audioCapture.startRecording(
+            privacyState: PrivacyGuardrails.State(hasAcceptedDisclosure: true),
+            microphonePermission: .authorized,
+            hasMicrophoneInput: true
+        )
+
+        let startExpectation = expectation(description: "Allow start to process")
+        DispatchQueue.main.async { startExpectation.fulfill() }
+        wait(for: [startExpectation], timeout: 1.0)
+
+        analyzer.handleTranscription("uh hello you know uh")
+
+        let updateExpectation = expectation(description: "Allow transcription to process")
+        DispatchQueue.main.async { updateExpectation.fulfill() }
+        wait(for: [updateExpectation], timeout: 1.0)
+
+        audioCapture.stopRecording()
+
+        let stopExpectation = expectation(description: "Allow stop to process")
+        DispatchQueue.main.async { stopExpectation.fulfill() }
+        wait(for: [stopExpectation], timeout: 1.0)
+
+        guard let summary = summaryWriter.lastSummary else {
+            XCTFail("Expected summary to be written")
+            return
+        }
+
+        XCTAssertEqual(summary.crutchWords.totalCount, 3)
+        XCTAssertEqual(summary.crutchWords.counts["uh"], 2)
+        XCTAssertEqual(summary.crutchWords.counts["you know"], 1)
+        XCTAssertEqual(summary.pace.totalWords, 5)
+    }
+
     func testIntegrityValidationRunsOnStopForAllRecordingURLs() {
         let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
             UUID().uuidString,
@@ -463,6 +528,22 @@ private final class FakeAudioCaptureBackend: AudioCaptureBackend {
 
 private final class FakeAudioFileWriter: AudioFileWritable {
     func write(from buffer: AVAudioPCMBuffer) throws {}
+}
+
+private final class CapturingSummaryWriter: AnalysisSummaryWriting {
+    private(set) var lastSummary: AnalysisSummary?
+    private(set) var lastRecordingURL: URL?
+
+    func summaryURL(for recordingURL: URL) -> URL {
+        recordingURL
+    }
+
+    func writeSummary(_ summary: AnalysisSummary, for recordingURL: URL) throws {
+        lastSummary = summary
+        lastRecordingURL = recordingURL
+    }
+
+    func deleteSummary(for recordingURL: URL) throws {}
 }
 
 private final class CapturingIntegrityValidator: RecordingIntegrityValidating {
