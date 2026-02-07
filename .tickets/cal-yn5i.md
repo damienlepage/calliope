@@ -1,7 +1,7 @@
 ---
 id: cal-yn5i
 status: blocked
-deps: [cal-45td]
+deps: [cal-45td, cal-qa13, cal-qa14, cal-qa15]
 links: []
 created: 2026-02-07T08:38:47Z
 type: task
