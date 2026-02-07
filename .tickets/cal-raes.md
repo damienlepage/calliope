@@ -1,6 +1,6 @@
 ---
 id: cal-raes
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-07T02:51:55Z
@@ -15,4 +15,3 @@ Document the release candidate checklist and validation steps for packaging and 
 ## Acceptance Criteria
 
 - New release checklist doc exists in the repo (location noted in README or PERFORMANCE_CHECKLIST).\n- Checklist covers: build/run, permissions flow, start/stop session, live feedback update, recordings creation/playback, diagnostics export, packaging script output, and notarization/signing reminders.\n- Checklist explicitly states that no audio/transcripts leave the device.
-
