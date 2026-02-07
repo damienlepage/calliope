@@ -118,4 +118,28 @@ final class AnalysisPreferencesStoreTests: XCTestCase {
         XCTAssertEqual(reloaded.pauseThreshold, Constants.pauseThreshold)
         XCTAssertEqual(reloaded.crutchWords, Constants.crutchWords)
     }
+
+    func testCrutchWordPresetsIncludeDefaultAndApply() {
+        let presets = AnalysisPreferencesStore.crutchWordPresets
+        XCTAssertGreaterThanOrEqual(presets.count, 2)
+        XCTAssertTrue(presets.contains(where: { preset in
+            preset.name == "Default" && preset.words == AnalysisPreferencesStore.normalizeCrutchWords(Constants.crutchWords)
+        }))
+
+        let suiteName = "AnalysisPreferencesStoreTests.presets.apply"
+        guard let defaults = UserDefaults(suiteName: suiteName) else {
+            XCTFail("Expected test defaults suite")
+            return
+        }
+        defaults.removePersistentDomain(forName: suiteName)
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let store = AnalysisPreferencesStore(defaults: defaults)
+        if let targetPreset = presets.first(where: { $0.name != "Default" }) {
+            store.applyCrutchWordPreset(targetPreset)
+            XCTAssertEqual(store.crutchWords, targetPreset.words)
+        } else {
+            XCTFail("Expected a non-default crutch word preset")
+        }
+    }
 }

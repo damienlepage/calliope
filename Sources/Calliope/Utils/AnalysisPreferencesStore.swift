@@ -8,6 +8,13 @@
 import Combine
 import Foundation
 
+struct CrutchWordPreset: Identifiable, Equatable {
+    let name: String
+    let words: [String]
+
+    var id: String { name }
+}
+
 struct AnalysisPreferences: Equatable, Codable {
     var paceMin: Double
     var paceMax: Double
@@ -23,6 +30,22 @@ struct AnalysisPreferences: Equatable, Codable {
 }
 
 final class AnalysisPreferencesStore: ObservableObject {
+    static let crutchWordPresets: [CrutchWordPreset] = {
+        let defaultPreset = CrutchWordPreset(
+            name: "Default",
+            words: normalizeCrutchWords(Constants.crutchWords)
+        )
+        let focusedPreset = CrutchWordPreset(
+            name: "Focused",
+            words: normalizeCrutchWords(["uh", "um", "ah", "er", "hmm"])
+        )
+        let extendedPreset = CrutchWordPreset(
+            name: "Extended",
+            words: normalizeCrutchWords(Constants.crutchWords + ["kind of", "sort of", "i mean", "right", "okay"])
+        )
+        return [defaultPreset, focusedPreset, extendedPreset]
+    }()
+
     @Published var paceMin: Double
     @Published var paceMax: Double
     @Published var pauseThreshold: TimeInterval
@@ -127,6 +150,10 @@ final class AnalysisPreferencesStore: ObservableObject {
         crutchWords = defaultsPreferences.crutchWords
     }
 
+    func applyCrutchWordPreset(_ preset: CrutchWordPreset) {
+        crutchWords = preset.words
+    }
+
     static func parseCrutchWords(from text: String) -> [String] {
         var seen = Set<String>()
         return text.split(whereSeparator: { $0 == "," || $0 == "\n" })
@@ -145,6 +172,20 @@ final class AnalysisPreferencesStore: ObservableObject {
         words.joined(separator: ", ")
     }
 
+    static func normalizeCrutchWords(_ words: [String]) -> [String] {
+        var seen = Set<String>()
+        return words
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+            .filter { !$0.isEmpty }
+            .filter { word in
+                if seen.contains(word) {
+                    return false
+                }
+                seen.insert(word)
+                return true
+            }
+    }
+
     private static func normalize(
         paceMin: Double,
         paceMax: Double,
@@ -159,17 +200,7 @@ final class AnalysisPreferencesStore: ObservableObject {
 
         let normalizedPauseThreshold = pauseThreshold > 0 ? pauseThreshold : Constants.pauseThreshold
 
-        var seen = Set<String>()
-        let normalizedCrutchWords = crutchWords
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
-            .filter { !$0.isEmpty }
-            .filter { word in
-                if seen.contains(word) {
-                    return false
-                }
-                seen.insert(word)
-                return true
-            }
+        let normalizedCrutchWords = normalizeCrutchWords(crutchWords)
 
         return AnalysisPreferences(
             paceMin: normalizedMin,

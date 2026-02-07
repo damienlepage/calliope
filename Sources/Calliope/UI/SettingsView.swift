@@ -355,6 +355,21 @@ struct SettingsView: View {
                             .font(.subheadline)
                         TextField("uh, um, you know", text: crutchWordsBinding())
                             .textFieldStyle(.roundedBorder)
+                        HStack {
+                            Text("Presets")
+                                .font(.footnote)
+                                .foregroundColor(.secondary)
+                            Menu("Choose") {
+                                ForEach(AnalysisPreferencesStore.crutchWordPresets) { preset in
+                                    Button(preset.name) {
+                                        preferencesStore.applyCrutchWordPreset(preset)
+                                    }
+                                }
+                            }
+                        }
+                        Text("Selecting a preset replaces the current list.")
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
                     }
                     Button("Reset to Defaults") {
                         preferencesStore.resetToDefaults()
