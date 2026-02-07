@@ -9,13 +9,11 @@ import XCTest
 @testable import Calliope
 
 final class SessionViewStateTests: XCTestCase {
-    func testIdleStateShowsPromptAndStart() {
+    func testIdleStateShowsFeedbackAndStart() {
         let state = SessionViewState(
             isRecording: false
         )
 
-        XCTAssertTrue(state.shouldShowIdlePrompt)
-        XCTAssertTrue(state.shouldShowFeedbackPanel)
         XCTAssertEqual(state.primaryButtonTitle, "Start")
         XCTAssertEqual(state.primaryButtonAccessibilityLabel, "Start recording")
         XCTAssertEqual(state.primaryButtonAccessibilityHint, "Begins a new coaching session.")
@@ -26,8 +24,6 @@ final class SessionViewStateTests: XCTestCase {
             isRecording: true
         )
 
-        XCTAssertFalse(state.shouldShowIdlePrompt)
-        XCTAssertTrue(state.shouldShowFeedbackPanel)
         XCTAssertEqual(state.primaryButtonTitle, "Stop")
         XCTAssertEqual(state.primaryButtonAccessibilityLabel, "Stop recording")
         XCTAssertEqual(state.primaryButtonAccessibilityHint, "Ends the current coaching session.")

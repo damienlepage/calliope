@@ -66,35 +66,25 @@ struct SessionView: View {
             }
             .frame(maxWidth: Layout.contentMaxWidth, alignment: .leading)
 
-            if viewState.shouldShowIdlePrompt {
-                Text("Ready when you are. Press Start to begin coaching.")
-                    .font(.title3)
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.secondary)
-                    .frame(maxWidth: 320)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            if viewState.shouldShowFeedbackPanel {
-                FeedbackPanel(
-                    pace: feedbackViewModel.state.pace,
-                    crutchWords: feedbackViewModel.state.crutchWords,
-                    pauseCount: feedbackViewModel.state.pauseCount,
-                    pauseAverageDuration: feedbackViewModel.state.pauseAverageDuration,
-                    speakingTimeSeconds: feedbackViewModel.state.speakingTimeSeconds,
-                    speakingTimeTargetPercent: analysisPreferences.speakingTimeTargetPercent,
-                    inputLevel: feedbackViewModel.state.inputLevel,
-                    paceMin: analysisPreferences.paceMin,
-                    paceMax: analysisPreferences.paceMax,
-                    sessionDurationText: sessionDurationText,
-                    sessionDurationSeconds: sessionDurationSeconds,
-                    liveTranscript: feedbackViewModel.liveTranscript,
-                    coachingProfiles: coachingProfiles,
-                    activeProfileLabel: activeProfileLabel,
-                    selectedCoachingProfileID: $selectedCoachingProfileID
-                )
-                .opacity(isSessionActive ? 1.0 : 0.55)
-                .saturation(isSessionActive ? 1.0 : 0.0)
-            }
+            FeedbackPanel(
+                pace: feedbackViewModel.state.pace,
+                crutchWords: feedbackViewModel.state.crutchWords,
+                pauseCount: feedbackViewModel.state.pauseCount,
+                pauseAverageDuration: feedbackViewModel.state.pauseAverageDuration,
+                speakingTimeSeconds: feedbackViewModel.state.speakingTimeSeconds,
+                speakingTimeTargetPercent: analysisPreferences.speakingTimeTargetPercent,
+                inputLevel: feedbackViewModel.state.inputLevel,
+                paceMin: analysisPreferences.paceMin,
+                paceMax: analysisPreferences.paceMax,
+                sessionDurationText: sessionDurationText,
+                sessionDurationSeconds: sessionDurationSeconds,
+                liveTranscript: feedbackViewModel.liveTranscript,
+                coachingProfiles: coachingProfiles,
+                activeProfileLabel: activeProfileLabel,
+                selectedCoachingProfileID: $selectedCoachingProfileID
+            )
+            .opacity(isSessionActive ? 1.0 : 0.55)
+            .saturation(isSessionActive ? 1.0 : 0.0)
 
             if let postSessionReview, !audioCapture.isRecording {
                 VStack(alignment: .leading, spacing: 12) {

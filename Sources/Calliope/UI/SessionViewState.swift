@@ -8,14 +8,6 @@
 struct SessionViewState: Equatable {
     let isRecording: Bool
 
-    var shouldShowIdlePrompt: Bool {
-        !isRecording
-    }
-
-    var shouldShowFeedbackPanel: Bool {
-        true
-    }
-
     var primaryButtonTitle: String {
         isRecording ? "Stop" : "Start"
     }
