@@ -25,7 +25,11 @@ final class DiagnosticsReportTests: XCTestCase {
                 autoCleanEnabled: true,
                 retentionDays: 60
             ),
-            recordingsCount: 12
+            recordingsCount: 12,
+            appLaunchAt: Date(timeIntervalSince1970: 1_699_999_000),
+            sessionReadyLatencySeconds: 1.6,
+            sessionReadyTargetSeconds: 2.0,
+            sessionReadyStatus: .onTarget
         )
 
         let encoder = JSONEncoder()
@@ -60,7 +64,11 @@ final class DiagnosticsReportTests: XCTestCase {
                 autoCleanEnabled: false,
                 retentionDays: 30
             ),
-            recordingsCount: 0
+            recordingsCount: 0,
+            appLaunchAt: Date(timeIntervalSince1970: 1_699_999_500),
+            sessionReadyLatencySeconds: nil,
+            sessionReadyTargetSeconds: 2.0,
+            sessionReadyStatus: .unknown
         )
 
         let writer = DiagnosticsReportWriter(recordingsDirectory: baseDirectory)
@@ -75,5 +83,55 @@ final class DiagnosticsReportTests: XCTestCase {
         decoder.dateDecodingStrategy = .iso8601
         let decoded = try decoder.decode(DiagnosticsReport.self, from: data)
         XCTAssertEqual(decoded, report)
+    }
+
+    func testReadinessStatusUsesTargetSeconds() {
+        let appVersion = AppVersionInfo(infoDictionary: [
+            "CFBundleShortVersionString": "1.0",
+            "CFBundleVersion": "100"
+        ])
+
+        let reportOnTarget = DiagnosticsReport.make(
+            appVersion: appVersion,
+            systemVersion: "macOS 14.0",
+            microphonePermission: .authorized,
+            speechPermission: .authorized,
+            capturePreferences: AudioCapturePreferences.default,
+            retentionPreferences: RecordingRetentionPreferences.default,
+            recordingsCount: 0,
+            appLaunchAt: Date(timeIntervalSince1970: 1_700_000_000),
+            sessionReadyLatencySeconds: 1.5,
+            now: Date(timeIntervalSince1970: 1_700_000_010)
+        )
+        XCTAssertEqual(reportOnTarget.sessionReadyTargetSeconds, 2.0)
+        XCTAssertEqual(reportOnTarget.sessionReadyStatus, .onTarget)
+
+        let reportSlow = DiagnosticsReport.make(
+            appVersion: appVersion,
+            systemVersion: "macOS 14.0",
+            microphonePermission: .authorized,
+            speechPermission: .authorized,
+            capturePreferences: AudioCapturePreferences.default,
+            retentionPreferences: RecordingRetentionPreferences.default,
+            recordingsCount: 0,
+            appLaunchAt: Date(timeIntervalSince1970: 1_700_000_000),
+            sessionReadyLatencySeconds: 2.1,
+            now: Date(timeIntervalSince1970: 1_700_000_010)
+        )
+        XCTAssertEqual(reportSlow.sessionReadyStatus, .slow)
+
+        let reportUnknown = DiagnosticsReport.make(
+            appVersion: appVersion,
+            systemVersion: "macOS 14.0",
+            microphonePermission: .authorized,
+            speechPermission: .authorized,
+            capturePreferences: AudioCapturePreferences.default,
+            retentionPreferences: RecordingRetentionPreferences.default,
+            recordingsCount: 0,
+            appLaunchAt: Date(timeIntervalSince1970: 1_700_000_000),
+            sessionReadyLatencySeconds: nil,
+            now: Date(timeIntervalSince1970: 1_700_000_010)
+        )
+        XCTAssertEqual(reportUnknown.sessionReadyStatus, .unknown)
     }
 }

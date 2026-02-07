@@ -1,1 +1,1 @@
-Goal completed: Reliable local test execution without permission errors
+Goal completed: Launch-to-session readiness under 2 seconds

@@ -25,7 +25,11 @@ final class DiagnosticsExportActionModelTests: XCTestCase {
                 autoCleanEnabled: false,
                 retentionDays: 30
             ),
-            recordingsCount: 4
+            recordingsCount: 4,
+            appLaunchAt: Date(timeIntervalSince1970: 1_700_000_000),
+            sessionReadyLatencySeconds: 1.2,
+            sessionReadyTargetSeconds: 2.0,
+            sessionReadyStatus: .onTarget
         )
         let recordingsDirectory = URL(fileURLWithPath: "/tmp/calliope-tests")
         let expectedURL = recordingsDirectory.appendingPathComponent("Diagnostics/report.json")

@@ -30,6 +30,7 @@ final class CalliopeAppState: ObservableObject {
     let settingsActionModel: MicrophoneSettingsActionModel
     let soundSettingsActionModel: SoundSettingsActionModel
     let speechSettingsActionModel: SpeechSettingsActionModel
+    let launchReadinessTracker: LaunchReadinessTracker
 
     private var didConfigure = false
 
@@ -43,7 +44,8 @@ final class CalliopeAppState: ObservableObject {
         quickStartStore: QuickStartStore = QuickStartStore(),
         settingsActionModel: MicrophoneSettingsActionModel = MicrophoneSettingsActionModel(),
         soundSettingsActionModel: SoundSettingsActionModel = SoundSettingsActionModel(),
-        speechSettingsActionModel: SpeechSettingsActionModel = SpeechSettingsActionModel()
+        speechSettingsActionModel: SpeechSettingsActionModel = SpeechSettingsActionModel(),
+        launchReadinessTracker: LaunchReadinessTracker = LaunchReadinessTracker()
     ) {
         let basePreferencesStore = AnalysisPreferencesStore()
         let frontmostAppMonitor = FrontmostAppMonitor()
@@ -67,6 +69,7 @@ final class CalliopeAppState: ObservableObject {
         self.settingsActionModel = settingsActionModel
         self.soundSettingsActionModel = soundSettingsActionModel
         self.speechSettingsActionModel = speechSettingsActionModel
+        self.launchReadinessTracker = launchReadinessTracker
         self.preferencesStore = basePreferencesStore
         self.frontmostAppMonitor = frontmostAppMonitor
         self.activePreferencesStore = activePreferencesStore

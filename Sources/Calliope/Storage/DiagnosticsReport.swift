@@ -8,6 +8,11 @@
 import Foundation
 
 struct DiagnosticsReport: Codable, Equatable {
+    enum LaunchReadinessStatus: String, Codable, Equatable {
+        case unknown
+        case onTarget = "on_target"
+        case slow
+    }
     struct AppInfo: Codable, Equatable {
         let shortVersion: String?
         let buildVersion: String?
@@ -36,6 +41,10 @@ struct DiagnosticsReport: Codable, Equatable {
     let capturePreferences: CapturePreferencesInfo
     let retentionPreferences: RetentionPreferencesInfo
     let recordingsCount: Int
+    let appLaunchAt: Date
+    let sessionReadyLatencySeconds: TimeInterval?
+    let sessionReadyTargetSeconds: TimeInterval
+    let sessionReadyStatus: LaunchReadinessStatus
 
     static func make(
         appVersion: AppVersionInfo,
@@ -45,9 +54,12 @@ struct DiagnosticsReport: Codable, Equatable {
         capturePreferences: AudioCapturePreferences,
         retentionPreferences: RecordingRetentionPreferences,
         recordingsCount: Int,
+        appLaunchAt: Date,
+        sessionReadyLatencySeconds: TimeInterval?,
         now: Date = Date()
     ) -> DiagnosticsReport {
-        DiagnosticsReport(
+        let readinessTargetSeconds = LaunchReadinessTracker.targetSeconds
+        return DiagnosticsReport(
             createdAt: now,
             app: AppInfo(
                 shortVersion: appVersion.shortVersion,
@@ -67,7 +79,14 @@ struct DiagnosticsReport: Codable, Equatable {
                 autoCleanEnabled: retentionPreferences.autoCleanEnabled,
                 retentionDays: retentionPreferences.retentionOption.days
             ),
-            recordingsCount: recordingsCount
+            recordingsCount: recordingsCount,
+            appLaunchAt: appLaunchAt,
+            sessionReadyLatencySeconds: sessionReadyLatencySeconds,
+            sessionReadyTargetSeconds: readinessTargetSeconds,
+            sessionReadyStatus: readinessStatus(
+                latencySeconds: sessionReadyLatencySeconds,
+                targetSeconds: readinessTargetSeconds
+            )
         )
     }
 
@@ -103,5 +122,15 @@ struct DiagnosticsReport: Codable, Equatable {
         case .authorized:
             return "authorized"
         }
+    }
+
+    private static func readinessStatus(
+        latencySeconds: TimeInterval?,
+        targetSeconds: TimeInterval
+    ) -> LaunchReadinessStatus {
+        guard let latencySeconds else {
+            return .unknown
+        }
+        return latencySeconds <= targetSeconds ? .onTarget : .slow
     }
 }

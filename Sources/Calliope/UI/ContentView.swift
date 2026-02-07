@@ -244,6 +244,11 @@ struct ContentView: View {
                     preferencesStore.paceMin = newValue
                 }
             }
+            .onChange(of: viewState.canStartRecording) { canStart in
+                if canStart {
+                    appState.launchReadinessTracker.markSessionReady()
+                }
+            }
             .onChange(of: hasAcceptedDisclosure) { newValue in
                 privacyDisclosureStore.hasAcceptedDisclosure = newValue
                 isDisclosureSheetPresented = PrivacyDisclosureGate.requiresDisclosure(
@@ -440,7 +445,9 @@ struct ContentView: View {
             speechPermission: speechPermission.state,
             capturePreferences: audioCapturePreferencesStore.current,
             retentionPreferences: recordingPreferencesStore.current,
-            recordingsCount: RecordingManager.shared.getAllRecordings().count
+            recordingsCount: RecordingManager.shared.getAllRecordings().count,
+            appLaunchAt: appState.launchReadinessTracker.appLaunchAt,
+            sessionReadyLatencySeconds: appState.launchReadinessTracker.sessionReadyLatencySeconds
         )
         diagnosticsExportActionModel.export(report: report)
     }

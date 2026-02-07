@@ -303,3 +303,15 @@ goals:
     notes:
       - "New 2026-02-07: swift test has reported ModuleCache and SwiftPM cache permission errors under user home paths; ensure test scripts keep all caches local and writable."
       - "Validated 2026-02-07: swift-test and coverage scripts now pin HOME, CFFIXED_USER_HOME, TMPDIR, SwiftPM config/security, and clang module caches; swift-test runs without permission errors."
+  - id: G53
+    title: Launch-to-session readiness under 2 seconds
+    status: AT_TARGET
+    notes:
+      - "New 2026-02-07: PRD success metric requires starting a session within 2 seconds of app launch; need measurable readiness and guardrails."
+      - "2026-02-07: Added launch readiness tracker and diagnostics export fields for app launch time and readiness latency."
+      - "Validated 2026-02-07: Diagnostics export now includes readiness target seconds and on_target/slow/unknown status with unit coverage."
+  - id: G54
+    title: Accessibility-ready Session and Recordings surfaces
+    status: BELOW_TARGET
+    notes:
+      - "New 2026-02-07: PRD requires full VoiceOver coverage, Dynamic Type, and non-color-only cues for live metrics and controls across core surfaces."
