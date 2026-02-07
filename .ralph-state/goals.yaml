@@ -274,6 +274,7 @@ goals:
       - "New 2026-02-07: PRD requires Dynamic Type, accessibility contrast, no color-only messaging, and full VoiceOver support for live metrics and controls; audit and ensure Session, Recordings, and Settings meet these requirements."
   - id: G48
     title: Session lifecycle resilience when backgrounded or reopened
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "New 2026-02-07: PRD requires predictable behavior when backgrounded, minimized, or reopened; validate recording continuity, timer accuracy, and UI state restoration across app lifecycle transitions."
+      - "Validated 2026-02-07: Added lifecycle monitor to refresh diagnostics on app reactivation and test coverage for active/inactive transitions."

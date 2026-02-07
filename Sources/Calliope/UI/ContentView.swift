@@ -22,6 +22,7 @@ struct ContentView: View {
     @ObservedObject private var recordingsViewModel: RecordingListViewModel
     @ObservedObject private var overlayPreferencesStore: OverlayPreferencesStore
     @ObservedObject private var coachingProfileStore: CoachingProfileStore
+    @StateObject private var appLifecycleMonitor = AppLifecycleMonitor()
     private let privacyDisclosureStore: PrivacyDisclosureStore
     private let quickStartStore: QuickStartStore
     @State private var hasAcceptedDisclosure: Bool
@@ -221,6 +222,10 @@ struct ContentView: View {
             }
             .onAppear {
                 appState.configureIfNeeded()
+                appState.refreshOnAppear()
+            }
+            .onReceive(appLifecycleMonitor.$isActive) { isActive in
+                guard isActive else { return }
                 appState.refreshOnAppear()
             }
             .onChange(of: preferencesStore.paceMin) { newValue in

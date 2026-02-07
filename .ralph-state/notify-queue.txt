@@ -1,0 +1,1 @@
+Goal completed: Session lifecycle resilience when backgrounded or reopened
