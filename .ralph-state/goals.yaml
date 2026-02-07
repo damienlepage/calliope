@@ -148,12 +148,23 @@ goals:
       - "Validated 2026-02-06: Settings now includes checklist, per-platform verification status, and a copyable verification log template."
   - id: G27
     title: Session profile presets and manual selection
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "2026-02-07: Goal created to let users define named coaching profiles and manually select one per session."
+      - "Validated 2026-02-07: Seeded Default/Focused/Conversational coaching presets with updated tests; session picker now shows presets by default."
   - id: G28
     title: Voice isolation confidence warnings
     status: AT_TARGET
     notes:
       - "2026-02-07: Goal created to detect risky audio routes (e.g., speaker bleed) and warn users during sessions."
       - "Validated 2026-02-07: Session view shows audio route warnings when speaker output risks bleed; evaluator covered by unit tests."
+  - id: G29
+    title: Privacy enforcement for risky audio routes
+    status: BELOW_TARGET
+    notes:
+      - "2026-02-07: Goal created to ensure sessions cannot start without acknowledging speaker-bleed risk when Voice Isolation is unavailable."
+  - id: G30
+    title: Recording metadata surfaces coaching profile usage
+    status: BELOW_TARGET
+    notes:
+      - "2026-02-07: Goal created to show the coaching profile used in recordings list and detail views for easier browsing."

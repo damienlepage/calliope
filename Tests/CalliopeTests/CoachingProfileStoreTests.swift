@@ -7,8 +7,11 @@ final class CoachingProfileStoreTests: XCTestCase {
 
         let store = CoachingProfileStore(defaults: defaults)
 
-        XCTAssertEqual(store.profiles.count, 1)
+        XCTAssertEqual(store.profiles.count, 3)
         XCTAssertEqual(store.profiles.first?.name, "Default")
+        XCTAssertTrue(store.profiles.map(\.name).contains("Focused"))
+        XCTAssertTrue(store.profiles.map(\.name).contains("Conversational"))
+        XCTAssertEqual(store.selectedProfile?.name, "Default")
         XCTAssertEqual(store.selectedProfileID, store.profiles.first?.id)
     }
 
@@ -16,12 +19,12 @@ final class CoachingProfileStoreTests: XCTestCase {
         let defaults = makeDefaults("CoachingProfileStoreTests.normalize")
         let store = CoachingProfileStore(defaults: defaults)
 
-        let added = store.addProfile(name: " Focused ", preferences: .default)
-        XCTAssertEqual(added?.name, "Focused")
+        let added = store.addProfile(name: " Interview Prep ", preferences: .default)
+        XCTAssertEqual(added?.name, "Interview Prep")
 
         let rejected = store.addProfile(name: "   ", preferences: .default)
         XCTAssertNil(rejected)
-        XCTAssertEqual(store.profiles.count, 2)
+        XCTAssertEqual(store.profiles.count, 4)
     }
 
     func testProfilePersistsAcrossLoads() {
@@ -48,7 +51,7 @@ final class CoachingProfileStoreTests: XCTestCase {
         }
 
         let reloaded = CoachingProfileStore(defaults: defaults)
-        XCTAssertEqual(reloaded.profiles.count, 2)
+        XCTAssertEqual(reloaded.profiles.count, 4)
         XCTAssertNotNil(reloaded.profiles.first { $0.id == profileID })
         XCTAssertEqual(reloaded.selectedProfileID, profileID)
     }

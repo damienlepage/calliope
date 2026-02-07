@@ -36,8 +36,7 @@ final class CoachingProfileStore: ObservableObject {
         let loadedProfiles = Self.loadProfiles(from: defaults, key: profilesKey)
         let normalizedProfiles = loadedProfiles.compactMap(Self.normalize)
         if normalizedProfiles.isEmpty {
-            let defaultProfile = CoachingProfile.default()
-            profiles = [defaultProfile]
+            profiles = Self.defaultProfiles()
         } else {
             profiles = normalizedProfiles
         }
@@ -148,6 +147,31 @@ final class CoachingProfileStore: ObservableObject {
 
     private static func normalizeName(_ name: String) -> String {
         name.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private static func defaultProfiles() -> [CoachingProfile] {
+        let defaultProfile = CoachingProfile.default()
+        let focused = CoachingProfile(
+            id: UUID(),
+            name: "Focused",
+            preferences: AnalysisPreferences(
+                paceMin: 130,
+                paceMax: 170,
+                pauseThreshold: 0.8,
+                crutchWords: Constants.crutchWords
+            )
+        )
+        let conversational = CoachingProfile(
+            id: UUID(),
+            name: "Conversational",
+            preferences: AnalysisPreferences(
+                paceMin: 110,
+                paceMax: 175,
+                pauseThreshold: 1.4,
+                crutchWords: Constants.crutchWords
+            )
+        )
+        return [defaultProfile, focused, conversational].compactMap(Self.normalize)
     }
 
     private static func normalizePreferences(_ preferences: AnalysisPreferences) -> AnalysisPreferences {
