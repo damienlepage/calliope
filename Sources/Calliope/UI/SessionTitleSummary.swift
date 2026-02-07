@@ -8,24 +8,35 @@
 import Foundation
 
 struct SessionTitleSummary: Equatable {
+    let durationText: String
     let paceText: String
     let crutchText: String
     let pauseText: String
+    let pauseRateText: String
     let speakingText: String
+    let turnsText: String
 
     init(summary: AnalysisSummary) {
         let pace = Int(summary.pace.averageWPM.rounded())
         let crutchCount = summary.crutchWords.totalCount
         let pauseCount = summary.pauses.count
+        let durationText = SessionTitleSummary.formatDuration(summary.durationSeconds)
+        let pauseRateText = SessionTitleSummary.formatPausesPerMinute(
+            count: pauseCount,
+            durationSeconds: summary.durationSeconds
+        ) ?? "n/a"
         let speakingText = SessionTitleSummary.formatSpeaking(
             speakingSeconds: summary.speaking.timeSeconds,
             durationSeconds: summary.durationSeconds
         )
 
+        self.durationText = "Duration: \(durationText)"
         self.paceText = "Avg pace: \(pace) WPM"
         self.crutchText = "Crutch words: \(crutchCount)"
         self.pauseText = "Pauses: \(pauseCount)"
+        self.pauseRateText = "Pauses/min: \(pauseRateText)"
         self.speakingText = "Speaking time: \(speakingText)"
+        self.turnsText = "Turns: \(summary.speaking.turnCount)"
     }
 
     private static func formatDuration(_ duration: TimeInterval) -> String {
@@ -40,6 +51,14 @@ struct SessionTitleSummary: Equatable {
         let minutes = totalSeconds / 60
         let seconds = totalSeconds % 60
         return String(format: "%d:%02d", minutes, seconds)
+    }
+
+    private static func formatPausesPerMinute(count: Int, durationSeconds: Double) -> String? {
+        guard durationSeconds > 0 else { return nil }
+        let safeDuration = max(durationSeconds, 1)
+        let minutes = safeDuration / 60
+        let rate = Double(count) / minutes
+        return String(format: "%.1f", rate)
     }
 
     private static func formatSpeaking(speakingSeconds: Double, durationSeconds: Double) -> String {

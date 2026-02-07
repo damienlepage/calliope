@@ -1,1 +1,1 @@
-Goal completed: Session recovery guidance for capture failures
+Goal completed: Post-session review and quick actions

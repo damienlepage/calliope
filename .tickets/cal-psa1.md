@@ -1,6 +1,6 @@
 ---
 id: cal-psa1
-status: ready
+status: closed
 deps: []
 links: []
 created: 2026-02-07T20:15:00Z

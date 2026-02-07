@@ -178,9 +178,10 @@ goals:
       - "Validated 2026-02-07: Settings, coaching profiles, and per-app profiles show preset matching/labels plus guidance for multi-word phrases."
   - id: G32
     title: Post-session review and quick actions
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "2026-02-07: Goal created to surface immediate post-session stats and provide quick actions without blocking the title prompt."
+      - "Validated 2026-02-07: Post-session recap shows duration, speaking time, turns, pace, crutch count, and pauses/min with Open Recording, Edit Title, and Go to Recordings actions."
   - id: G33
     title: Session recovery guidance for capture failures
     status: AT_TARGET

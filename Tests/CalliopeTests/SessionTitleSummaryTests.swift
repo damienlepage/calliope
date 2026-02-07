@@ -27,10 +27,13 @@ final class SessionTitleSummaryTests: XCTestCase {
 
         let summaryText = SessionTitleSummary(summary: summary)
 
+        XCTAssertEqual(summaryText.durationText, "Duration: 5:00")
+        XCTAssertEqual(summaryText.speakingText, "Speaking time: 1:35 (32%)")
+        XCTAssertEqual(summaryText.turnsText, "Turns: 3")
         XCTAssertEqual(summaryText.paceText, "Avg pace: 146 WPM")
         XCTAssertEqual(summaryText.crutchText, "Crutch words: 7")
         XCTAssertEqual(summaryText.pauseText, "Pauses: 4")
-        XCTAssertEqual(summaryText.speakingText, "Speaking time: 1:35 (32%)")
+        XCTAssertEqual(summaryText.pauseRateText, "Pauses/min: 0.8")
     }
 
     func testSummaryFormattingHandlesZeroDuration() {
@@ -59,5 +62,6 @@ final class SessionTitleSummaryTests: XCTestCase {
         let summaryText = SessionTitleSummary(summary: summary)
 
         XCTAssertEqual(summaryText.speakingText, "Speaking time: 0:00")
+        XCTAssertEqual(summaryText.pauseRateText, "Pauses/min: n/a")
     }
 }

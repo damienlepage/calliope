@@ -33,9 +33,7 @@ struct ContentView: View {
     @State private var isDisclosureSheetPresented: Bool
     @State private var isQuickStartSheetPresented: Bool
     @State private var isQuickStartPending: Bool
-    @State private var pendingSessionForTitle: CompletedRecordingSession?
-    @State private var postSessionReview: PostSessionReview?
-    @State private var sessionTitleDraft: String = ""
+    @State private var postSessionCoordinator = PostSessionReviewCoordinator()
     private let settingsActionModel: MicrophoneSettingsActionModel
     private let soundSettingsActionModel: SoundSettingsActionModel
     private let speechSettingsActionModel: SpeechSettingsActionModel
@@ -114,14 +112,14 @@ struct ContentView: View {
             coachingProfileName: coachingProfileStore.selectedProfile?.name,
             perAppProfile: activePreferencesStore.activeProfile
         )
+        let pendingSessionForTitle = postSessionCoordinator.pendingSessionForTitle
+        let postSessionReview = postSessionCoordinator.postSessionReview
         let defaultSessionTitle = pendingSessionForTitle.map {
             RecordingMetadata.defaultSessionTitle(for: $0.createdAt)
         }
         let postSessionRecordingItem = postSessionReview.map {
             recordingsViewModel.item(for: $0.recordingURL)
         }
-        let isPostSessionActive = postSessionReview?.recordingURL == recordingsViewModel.activePlaybackURL
-        let isPostSessionPaused = isPostSessionActive && recordingsViewModel.isPlaybackPaused
         let requiresVoiceIsolationAcknowledgement = voiceIsolationAcknowledgementRequired()
         let blockingReasons = RecordingEligibility.blockingReasons(
             privacyState: privacyState,
@@ -164,19 +162,15 @@ struct ContentView: View {
                         defaultSessionTitle: defaultSessionTitle,
                         postSessionReview: postSessionReview,
                         postSessionRecordingItem: postSessionRecordingItem,
-                        isPostSessionPlaybackActive: isPostSessionActive,
-                        isPostSessionPlaybackPaused: isPostSessionPaused,
-                        sessionTitleDraft: $sessionTitleDraft,
+                        sessionTitleDraft: Binding(
+                            get: { postSessionCoordinator.sessionTitleDraft },
+                            set: { postSessionCoordinator.sessionTitleDraft = $0 }
+                        ),
                         onSaveSessionTitle: saveSessionTitle,
                         onSkipSessionTitle: skipSessionTitle,
                         onViewRecordings: { navigationState.selection = .recordings },
-                        onPostSessionPlayPause: {
-                            guard let postSessionRecordingItem else { return }
-                            recordingsViewModel.togglePlayPause(postSessionRecordingItem)
-                        },
-                        onPostSessionReveal: {
-                            guard let postSessionRecordingItem else { return }
-                            recordingsViewModel.reveal(postSessionRecordingItem)
+                        onEditSessionTitle: {
+                            editSessionTitle(using: postSessionRecordingItem)
                         },
                         onAcknowledgeVoiceIsolationRisk: acknowledgeVoiceIsolationRisk,
                         onOpenSettings: { navigationState.selection = .settings },
@@ -309,19 +303,14 @@ struct ContentView: View {
         .onChange(of: audioCapture.completedRecordingSession) { newValue in
             guard let newValue else { return }
             writeDefaultMetadata(for: newValue)
-            pendingSessionForTitle = newValue
-            postSessionReview = loadPostSessionReview(for: newValue)
-            sessionTitleDraft = ""
-        }
-        .onChange(of: pendingSessionForTitle) { newValue in
-            guard let newValue else {
-                postSessionReview = nil
-                return
+            postSessionCoordinator.handleCompletedSession(newValue) { session in
+                loadPostSessionReview(for: session)
             }
-            postSessionReview = loadPostSessionReview(for: newValue)
         }
         .onChange(of: audioCapture.isRecording) { isRecording in
-            if !isRecording {
+            if isRecording {
+                postSessionCoordinator.handleRecordingStarted()
+            } else {
                 hasAcknowledgedVoiceIsolationRisk = false
             }
         }
@@ -403,9 +392,9 @@ struct ContentView: View {
     }
 
     private func saveSessionTitle() {
-        guard let pendingSession = pendingSessionForTitle else { return }
+        guard let pendingSession = postSessionCoordinator.pendingSessionForTitle else { return }
         let didSave = RecordingManager.shared.saveSessionTitle(
-            sessionTitleDraft,
+            postSessionCoordinator.sessionTitleDraft,
             for: pendingSession.recordingURLs,
             createdAt: pendingSession.createdAt,
             coachingProfile: coachingProfileStore.selectedProfile
@@ -415,15 +404,22 @@ struct ContentView: View {
             return
         }
         recordingsViewModel.refreshRecordings()
-        pendingSessionForTitle = nil
-        postSessionReview = nil
-        sessionTitleDraft = ""
+        postSessionCoordinator.handleTitleSaved()
     }
 
     private func skipSessionTitle() {
-        pendingSessionForTitle = nil
-        postSessionReview = nil
-        sessionTitleDraft = ""
+        postSessionCoordinator.handleTitleSkipped()
+    }
+
+    private func editSessionTitle(using recordingItem: RecordingItem?) {
+        guard postSessionCoordinator.pendingSessionForTitle == nil else { return }
+        if let title = recordingItem?.metadata?.title,
+           let normalized = RecordingMetadata.normalizedTitle(title) {
+            postSessionCoordinator.sessionTitleDraft = normalized
+        } else {
+            postSessionCoordinator.sessionTitleDraft = ""
+        }
+        postSessionCoordinator.handleEditTitle()
     }
 
     private func writeDefaultMetadata(for session: CompletedRecordingSession) {

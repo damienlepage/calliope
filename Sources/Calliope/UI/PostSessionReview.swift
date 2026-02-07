@@ -17,17 +17,22 @@ struct PostSessionReview: Equatable {
     var paceText: String? { summary?.paceText }
     var crutchText: String? { summary?.crutchText }
     var pauseText: String? { summary?.pauseText }
+    var pauseRateText: String? { summary?.pauseRateText }
     var speakingText: String? { summary?.speakingText }
+    var durationText: String? { summary?.durationText }
+    var turnsText: String? { summary?.turnsText }
 
     var summaryLines: [String] {
         guard let summary else {
             return [Self.summaryFallbackText]
         }
         return [
+            summary.durationText,
+            summary.speakingText,
+            summary.turnsText,
             summary.paceText,
             summary.crutchText,
-            summary.pauseText,
-            summary.speakingText
+            summary.pauseRateText
         ]
     }
 

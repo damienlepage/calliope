@@ -24,14 +24,11 @@ struct SessionView: View {
     let defaultSessionTitle: String?
     let postSessionReview: PostSessionReview?
     let postSessionRecordingItem: RecordingItem?
-    let isPostSessionPlaybackActive: Bool
-    let isPostSessionPlaybackPaused: Bool
     @Binding var sessionTitleDraft: String
     let onSaveSessionTitle: () -> Void
     let onSkipSessionTitle: () -> Void
     let onViewRecordings: () -> Void
-    let onPostSessionPlayPause: () -> Void
-    let onPostSessionReveal: () -> Void
+    let onEditSessionTitle: () -> Void
     let onAcknowledgeVoiceIsolationRisk: () -> Void
     let onOpenSettings: () -> Void
     let onRetryCapture: () -> Void
@@ -50,8 +47,6 @@ struct SessionView: View {
             defaultTitle: defaultSessionTitle
         )
         let titleHintColor: Color = titlePromptState.helperTone == .warning ? .orange : .secondary
-        let isPostSessionPlaying = isPostSessionPlaybackActive && !isPostSessionPlaybackPaused
-        let isPostSessionPaused = isPostSessionPlaybackActive && isPostSessionPlaybackPaused
         let postSessionActionsDisabled = audioCapture.isRecording
         let postSessionItemUnavailable = postSessionRecordingItem == nil
         let captureStatusText = CaptureStatusFormatter.statusText(
@@ -191,7 +186,7 @@ struct SessionView: View {
                     .frame(maxWidth: 320, alignment: .leading)
                 }
 
-                if let postSessionReview {
+                if let postSessionReview, !audioCapture.isRecording {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Session recap")
                             .font(.headline)
@@ -206,30 +201,17 @@ struct SessionView: View {
                         .accessibilityLabel("Session recap")
                         .accessibilityValue(postSessionReview.summaryLines.joined(separator: ", "))
                         HStack(spacing: 12) {
-                            Button("View Recordings", action: onViewRecordings)
-                                .buttonStyle(.bordered)
-                                .disabled(postSessionActionsDisabled)
-                            Button(isPostSessionPlaying ? "Pause" : "Play", action: onPostSessionPlayPause)
-                                .buttonStyle(.bordered)
-                                .disabled(postSessionActionsDisabled || postSessionItemUnavailable)
-                                .accessibilityLabel(isPostSessionPlaying ? "Pause playback" : "Play recording")
-                            Button("Reveal", action: onPostSessionReveal)
-                                .buttonStyle(.bordered)
-                                .disabled(postSessionActionsDisabled || postSessionItemUnavailable)
-                            Button("Details") {
+                            Button("Open Recording") {
                                 postSessionDetailItem = postSessionRecordingItem
                             }
                             .buttonStyle(.bordered)
                             .disabled(postSessionActionsDisabled || postSessionItemUnavailable)
-                        }
-                        if isPostSessionPlaying {
-                            Text("Playing")
-                                .font(.footnote)
-                                .foregroundColor(.secondary)
-                        } else if isPostSessionPaused {
-                            Text("Paused")
-                                .font(.footnote)
-                                .foregroundColor(.secondary)
+                            Button("Edit Title", action: onEditSessionTitle)
+                                .buttonStyle(.bordered)
+                                .disabled(postSessionActionsDisabled || showTitlePrompt)
+                            Button("Go to Recordings", action: onViewRecordings)
+                                .buttonStyle(.bordered)
+                                .disabled(postSessionActionsDisabled)
                         }
                     }
                     .frame(maxWidth: 320, alignment: .leading)
@@ -412,14 +394,11 @@ private struct SessionViewPreview: View {
                 integrityReport: nil,
                 metadata: nil
             ),
-            isPostSessionPlaybackActive: false,
-            isPostSessionPlaybackPaused: false,
             sessionTitleDraft: $sessionTitle,
             onSaveSessionTitle: {},
             onSkipSessionTitle: {},
             onViewRecordings: {},
-            onPostSessionPlayPause: {},
-            onPostSessionReveal: {},
+            onEditSessionTitle: {},
             onAcknowledgeVoiceIsolationRisk: {},
             onOpenSettings: {},
             onRetryCapture: {},
