@@ -17,4 +17,16 @@ final class CrutchWordFeedbackTests: XCTestCase {
     func testLevelAboveThresholdIsCaution() {
         XCTAssertEqual(CrutchWordFeedback.level(for: CrutchWordFeedback.cautionThreshold + 1), .caution)
     }
+
+    func testStatusTextMatchesLevel() {
+        XCTAssertEqual(CrutchWordFeedback.statusText(for: 0), "On track")
+        XCTAssertEqual(
+            CrutchWordFeedback.statusText(for: CrutchWordFeedback.cautionThreshold),
+            "On track"
+        )
+        XCTAssertEqual(
+            CrutchWordFeedback.statusText(for: CrutchWordFeedback.cautionThreshold + 1),
+            "High"
+        )
+    }
 }

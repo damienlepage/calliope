@@ -1,6 +1,6 @@
 ---
 id: cal-thbz
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-07T05:44:47Z
@@ -16,3 +16,8 @@ Review status indicators and warnings in Session/Recordings/Settings to ensure n
 
 All status/warning indicators include text or symbol plus color. No critical meaning relies on color alone. Any status-only dots/badges include accessible text labels.
 
+## Notes
+
+**2026-02-07T06:01:00Z**
+
+Added explicit crutch-word status labels in the live feedback panel and compact overlay, plus unit coverage for the new status text helper.

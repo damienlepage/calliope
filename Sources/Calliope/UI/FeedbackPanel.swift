@@ -43,6 +43,7 @@ struct FeedbackPanel: View {
             showSilenceWarning: showSilenceWarning,
             showWaitingForSpeech: showWaitingForSpeech
         )
+        let crutchStatusText = CrutchWordFeedback.statusText(for: crutchWords)
         VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .firstTextBaseline) {
                 Text("Real-time Feedback")
@@ -98,7 +99,7 @@ struct FeedbackPanel: View {
                     title: "Crutch Words",
                     value: "\(crutchWords)",
                     valueColor: crutchColor(crutchLevel),
-                    subtitle: "Target: \u{2264} 5"
+                    subtitle: "Status: \(crutchStatusText) · Target: \u{2264} 5"
                 )
                 FeedbackStatCard(
                     title: "Pauses",

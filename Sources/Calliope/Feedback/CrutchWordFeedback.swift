@@ -18,4 +18,13 @@ struct CrutchWordFeedback {
     static func level(for count: Int) -> CrutchWordFeedbackLevel {
         count > cautionThreshold ? .caution : .calm
     }
+
+    static func statusText(for count: Int) -> String {
+        switch level(for: count) {
+        case .calm:
+            return "On track"
+        case .caution:
+            return "High"
+        }
+    }
 }

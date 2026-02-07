@@ -46,6 +46,7 @@ struct CompactFeedbackOverlay: View {
             showSilenceWarning: showSilenceWarning,
             showWaitingForSpeech: showWaitingForSpeech
         )
+        let crutchStatusText = CrutchWordFeedback.statusText(for: crutchWords)
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 Text("Live Feedback")
@@ -111,7 +112,7 @@ struct CompactFeedbackOverlay: View {
                     title: "Crutch Words",
                     value: "\(crutchWords)",
                     valueColor: crutchColor(crutchLevel),
-                    subtitle: "Target: \u{2264} 5"
+                    subtitle: "Status: \(crutchStatusText) · Target: \u{2264} 5"
                 )
                 OverlayStatCard(
                     title: "Pauses",
