@@ -31,14 +31,17 @@ Calliope is a macOS app that acts as a real-time communication coach during conf
    - Speaking pace/speed.
    - Crutch word detection (e.g., “uh”, “ah”, “so”).
    - Pause analysis (detect effective frequency and duration of pauses).
-3. Local storage of recordings and analysis artifacts on the user’s file system.
-4. Each session is saved with a default name that includes the session date and start time.
-5. Users can optionally add a title after clicking Stop (e.g. “1:1 with Alex”).
-6. Sessions metadata and statistics are easily browsable and searchable.
-7. For each session, record how often the user spoke and the total duration of user speech.
-8. Users can apply different coaching profiles per session (e.g., different speaking-time targets and sensitivity to crutch words/pauses).
-9. Privacy safeguards ensuring other participants’ voices are not recorded.
-10. Support for common conferencing tools running on macOS (Zoom, Google Meet, Teams, etc.).
+3. Live feedback must show total time, speaking time, pace, crutch words, pauses and input level.
+4. Closed captions are captured on the fly, visible by default, and toggleable with a CC control.
+5. Local storage of recordings and analysis artifacts on the user’s file system.
+6. Each session is saved with a default name that includes the session date and start time.
+7. Users can optionally add a title after clicking Stop (e.g. “1:1 with Alex”).
+8. Sessions metadata and statistics are easily browsable and searchable.
+9. For each session, record how often the user spoke and the total duration of user speech.
+10. Users can apply different coaching profiles per session, including pace min/max, pause boundaries, crutch word list, and speaking-time target.
+11. Privacy safeguards ensuring other participants’ voices are not recorded.
+13. Crutch word counts in live feedback must match post-session statistics.
+14. WPM detection accuracy must align closely with actual speech.
 
 ### Non-Functional Requirements
 1. Low-latency processing suitable for live feedback.
@@ -65,21 +68,36 @@ Calliope is a macOS app that acts as a real-time communication coach during conf
 
 ### Main Session Screen (Default)
 - Prominent Start/Stop control with clear status messaging.
-- Live feedback panel (pace, crutch words, pauses, input level, elapsed time) while recording.
+- Live feedback panel (pace, crutch words, pauses, input level, elapsed time, speaking time) while recording.
 - Minimal idle state: a short, friendly prompt and a single primary CTA (Start).
 - No settings, permissions, or recordings list visible by default.
+- Do not show system health in live feedback.
+- Closed captions appear by default with a visible CC toggle.
 
 ### Settings & Permissions
-- Microphone permission status shown in Settings after first grant.
-- Permission recovery actions (Open System Settings, Grant Access when undetermined) live in Settings, not on the session screen.
-- Privacy guardrails and preferences presented as grouped sections with concise copy.
-- Sensitivity controls remain simple and discoverable, with Reset to Defaults.
+- Settings must be tidy and show only user-facing controls that matter.
+- Only show these controls:
+  - Microphone access.
+  - Preferred input.
+  - Speech recognition.
+  - Privacy guardrails.
+  - Sensitivity preferences.
+  - Coaching profiles.
+  - Overlay.
+- Pause detection boundaries are configurable here:
+  - Low boundary default: 1s (less than this does not count as a pause).
+  - High boundary default: 5s (more than this ends a turn).
+- Remove verification status for Zoom/Google Meet/Teams from Settings.
+- Remove validation checklists and diagnostics from Settings.
 
 ### Recordings
 - Recordings list lives in a separate view or window.
 - Only show the recordings list on demand; never block or precede the session start flow.
 - Keep “Open Folder,” playback, and delete actions in the recordings view.
 - Recordings list supports search and basic metadata sorting (e.g., date, duration, speaking-time %).
+- Recordings list columns are tidy and readable: show only recording name and title in the first column.
+- Hide detailed metadata behind a Details button.
+- Recording details modal must include a visible Close button.
 
 ### Navigation & Behavior
 - Use a macOS-standard toolbar with a segmented control or sidebar for:
