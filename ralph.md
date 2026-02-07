@@ -23,7 +23,7 @@ Build Calliope into a privacy-first, low-latency macOS communication coach that 
 
 ## Workflow
 1. Read `PRD.md`, `ralph-state/goals.yaml`, `ralph-state/lessons-learned.yaml`.
-2. Use Ticket (`tk`) to decide the best next step:
+2. Use Ticket (`tk` command from the project root directory) to decide the best next step:
    - Run `tk ready` to see unblocked work.
    - If multiple are ready, prefer lowest priority number (highest priority), then pick the oldest ready ticket.
    - If none are ready, and only then:
