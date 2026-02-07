@@ -19,6 +19,11 @@ struct RecordingDetailView: View {
                     Text(item.detailMetadataText)
                         .font(.subheadline)
                         .foregroundColor(.secondary)
+                    if let profileText = item.coachingProfileText {
+                        Text(profileText)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
                 }
 
                 if let warningText = item.integrityWarningText {

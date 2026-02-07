@@ -176,6 +176,37 @@ final class RecordingItemTests: XCTestCase {
         XCTAssertEqual(item.sessionDate, modifiedAt)
     }
 
+    func testCoachingProfileTextUsesMetadataName() {
+        let metadata = RecordingMetadata(
+            title: "Weekly Review",
+            coachingProfileName: "  Focused \n"
+        )
+        let item = RecordingItem(
+            url: URL(fileURLWithPath: "/tmp/recording.m4a"),
+            modifiedAt: Date(timeIntervalSince1970: 0),
+            duration: nil,
+            fileSizeBytes: nil,
+            summary: nil,
+            integrityReport: nil,
+            metadata: metadata
+        )
+
+        XCTAssertEqual(item.coachingProfileText, "Profile: Focused")
+    }
+
+    func testCoachingProfileTextIsNilWhenMissing() {
+        let item = RecordingItem(
+            url: URL(fileURLWithPath: "/tmp/recording.m4a"),
+            modifiedAt: Date(timeIntervalSince1970: 0),
+            duration: nil,
+            fileSizeBytes: nil,
+            summary: nil,
+            integrityReport: nil
+        )
+
+        XCTAssertNil(item.coachingProfileText)
+    }
+
     func testIntegrityWarningTextUsesMissingSummaryMessage() {
         let report = RecordingIntegrityReport(
             createdAt: Date(timeIntervalSince1970: 0),

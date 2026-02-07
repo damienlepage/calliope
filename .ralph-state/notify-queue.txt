@@ -1,1 +1,1 @@
-Goal completed: Privacy enforcement for risky audio routes
+Goal completed: Recording metadata surfaces coaching profile usage

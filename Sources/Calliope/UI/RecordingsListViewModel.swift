@@ -178,6 +178,12 @@ struct RecordingItem: Identifiable, Equatable {
         metadataDetailText()
     }
 
+    var coachingProfileText: String? {
+        guard let name = metadata?.coachingProfileName,
+              !name.isEmpty else { return nil }
+        return "Profile: \(name)"
+    }
+
     var paceDetailLines: [String] {
         guard let summary else { return [] }
         let average = Int(summary.pace.averageWPM.rounded())
