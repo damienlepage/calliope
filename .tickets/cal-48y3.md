@@ -1,6 +1,6 @@
 ---
 id: cal-48y3
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-07T04:45:17Z
@@ -15,4 +15,3 @@ Update recording details sheet to include a clear Close button and follow macOS 
 ## Acceptance Criteria
 
 Layout matches macOS sheet conventions with close action at bottom right.
-
