@@ -297,3 +297,9 @@ goals:
     notes:
       - "New 2026-02-07: Add a PRD acceptance checklist and success-metrics sign-off flow so release QA captures required outcomes."
       - "Validated 2026-02-07: Release QA template and checklist now include PRD acceptance and success-metric sign-off."
+  - id: G52
+    title: Reliable local test execution without permission errors
+    status: AT_TARGET
+    notes:
+      - "New 2026-02-07: swift test has reported ModuleCache and SwiftPM cache permission errors under user home paths; ensure test scripts keep all caches local and writable."
+      - "Validated 2026-02-07: swift-test and coverage scripts now pin HOME, CFFIXED_USER_HOME, TMPDIR, SwiftPM config/security, and clang module caches; swift-test runs without permission errors."

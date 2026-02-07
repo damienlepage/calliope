@@ -1,1 +1,1 @@
-Goal completed: PRD acceptance validation and success-metric sign-off
+Goal completed: Reliable local test execution without permission errors
