@@ -10,6 +10,8 @@ import Foundation
 struct RecordingMetadata: Codable, Equatable {
     let title: String
     let createdAt: Date?
+    let coachingProfileID: UUID?
+    let coachingProfileName: String?
 
     static let maxTitleLength = 80
     private static let earliestAllowedTimestamp: TimeInterval = 946684800 // 2000-01-01T00:00:00Z
@@ -22,9 +24,16 @@ struct RecordingMetadata: Codable, Equatable {
         return formatter
     }()
 
-    init(title: String, createdAt: Date? = nil) {
+    init(
+        title: String,
+        createdAt: Date? = nil,
+        coachingProfileID: UUID? = nil,
+        coachingProfileName: String? = nil
+    ) {
         self.title = title
         self.createdAt = createdAt
+        self.coachingProfileID = coachingProfileID
+        self.coachingProfileName = RecordingMetadata.normalizedProfileName(coachingProfileName)
     }
 
     struct TitleInfo: Equatable {
@@ -48,6 +57,20 @@ struct RecordingMetadata: Codable, Equatable {
 
     static func normalizedTitle(_ title: String) -> String? {
         normalizedTitleInfo(title)?.normalized
+    }
+
+    static func normalizedProfileName(_ name: String?) -> String? {
+        guard let name else { return nil }
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        let filteredScalars = trimmed.unicodeScalars.filter {
+            !CharacterSet.controlCharacters.contains($0)
+        }
+        guard !filteredScalars.isEmpty else { return nil }
+        let filtered = String(String.UnicodeScalarView(filteredScalars))
+        let collapsed = filtered.split(whereSeparator: { $0.isWhitespace }).joined(separator: " ")
+        guard !collapsed.isEmpty else { return nil }
+        return String(collapsed.prefix(maxTitleLength))
     }
 
     static func resolvedTitle(_ title: String, createdAt: Date?) -> String? {

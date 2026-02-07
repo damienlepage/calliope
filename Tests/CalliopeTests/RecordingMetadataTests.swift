@@ -42,4 +42,15 @@ final class RecordingMetadataTests: XCTestCase {
         XCTAssertEqual(info?.normalized, "Weekly Review")
         XCTAssertEqual(info?.wasTruncated, false)
     }
+
+    func testNormalizedProfileNameTrimsWhitespace() {
+        let name = RecordingMetadata.normalizedProfileName("  Focused \n")
+
+        XCTAssertEqual(name, "Focused")
+    }
+
+    func testNormalizedProfileNameReturnsNilForEmpty() {
+        XCTAssertNil(RecordingMetadata.normalizedProfileName("  \n\t "))
+        XCTAssertNil(RecordingMetadata.normalizedProfileName(nil))
+    }
 }

@@ -7,6 +7,7 @@ final class ActiveAnalysisPreferencesStoreTests: XCTestCase {
     func testUsesBasePreferencesWhenNotRecording() {
         let baseDefaults = makeDefaults("ActiveAnalysisPreferencesStoreTests.base.notRecording")
         let profileDefaults = makeDefaults("ActiveAnalysisPreferencesStoreTests.profile.notRecording")
+        let coachingDefaults = makeDefaults("ActiveAnalysisPreferencesStoreTests.coaching.notRecording")
         let baseStore = AnalysisPreferencesStore(defaults: baseDefaults)
         baseStore.paceMin = 110
         baseStore.paceMax = 160
@@ -23,11 +24,25 @@ final class ActiveAnalysisPreferencesStoreTests: XCTestCase {
                 crutchWords: ["like"]
             )
         )
+        let coachingStore = CoachingProfileStore(defaults: coachingDefaults)
+        let coachingProfile = coachingStore.addProfile(
+            name: "Focused",
+            preferences: AnalysisPreferences(
+                paceMin: 140,
+                paceMax: 190,
+                pauseThreshold: 0.6,
+                crutchWords: ["actually"]
+            )
+        )
+        if let coachingProfile {
+            coachingStore.selectProfile(id: coachingProfile.id)
+        }
 
         let frontmost = CurrentValueSubject<String?, Never>(nil)
         let recording = CurrentValueSubject<Bool, Never>(false)
         let store = ActiveAnalysisPreferencesStore(
             basePreferencesStore: baseStore,
+            coachingProfileStore: coachingStore,
             perAppProfileStore: profileStore,
             frontmostAppPublisher: frontmost.eraseToAnyPublisher(),
             recordingPublisher: recording.eraseToAnyPublisher()
@@ -51,6 +66,7 @@ final class ActiveAnalysisPreferencesStoreTests: XCTestCase {
     func testUsesProfileWhenRecording() {
         let baseDefaults = makeDefaults("ActiveAnalysisPreferencesStoreTests.base.recording")
         let profileDefaults = makeDefaults("ActiveAnalysisPreferencesStoreTests.profile.recording")
+        let coachingDefaults = makeDefaults("ActiveAnalysisPreferencesStoreTests.coaching.recording")
         let baseStore = AnalysisPreferencesStore(defaults: baseDefaults)
         baseStore.paceMin = 120
         baseStore.paceMax = 180
@@ -66,11 +82,25 @@ final class ActiveAnalysisPreferencesStoreTests: XCTestCase {
         )
         let profileStore = PerAppFeedbackProfileStore(defaults: profileDefaults)
         profileStore.setProfile(profile)
+        let coachingStore = CoachingProfileStore(defaults: coachingDefaults)
+        let coachingProfile = coachingStore.addProfile(
+            name: "On Air",
+            preferences: AnalysisPreferences(
+                paceMin: 150,
+                paceMax: 190,
+                pauseThreshold: 0.9,
+                crutchWords: ["basically"]
+            )
+        )
+        if let coachingProfile {
+            coachingStore.selectProfile(id: coachingProfile.id)
+        }
 
         let frontmost = CurrentValueSubject<String?, Never>(nil)
         let recording = CurrentValueSubject<Bool, Never>(false)
         let store = ActiveAnalysisPreferencesStore(
             basePreferencesStore: baseStore,
+            coachingProfileStore: coachingStore,
             perAppProfileStore: profileStore,
             frontmostAppPublisher: frontmost.eraseToAnyPublisher(),
             recordingPublisher: recording.eraseToAnyPublisher()
@@ -102,6 +132,7 @@ final class ActiveAnalysisPreferencesStoreTests: XCTestCase {
     func testFallsBackWhenNoProfile() {
         let baseDefaults = makeDefaults("ActiveAnalysisPreferencesStoreTests.base.noProfile")
         let profileDefaults = makeDefaults("ActiveAnalysisPreferencesStoreTests.profile.noProfile")
+        let coachingDefaults = makeDefaults("ActiveAnalysisPreferencesStoreTests.coaching.noProfile")
         let baseStore = AnalysisPreferencesStore(defaults: baseDefaults)
         baseStore.paceMin = 118
         baseStore.paceMax = 172
@@ -109,10 +140,24 @@ final class ActiveAnalysisPreferencesStoreTests: XCTestCase {
         baseStore.crutchWords = ["uh", "um"]
 
         let profileStore = PerAppFeedbackProfileStore(defaults: profileDefaults)
+        let coachingStore = CoachingProfileStore(defaults: coachingDefaults)
+        let coachingProfile = coachingStore.addProfile(
+            name: "Interview",
+            preferences: AnalysisPreferences(
+                paceMin: 130,
+                paceMax: 165,
+                pauseThreshold: 0.8,
+                crutchWords: ["so"]
+            )
+        )
+        if let coachingProfile {
+            coachingStore.selectProfile(id: coachingProfile.id)
+        }
         let frontmost = CurrentValueSubject<String?, Never>(nil)
         let recording = CurrentValueSubject<Bool, Never>(false)
         let store = ActiveAnalysisPreferencesStore(
             basePreferencesStore: baseStore,
+            coachingProfileStore: coachingStore,
             perAppProfileStore: profileStore,
             frontmostAppPublisher: frontmost.eraseToAnyPublisher(),
             recordingPublisher: recording.eraseToAnyPublisher()
@@ -129,7 +174,7 @@ final class ActiveAnalysisPreferencesStoreTests: XCTestCase {
         wait(for: [expectation], timeout: 1.0)
         cancellable.cancel()
 
-        XCTAssertEqual(store.activePreferences, baseStore.current)
+        XCTAssertEqual(store.activePreferences, coachingProfile?.preferences ?? baseStore.current)
         XCTAssertEqual(store.activeAppIdentifier, "com.apple.finder")
         XCTAssertNil(store.activeProfile)
     }

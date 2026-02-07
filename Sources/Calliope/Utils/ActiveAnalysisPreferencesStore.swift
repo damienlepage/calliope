@@ -21,16 +21,19 @@ final class ActiveAnalysisPreferencesStore: ObservableObject, AnalysisPreference
     @Published private(set) var activeProfile: PerAppFeedbackProfile?
 
     private let basePreferencesStore: AnalysisPreferencesStore
+    private let coachingProfileStore: CoachingProfileStore
     private let perAppProfileStore: PerAppFeedbackProfileStore
     private var cancellables = Set<AnyCancellable>()
 
     init(
         basePreferencesStore: AnalysisPreferencesStore,
+        coachingProfileStore: CoachingProfileStore,
         perAppProfileStore: PerAppFeedbackProfileStore,
         frontmostAppPublisher: AnyPublisher<String?, Never>,
         recordingPublisher: AnyPublisher<Bool, Never>
     ) {
         self.basePreferencesStore = basePreferencesStore
+        self.coachingProfileStore = coachingProfileStore
         self.perAppProfileStore = perAppProfileStore
         activePreferences = basePreferencesStore.current
         activeAppIdentifier = nil
@@ -40,13 +43,27 @@ final class ActiveAnalysisPreferencesStore: ObservableObject, AnalysisPreference
             .map { PerAppFeedbackProfileStore.normalizeAppIdentifier($0) }
             .removeDuplicates()
 
-        Publishers.CombineLatest4(
-            basePreferencesStore.preferencesPublisher,
-            perAppProfileStore.$profiles,
-            normalizedFrontmostPublisher,
+        let coachingProfilePublisher = Publishers.CombineLatest(
+            coachingProfileStore.$profiles,
+            coachingProfileStore.$selectedProfileID
+        )
+        .map { profiles, selectedID in
+            profiles.first { $0.id == selectedID } ?? profiles.first
+        }
+        .removeDuplicates()
+
+        Publishers.CombineLatest(
+            Publishers.CombineLatest4(
+                basePreferencesStore.preferencesPublisher,
+                coachingProfilePublisher,
+                perAppProfileStore.$profiles,
+                normalizedFrontmostPublisher
+            ),
             recordingPublisher
         )
-        .map { basePreferences, profiles, frontmostApp, isRecording in
+        .map { combined, isRecording in
+            let (basePreferences, coachingProfile, profiles, frontmostApp) = combined
+            let resolvedBase = isRecording ? coachingProfile?.preferences ?? basePreferences : basePreferences
             let resolvedAppIdentifier = isRecording ? frontmostApp : nil
             let resolvedProfile = resolvedAppIdentifier.flatMap { appIdentifier in
                 profiles.first { $0.appIdentifier == appIdentifier }
@@ -58,7 +75,7 @@ final class ActiveAnalysisPreferencesStore: ObservableObject, AnalysisPreference
                     pauseThreshold: profile.pauseThreshold,
                     crutchWords: profile.crutchWords
                 )
-            } ?? basePreferences
+            } ?? resolvedBase
             return ActiveState(
                 preferences: resolvedPreferences,
                 appIdentifier: resolvedAppIdentifier,

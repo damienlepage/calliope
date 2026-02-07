@@ -639,4 +639,64 @@ final class RecordingManagerTests: XCTestCase {
         XCTAssertEqual(readBack?.createdAt, expectedDate)
         XCTAssertTrue(FileManager.default.fileExists(atPath: metadataURL.path))
     }
+
+    func testWriteDefaultMetadataIncludesCoachingProfile() {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let recordingsDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
+        let timestampMs: Double = 1_700_000_000_000
+        let recordingURL = recordingsDirectory
+            .appendingPathComponent("recording_\(Int64(timestampMs))_abc.m4a")
+        let createdAt = Date(timeIntervalSince1970: timestampMs / 1000)
+        let profile = CoachingProfile(
+            id: UUID(),
+            name: "Focused",
+            preferences: AnalysisPreferences.default
+        )
+
+        FileManager.default.createFile(atPath: recordingURL.path, contents: Data([0x1]))
+
+        manager.writeDefaultMetadataIfNeeded(
+            for: [recordingURL],
+            createdAt: createdAt,
+            coachingProfile: profile
+        )
+
+        let readBack = manager.readMetadata(for: recordingURL)
+        XCTAssertEqual(readBack?.coachingProfileID, profile.id)
+        XCTAssertEqual(readBack?.coachingProfileName, profile.name)
+    }
+
+    func testSaveSessionTitlePreservesCoachingProfile() {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let manager = RecordingManager(baseDirectory: tempDir)
+        let recordingsDirectory = tempDir.appendingPathComponent("CalliopeRecordings", isDirectory: true)
+        let recordingURL = recordingsDirectory.appendingPathComponent("session.m4a")
+        let profile = CoachingProfile(
+            id: UUID(),
+            name: "Interview",
+            preferences: AnalysisPreferences.default
+        )
+
+        FileManager.default.createFile(atPath: recordingURL.path, contents: Data([0x1]))
+        let initial = RecordingMetadata(
+            title: "Session \(Date())",
+            createdAt: Date(),
+            coachingProfileID: profile.id,
+            coachingProfileName: profile.name
+        )
+        try? manager.writeMetadata(initial, for: recordingURL)
+
+        _ = manager.saveSessionTitle(
+            "Weekly Sync",
+            for: [recordingURL],
+            createdAt: Date()
+        )
+
+        let readBack = manager.readMetadata(for: recordingURL)
+        XCTAssertEqual(readBack?.coachingProfileID, profile.id)
+        XCTAssertEqual(readBack?.coachingProfileName, profile.name)
+    }
 }

@@ -10,7 +10,9 @@ import SwiftUI
 struct SessionView: View {
     @ObservedObject var audioCapture: AudioCapture
     @ObservedObject var feedbackViewModel: LiveFeedbackViewModel
-    @ObservedObject var preferencesStore: AnalysisPreferencesStore
+    let analysisPreferences: AnalysisPreferences
+    let coachingProfiles: [CoachingProfile]
+    @Binding var selectedCoachingProfileID: UUID?
     let sessionDurationText: String?
     let sessionDurationSeconds: Int?
     let canStartRecording: Bool
@@ -102,12 +104,30 @@ struct SessionView: View {
                         processingLatencyAverage: feedbackViewModel.state.processingLatencyAverage,
                         processingUtilizationStatus: feedbackViewModel.state.processingUtilizationStatus,
                         processingUtilizationAverage: feedbackViewModel.state.processingUtilizationAverage,
-                        paceMin: preferencesStore.paceMin,
-                        paceMax: preferencesStore.paceMax,
+                        paceMin: analysisPreferences.paceMin,
+                        paceMax: analysisPreferences.paceMax,
                         sessionDurationText: sessionDurationText,
                         sessionDurationSeconds: sessionDurationSeconds,
                         storageStatus: storageStatus
                     )
+                }
+
+                if !coachingProfiles.isEmpty {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Coaching profile")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Picker("Coaching profile", selection: $selectedCoachingProfileID) {
+                            ForEach(coachingProfiles) { profile in
+                                Text(profile.name)
+                                    .tag(profile.id as UUID?)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .frame(maxWidth: 260, alignment: .leading)
+                        .accessibilityLabel("Coaching profile")
+                    }
+                    .frame(maxWidth: 320, alignment: .leading)
                 }
 
                 if showTitlePrompt {
@@ -181,12 +201,19 @@ struct SessionView: View {
 
 private struct SessionViewPreview: View {
     @State private var sessionTitle = ""
+    private let defaultProfile = CoachingProfile.default()
+    private let focusedProfile = CoachingProfile(id: UUID(), name: "Focused", preferences: .default)
 
     var body: some View {
         SessionView(
             audioCapture: AudioCapture(capturePreferencesStore: AudioCapturePreferencesStore()),
             feedbackViewModel: LiveFeedbackViewModel(),
-            preferencesStore: AnalysisPreferencesStore(),
+            analysisPreferences: AnalysisPreferences.default,
+            coachingProfiles: [
+                defaultProfile,
+                focusedProfile
+            ],
+            selectedCoachingProfileID: .constant(defaultProfile.id),
             sessionDurationText: "00:32",
             sessionDurationSeconds: 32,
             canStartRecording: true,

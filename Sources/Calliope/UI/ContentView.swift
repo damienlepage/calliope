@@ -24,6 +24,7 @@ struct ContentView: View {
     @StateObject private var recordingsViewModel: RecordingListViewModel
     @StateObject private var overlayPreferencesStore: OverlayPreferencesStore
     @StateObject private var perAppProfileStore: PerAppFeedbackProfileStore
+    @StateObject private var coachingProfileStore: CoachingProfileStore
     @StateObject private var conferencingVerificationStore: ConferencingCompatibilityVerificationStore
     @State private var privacyDisclosureStore: PrivacyDisclosureStore
     @State private var quickStartStore: QuickStartStore
@@ -43,6 +44,7 @@ struct ContentView: View {
         recordingPreferencesStore: RecordingRetentionPreferencesStore = RecordingRetentionPreferencesStore(),
         overlayPreferencesStore: OverlayPreferencesStore = OverlayPreferencesStore(),
         perAppProfileStore: PerAppFeedbackProfileStore = PerAppFeedbackProfileStore(),
+        coachingProfileStore: CoachingProfileStore = CoachingProfileStore(),
         conferencingVerificationStore: ConferencingCompatibilityVerificationStore = ConferencingCompatibilityVerificationStore(),
         privacyDisclosureStore: PrivacyDisclosureStore = PrivacyDisclosureStore(),
         quickStartStore: QuickStartStore = QuickStartStore(),
@@ -58,6 +60,7 @@ struct ContentView: View {
         )
         let activePreferencesStore = ActiveAnalysisPreferencesStore(
             basePreferencesStore: basePreferencesStore,
+            coachingProfileStore: coachingProfileStore,
             perAppProfileStore: perAppProfileStore,
             frontmostAppPublisher: frontmostAppMonitor.$frontmostAppIdentifier.eraseToAnyPublisher(),
             recordingPublisher: audioCapture.$isRecording.eraseToAnyPublisher()
@@ -68,6 +71,7 @@ struct ContentView: View {
         _audioCapturePreferencesStore = StateObject(wrappedValue: audioCapturePreferencesStore)
         _recordingPreferencesStore = StateObject(wrappedValue: recordingPreferencesStore)
         _perAppProfileStore = StateObject(wrappedValue: perAppProfileStore)
+        _coachingProfileStore = StateObject(wrappedValue: coachingProfileStore)
         _conferencingVerificationStore = StateObject(wrappedValue: conferencingVerificationStore)
         _preferencesStore = StateObject(wrappedValue: basePreferencesStore)
         _frontmostAppMonitor = StateObject(wrappedValue: frontmostAppMonitor)
@@ -97,6 +101,7 @@ struct ContentView: View {
         let sessionDurationText = feedbackViewModel.sessionDurationSeconds
             .map(SessionDurationFormatter.format)
         let sessionDurationSeconds = feedbackViewModel.sessionDurationSeconds
+        let activePreferences = activePreferencesStore.activePreferences
         let overlayCaptureStatusText = CaptureStatusFormatter.overlayStatusText(
             inputDeviceName: audioCapture.inputDeviceName,
             backendStatus: audioCapture.backendStatus
@@ -127,7 +132,12 @@ struct ContentView: View {
                     SessionView(
                         audioCapture: audioCapture,
                         feedbackViewModel: feedbackViewModel,
-                        preferencesStore: preferencesStore,
+                        analysisPreferences: activePreferences,
+                        coachingProfiles: coachingProfileStore.profiles,
+                        selectedCoachingProfileID: Binding(
+                            get: { coachingProfileStore.selectedProfileID },
+                            set: { coachingProfileStore.selectedProfileID = $0 }
+                        ),
                         sessionDurationText: sessionDurationText,
                         sessionDurationSeconds: sessionDurationSeconds,
                         canStartRecording: canStartRecording,
@@ -178,24 +188,24 @@ struct ContentView: View {
                 isEnabled: overlayPreferencesStore.showCompactOverlay,
                 isRecording: audioCapture.isRecording
             ) {
-                CompactFeedbackOverlay(
-                    pace: feedbackViewModel.state.pace,
-                    crutchWords: feedbackViewModel.state.crutchWords,
-                    pauseCount: feedbackViewModel.state.pauseCount,
-                    pauseAverageDuration: feedbackViewModel.state.pauseAverageDuration,
+                    CompactFeedbackOverlay(
+                        pace: feedbackViewModel.state.pace,
+                        crutchWords: feedbackViewModel.state.crutchWords,
+                        pauseCount: feedbackViewModel.state.pauseCount,
+                        pauseAverageDuration: feedbackViewModel.state.pauseAverageDuration,
                     inputLevel: feedbackViewModel.state.inputLevel,
                     showSilenceWarning: feedbackViewModel.state.showSilenceWarning,
                     showWaitingForSpeech: feedbackViewModel.showWaitingForSpeech,
                     processingLatencyStatus: feedbackViewModel.state.processingLatencyStatus,
                     processingLatencyAverage: feedbackViewModel.state.processingLatencyAverage,
-                    processingUtilizationStatus: feedbackViewModel.state.processingUtilizationStatus,
-                    processingUtilizationAverage: feedbackViewModel.state.processingUtilizationAverage,
-                    captureStatusText: overlayCaptureStatusText,
-                    paceMin: preferencesStore.paceMin,
-                    paceMax: preferencesStore.paceMax,
-                    sessionDurationText: sessionDurationText,
-                    sessionDurationSeconds: sessionDurationSeconds,
-                    storageStatus: audioCapture.storageStatus,
+                        processingUtilizationStatus: feedbackViewModel.state.processingUtilizationStatus,
+                        processingUtilizationAverage: feedbackViewModel.state.processingUtilizationAverage,
+                        captureStatusText: overlayCaptureStatusText,
+                        paceMin: activePreferences.paceMin,
+                        paceMax: activePreferences.paceMax,
+                        sessionDurationText: sessionDurationText,
+                        sessionDurationSeconds: sessionDurationSeconds,
+                        storageStatus: audioCapture.storageStatus,
                     interruptionMessage: audioCapture.interruptionMessage,
                     activeProfileLabel: activeProfileLabel
                 )
@@ -348,7 +358,8 @@ struct ContentView: View {
         let didSave = RecordingManager.shared.saveSessionTitle(
             sessionTitleDraft,
             for: pendingSession.recordingURLs,
-            createdAt: pendingSession.createdAt
+            createdAt: pendingSession.createdAt,
+            coachingProfile: coachingProfileStore.selectedProfile
         )
         guard didSave else {
             skipSessionTitle()
@@ -367,7 +378,8 @@ struct ContentView: View {
     private func writeDefaultMetadata(for session: CompletedRecordingSession) {
         RecordingManager.shared.writeDefaultMetadataIfNeeded(
             for: session.recordingURLs,
-            createdAt: session.createdAt
+            createdAt: session.createdAt,
+            coachingProfile: coachingProfileStore.selectedProfile
         )
     }
 

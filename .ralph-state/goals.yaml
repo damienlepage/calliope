@@ -146,3 +146,13 @@ goals:
     notes:
       - "2026-02-06: Goal created to confirm compatibility with common conferencing tools and document mitigations."
       - "Validated 2026-02-06: Settings now includes checklist, per-platform verification status, and a copyable verification log template."
+  - id: G27
+    title: Session profile presets and manual selection
+    status: BELOW_TARGET
+    notes:
+      - "2026-02-07: Goal created to let users define named coaching profiles and manually select one per session."
+  - id: G28
+    title: Voice isolation confidence warnings
+    status: BELOW_TARGET
+    notes:
+      - "2026-02-07: Goal created to detect risky audio routes (e.g., speaker bleed) and warn users during sessions."

@@ -8,7 +8,7 @@
 import Combine
 import Foundation
 
-struct AnalysisPreferences: Equatable {
+struct AnalysisPreferences: Equatable, Codable {
     let paceMin: Double
     let paceMax: Double
     let pauseThreshold: TimeInterval
