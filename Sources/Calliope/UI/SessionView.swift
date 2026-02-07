@@ -50,6 +50,7 @@ struct SessionView: View {
         let titleHintColor: Color = titlePromptState.helperTone == .warning ? .orange : .secondary
         let postSessionActionsDisabled = audioCapture.isRecording
         let postSessionItemUnavailable = postSessionRecordingItem == nil
+        let selectedProfileName = coachingProfiles.first(where: { $0.id == selectedCoachingProfileID })?.name
         let captureStatusText = CaptureStatusFormatter.statusText(
             inputDeviceName: audioCapture.inputDeviceName,
             backendStatus: audioCapture.backendStatus,
@@ -119,6 +120,8 @@ struct SessionView: View {
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: 320)
                     .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityLabel("Capture interruption")
+                    .accessibilityValue(interruptionMessage)
             }
             if viewState.shouldShowRecordingDetails, let captureStatusText {
                 Text(captureStatusText)
@@ -221,6 +224,9 @@ struct SessionView: View {
                     .pickerStyle(.menu)
                     .frame(maxWidth: 260, alignment: .leading)
                     .accessibilityLabel("Coaching profile")
+                    .accessibilityValue(
+                        AccessibilityFormatting.profileValue(selectedName: selectedProfileName)
+                    )
                     .accessibilityHint("Choose which coaching profile to apply to this session.")
                 }
                 .frame(maxWidth: 320, alignment: .leading)
@@ -312,6 +318,9 @@ struct SessionView: View {
                             .buttonStyle(.bordered)
                     }
                     .frame(maxWidth: 320, alignment: .leading)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("Voice isolation warning")
+                    .accessibilityValue(voiceIsolationAcknowledgementMessage)
                 }
 
                 HStack(spacing: 20) {

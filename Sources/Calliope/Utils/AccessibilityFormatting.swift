@@ -31,6 +31,11 @@ enum AccessibilityFormatting {
             .joined(separator: ", ")
     }
 
+    static func profileValue(selectedName: String?) -> String {
+        let trimmed = (selectedName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "Default profile" : trimmed
+    }
+
     static func percentText(for level: Double) -> String {
         let clamped = max(0, min(level, 1))
         let percentValue = Int((clamped * 100).rounded())

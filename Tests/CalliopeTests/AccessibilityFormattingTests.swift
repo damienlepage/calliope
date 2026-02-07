@@ -37,6 +37,15 @@ final class AccessibilityFormattingTests: XCTestCase {
         XCTAssertEqual(value, "3, Target: <= 5, 0.8/min")
     }
 
+    func testProfileValueFallsBackWhenMissing() {
+        XCTAssertEqual(AccessibilityFormatting.profileValue(selectedName: nil), "Default profile")
+        XCTAssertEqual(AccessibilityFormatting.profileValue(selectedName: "  "), "Default profile")
+        XCTAssertEqual(
+            AccessibilityFormatting.profileValue(selectedName: "Focused"),
+            "Focused"
+        )
+    }
+
     func testPercentTextClampsInput() {
         XCTAssertEqual(AccessibilityFormatting.percentText(for: -0.1), "0%")
         XCTAssertEqual(AccessibilityFormatting.percentText(for: 1.2), "100%")
