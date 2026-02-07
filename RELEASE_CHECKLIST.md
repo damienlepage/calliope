@@ -54,8 +54,9 @@ Validate launch, permissions, recordings storage, and session flows per version.
 
 | macOS Version | Machine | Launches | Permissions | Session Flow | Recordings Storage | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-|  |  | Pass/Fail | Pass/Fail | Pass/Fail | Pass/Fail |  |
-|  |  | Pass/Fail | Pass/Fail | Pass/Fail | Pass/Fail |  |
+| macOS 13 (Ventura) |  | Pass/Fail | Pass/Fail | Pass/Fail | Pass/Fail |  |
+| macOS 14 (Sonoma) |  | Pass/Fail | Pass/Fail | Pass/Fail | Pass/Fail |  |
+| macOS 15 (Sequoia) |  | Pass/Fail | Pass/Fail | Pass/Fail | Pass/Fail |  |
 
 ## Packaged App Flow Checklist
 Run these steps in the packaged app on each supported macOS version.

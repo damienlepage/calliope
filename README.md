@@ -114,6 +114,14 @@ Calliope/
 - Speech framework (transcription)
 - Core Audio (real-time processing)
 
+## Supported macOS Versions
+
+Calliope supports macOS 13 (Ventura) and later. For release verification, test the packaged app on the supported major versions:
+
+- macOS 13 (Ventura)
+- macOS 14 (Sonoma)
+- macOS 15 (Sequoia)
+
 ## Development Status
 
 🚧 In Development
