@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct QuickStartStore {
+final class QuickStartStore {
     private let defaults: UserDefaults
     private let quickStartSeenKey = "quickStartSeen"
 

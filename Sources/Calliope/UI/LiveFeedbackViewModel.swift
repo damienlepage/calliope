@@ -143,7 +143,7 @@ final class LiveFeedbackViewModel: ObservableObject {
         recordingState
             .map { isRecording -> AnyPublisher<Int?, Never> in
                 guard isRecording else {
-                    return Just<Int?>(nil).eraseToAnyPublisher()
+                    return Empty<Int?, Never>().eraseToAnyPublisher()
                 }
                 let start = now()
                 return timerPublisherFactory()

@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct PrivacyDisclosureStore {
+final class PrivacyDisclosureStore {
     private let defaults: UserDefaults
     private let disclosureKey = "privacyDisclosureAccepted"
 

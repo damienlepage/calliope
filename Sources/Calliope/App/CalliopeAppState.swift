@@ -8,6 +8,7 @@
 import Combine
 import SwiftUI
 
+@MainActor
 final class CalliopeAppState: ObservableObject {
     let audioCapture: AudioCapture
     let audioAnalyzer: AudioAnalyzer

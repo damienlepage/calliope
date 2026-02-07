@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+@MainActor
 struct ContentView: View {
     @EnvironmentObject private var navigationState: AppNavigationState
     private let appState: CalliopeAppState
@@ -38,8 +39,28 @@ struct ContentView: View {
         static let settingsWidth: CGFloat = 520
         static let height: CGFloat = 760
     }
+    private struct ViewState {
+        let privacyState: PrivacyGuardrails.State
+        let sessionDurationText: String?
+        let sessionDurationSeconds: Int?
+        let activePreferences: AnalysisPreferences
+        let overlayCaptureStatusText: String
+        let activeProfileLabel: String?
+        let pendingSessionForTitle: CompletedRecordingSession?
+        let postSessionReview: PostSessionReview?
+        let defaultSessionTitle: String?
+        let postSessionRecordingItem: RecordingItem?
+        let requiresVoiceIsolationAcknowledgement: Bool
+        let blockingReasons: [RecordingEligibility.Reason]
+        let canStartRecording: Bool
+        let showOpenSettingsAction: Bool
+        let showOpenSoundSettingsAction: Bool
+        let showOpenSpeechSettingsAction: Bool
+        let blockingReasonsText: String?
+        let voiceIsolationAcknowledgementMessage: String?
+    }
 
-    init(appState: CalliopeAppState = CalliopeAppState()) {
+    init(appState: CalliopeAppState) {
         self.appState = appState
         _audioCapture = ObservedObject(initialValue: appState.audioCapture)
         _feedbackViewModel = ObservedObject(initialValue: appState.feedbackViewModel)
@@ -71,6 +92,10 @@ struct ContentView: View {
     }
 
     var body: some View {
+        content(viewState)
+    }
+
+    private var viewState: ViewState {
         let privacyState = PrivacyGuardrails.State(
             hasAcceptedDisclosure: hasAcceptedDisclosure
         )
@@ -113,185 +138,252 @@ struct ContentView: View {
         let voiceIsolationAcknowledgementMessage = blockingReasons.first(
             where: { $0 == .voiceIsolationRiskUnacknowledged }
         )?.message
-        ZStack(alignment: .topTrailing) {
-            Group {
-                switch navigationState.selection {
-                case .session:
-                    SessionView(
-                        audioCapture: audioCapture,
-                        feedbackViewModel: feedbackViewModel,
-                        analysisPreferences: activePreferences,
-                        coachingProfiles: coachingProfileStore.profiles,
-                        selectedCoachingProfileID: Binding(
-                            get: { coachingProfileStore.selectedProfileID },
-                            set: { coachingProfileStore.selectedProfileID = $0 }
-                        ),
-                        sessionDurationText: sessionDurationText,
-                        sessionDurationSeconds: sessionDurationSeconds,
-                        canStartRecording: canStartRecording,
-                        blockingReasonsText: blockingReasonsText,
-                        voiceIsolationAcknowledgementMessage: voiceIsolationAcknowledgementMessage,
-                        storageStatus: audioCapture.storageStatus,
-                        activeProfileLabel: activeProfileLabel,
-                        showTitlePrompt: pendingSessionForTitle != nil,
-                        defaultSessionTitle: defaultSessionTitle,
-                        postSessionReview: postSessionReview,
-                        postSessionRecordingItem: postSessionRecordingItem,
-                        sessionTitleDraft: Binding(
-                            get: { postSessionCoordinator.sessionTitleDraft },
-                            set: { postSessionCoordinator.sessionTitleDraft = $0 }
-                        ),
-                        onSaveSessionTitle: saveSessionTitle,
-                        onSkipSessionTitle: skipSessionTitle,
-                        onViewRecordings: { navigationState.selection = .recordings },
-                        onEditSessionTitle: {
-                            editSessionTitle(using: postSessionRecordingItem)
-                        },
-                        onAcknowledgeVoiceIsolationRisk: acknowledgeVoiceIsolationRisk,
-                        onOpenSettings: { navigationState.selection = .settings },
-                        onRetryCapture: toggleRecording,
-                        onToggleRecording: toggleRecording
+        return ViewState(
+            privacyState: privacyState,
+            sessionDurationText: sessionDurationText,
+            sessionDurationSeconds: sessionDurationSeconds,
+            activePreferences: activePreferences,
+            overlayCaptureStatusText: overlayCaptureStatusText,
+            activeProfileLabel: activeProfileLabel,
+            pendingSessionForTitle: pendingSessionForTitle,
+            postSessionReview: postSessionReview,
+            defaultSessionTitle: defaultSessionTitle,
+            postSessionRecordingItem: postSessionRecordingItem,
+            requiresVoiceIsolationAcknowledgement: requiresVoiceIsolationAcknowledgement,
+            blockingReasons: blockingReasons,
+            canStartRecording: canStartRecording,
+            showOpenSettingsAction: showOpenSettingsAction,
+            showOpenSoundSettingsAction: showOpenSoundSettingsAction,
+            showOpenSpeechSettingsAction: showOpenSpeechSettingsAction,
+            blockingReasonsText: blockingReasonsText,
+            voiceIsolationAcknowledgementMessage: voiceIsolationAcknowledgementMessage
+        )
+    }
+
+    @ViewBuilder
+    private func content(_ viewState: ViewState) -> some View {
+        contentWithSheets(viewState)
+    }
+
+    @ViewBuilder
+    private func contentWithSheets(_ viewState: ViewState) -> some View {
+        contentWithFocusedValues(viewState)
+            .sheet(isPresented: $isDisclosureSheetPresented) {
+                PrivacyDisclosureSheet(
+                    recordingsPath: PathDisplayFormatter.displayPath(
+                        RecordingManager.shared.recordingsDirectoryURL()
                     )
-                case .recordings:
-                    RecordingsView(viewModel: recordingsViewModel)
-                case .settings:
-                    SettingsView(
-                        microphonePermission: microphonePermission,
-                        speechPermission: speechPermission,
-                        microphoneDevices: microphoneDevices,
-                        preferencesStore: preferencesStore,
-                        overlayPreferencesStore: overlayPreferencesStore,
-                        audioCapturePreferencesStore: audioCapturePreferencesStore,
-                        coachingProfileStore: coachingProfileStore,
-                        hasAcceptedDisclosure: hasAcceptedDisclosure,
-                        recordingsPath: PathDisplayFormatter.displayPath(
-                            RecordingManager.shared.recordingsDirectoryURL()
-                        ),
-                        showOpenSettingsAction: showOpenSettingsAction,
-                        showOpenSoundSettingsAction: showOpenSoundSettingsAction,
-                        showOpenSpeechSettingsAction: showOpenSpeechSettingsAction,
-                        onRequestMicAccess: microphonePermission.requestAccess,
-                        onRequestSpeechAccess: speechPermission.requestAccess,
-                        onOpenSystemSettings: settingsActionModel.openSystemSettings,
-                        onOpenSoundSettings: soundSettingsActionModel.openSoundSettings,
-                        onOpenSpeechSettings: speechSettingsActionModel.openSystemSettings
-                    )
+                ) {
+                    hasAcceptedDisclosure = true
+                }
+                .interactiveDismissDisabled(true)
+            }
+            .sheet(isPresented: $isQuickStartSheetPresented) {
+                QuickStartSheet {
+                    quickStartStore.hasSeenQuickStart = true
+                    isQuickStartSheetPresented = false
                 }
             }
-            if OverlayVisibility.shouldShowCompactOverlay(
-                isEnabled: overlayPreferencesStore.showCompactOverlay,
-                isRecording: audioCapture.isRecording
-            ) {
-                CompactFeedbackOverlay(
-                    pace: feedbackViewModel.state.pace,
-                    crutchWords: feedbackViewModel.state.crutchWords,
-                    pauseCount: feedbackViewModel.state.pauseCount,
-                    pauseAverageDuration: feedbackViewModel.state.pauseAverageDuration,
-                    speakingTimeSeconds: feedbackViewModel.state.speakingTimeSeconds,
-                    inputLevel: feedbackViewModel.state.inputLevel,
-                    showSilenceWarning: feedbackViewModel.state.showSilenceWarning,
-                    showWaitingForSpeech: feedbackViewModel.showWaitingForSpeech,
-                    captureStatusText: overlayCaptureStatusText,
-                    paceMin: activePreferences.paceMin,
-                    paceMax: activePreferences.paceMax,
-                    sessionDurationText: sessionDurationText,
-                    sessionDurationSeconds: sessionDurationSeconds,
-                    storageStatus: audioCapture.storageStatus,
-                    interruptionMessage: audioCapture.interruptionMessage,
-                    activeProfileLabel: activeProfileLabel
-                )
-                .padding(.top, 12)
-                .padding(.trailing, 12)
+    }
+
+    @ViewBuilder
+    private func contentWithFocusedValues(_ viewState: ViewState) -> some View {
+        let toggleRecordingAction: (() -> Void)? = navigationState.selection == .session
+            ? { toggleRecording() }
+            : nil
+        let refreshRecordingsAction: (() -> Void)? = navigationState.selection == .recordings
+            ? { refreshRecordings() }
+            : nil
+        let openRecordingsFolderAction: (() -> Void)? = navigationState.selection == .recordings
+            ? { openRecordingsFolder() }
+            : nil
+
+        contentWithLifecycle(viewState)
+            .focusedSceneValue(
+                \.toggleRecording,
+                toggleRecordingAction
+            )
+            .focusedSceneValue(
+                \.refreshRecordings,
+                refreshRecordingsAction
+            )
+            .focusedSceneValue(
+                \.openRecordingsFolder,
+                openRecordingsFolderAction
+            )
+    }
+
+    @ViewBuilder
+    private func contentWithLifecycle(_ viewState: ViewState) -> some View {
+        contentBase(viewState)
+            .toolbar {
+                contentToolbar()
             }
+            .onAppear {
+                appState.configureIfNeeded()
+                appState.refreshOnAppear()
+            }
+            .onChange(of: preferencesStore.paceMin) { newValue in
+                if newValue > preferencesStore.paceMax {
+                    preferencesStore.paceMax = newValue
+                }
+            }
+            .onChange(of: preferencesStore.paceMax) { newValue in
+                if newValue < preferencesStore.paceMin {
+                    preferencesStore.paceMin = newValue
+                }
+            }
+            .onChange(of: hasAcceptedDisclosure) { newValue in
+                privacyDisclosureStore.hasAcceptedDisclosure = newValue
+                isDisclosureSheetPresented = PrivacyDisclosureGate.requiresDisclosure(
+                    hasAcceptedDisclosure: newValue
+                )
+                if newValue, !quickStartStore.hasSeenQuickStart {
+                    isQuickStartPending = true
+                }
+            }
+            .onChange(of: isDisclosureSheetPresented) { newValue in
+                if !newValue, isQuickStartPending {
+                    isQuickStartSheetPresented = true
+                    isQuickStartPending = false
+                }
+            }
+            .onChange(of: audioCapture.completedRecordingSession) { newValue in
+                guard let newValue else { return }
+                writeDefaultMetadata(for: newValue)
+                postSessionCoordinator.handleCompletedSession(newValue) { session in
+                    loadPostSessionReview(for: session)
+                }
+            }
+            .onChange(of: audioCapture.isRecording) { isRecording in
+                if isRecording {
+                    postSessionCoordinator.handleRecordingStarted()
+                } else {
+                    hasAcknowledgedVoiceIsolationRisk = false
+                }
+            }
+            .onChange(of: overlayPreferencesStore.alwaysOnTop) { newValue in
+                WindowLevelController.apply(alwaysOnTop: newValue)
+            }
+    }
+
+    @ViewBuilder
+    private func contentBase(_ viewState: ViewState) -> some View {
+        ZStack(alignment: .topTrailing) {
+            mainContent(viewState)
+            overlayView(viewState)
         }
         .frame(width: contentWidth, height: Layout.height)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Picker("View", selection: $navigationState.selection) {
-                    ForEach(AppSection.allCases) { section in
-                        Text(section.title)
-                            .tag(section)
-                    }
+    }
+
+    @ToolbarContentBuilder
+    private func contentToolbar() -> some ToolbarContent {
+        ToolbarItem(placement: .principal) {
+            Picker("View", selection: $navigationState.selection) {
+                ForEach(AppSection.allCases) { section in
+                    Text(section.title)
+                        .tag(section)
                 }
-                .pickerStyle(.segmented)
-                .frame(maxWidth: 320)
-                .accessibilityLabel("View")
-                .accessibilityHint("Switch between Session, Recordings, and Settings.")
             }
+            .pickerStyle(.segmented)
+            .frame(maxWidth: 320)
+            .accessibilityLabel("View")
+            .accessibilityHint("Switch between Session, Recordings, and Settings.")
         }
-        .onAppear {
-            appState.configureIfNeeded()
-            appState.refreshOnAppear()
-        }
-        .onChange(of: preferencesStore.paceMin) { newValue in
-            if newValue > preferencesStore.paceMax {
-                preferencesStore.paceMax = newValue
-            }
-        }
-        .onChange(of: preferencesStore.paceMax) { newValue in
-            if newValue < preferencesStore.paceMin {
-                preferencesStore.paceMin = newValue
-            }
-        }
-        .onChange(of: hasAcceptedDisclosure) { newValue in
-            privacyDisclosureStore.hasAcceptedDisclosure = newValue
-            isDisclosureSheetPresented = PrivacyDisclosureGate.requiresDisclosure(
-                hasAcceptedDisclosure: newValue
+    }
+
+    @ViewBuilder
+    private func overlayView(_ viewState: ViewState) -> some View {
+        if OverlayVisibility.shouldShowCompactOverlay(
+            isEnabled: overlayPreferencesStore.showCompactOverlay,
+            isRecording: audioCapture.isRecording
+        ) {
+            CompactFeedbackOverlay(
+                pace: feedbackViewModel.state.pace,
+                crutchWords: feedbackViewModel.state.crutchWords,
+                pauseCount: feedbackViewModel.state.pauseCount,
+                pauseAverageDuration: feedbackViewModel.state.pauseAverageDuration,
+                speakingTimeSeconds: feedbackViewModel.state.speakingTimeSeconds,
+                inputLevel: feedbackViewModel.state.inputLevel,
+                showSilenceWarning: feedbackViewModel.state.showSilenceWarning,
+                showWaitingForSpeech: feedbackViewModel.showWaitingForSpeech,
+                captureStatusText: viewState.overlayCaptureStatusText,
+                paceMin: viewState.activePreferences.paceMin,
+                paceMax: viewState.activePreferences.paceMax,
+                sessionDurationText: viewState.sessionDurationText,
+                sessionDurationSeconds: viewState.sessionDurationSeconds,
+                storageStatus: audioCapture.storageStatus,
+                interruptionMessage: audioCapture.interruptionMessage,
+                activeProfileLabel: viewState.activeProfileLabel
             )
-            if newValue, !quickStartStore.hasSeenQuickStart {
-                isQuickStartPending = true
-            }
+            .padding(.top, 12)
+            .padding(.trailing, 12)
         }
-        .onChange(of: isDisclosureSheetPresented) { newValue in
-            if !newValue, isQuickStartPending {
-                isQuickStartSheetPresented = true
-                isQuickStartPending = false
-            }
-        }
-        .onChange(of: audioCapture.completedRecordingSession) { newValue in
-            guard let newValue else { return }
-            writeDefaultMetadata(for: newValue)
-            postSessionCoordinator.handleCompletedSession(newValue) { session in
-                loadPostSessionReview(for: session)
-            }
-        }
-        .onChange(of: audioCapture.isRecording) { isRecording in
-            if isRecording {
-                postSessionCoordinator.handleRecordingStarted()
-            } else {
-                hasAcknowledgedVoiceIsolationRisk = false
-            }
-        }
-        .onChange(of: overlayPreferencesStore.alwaysOnTop) { newValue in
-            WindowLevelController.apply(alwaysOnTop: newValue)
-        }
-        .focusedSceneValue(
-            \.toggleRecording,
-            navigationState.selection == .session ? toggleRecording : nil
-        )
-        .focusedSceneValue(
-            \.refreshRecordings,
-            navigationState.selection == .recordings ? refreshRecordings : nil
-        )
-        .focusedSceneValue(
-            \.openRecordingsFolder,
-            navigationState.selection == .recordings ? openRecordingsFolder : nil
-        )
-        .sheet(isPresented: $isDisclosureSheetPresented) {
-            PrivacyDisclosureSheet(
+    }
+
+    @ViewBuilder
+    private func mainContent(_ viewState: ViewState) -> some View {
+        switch navigationState.selection {
+        case .session:
+            SessionView(
+                audioCapture: audioCapture,
+                feedbackViewModel: feedbackViewModel,
+                analysisPreferences: viewState.activePreferences,
+                coachingProfiles: coachingProfileStore.profiles,
+                selectedCoachingProfileID: Binding(
+                    get: { coachingProfileStore.selectedProfileID },
+                    set: { coachingProfileStore.selectedProfileID = $0 }
+                ),
+                sessionDurationText: viewState.sessionDurationText,
+                sessionDurationSeconds: viewState.sessionDurationSeconds,
+                canStartRecording: viewState.canStartRecording,
+                blockingReasonsText: viewState.blockingReasonsText,
+                voiceIsolationAcknowledgementMessage: viewState.voiceIsolationAcknowledgementMessage,
+                storageStatus: audioCapture.storageStatus,
+                activeProfileLabel: viewState.activeProfileLabel,
+                showTitlePrompt: viewState.pendingSessionForTitle != nil,
+                defaultSessionTitle: viewState.defaultSessionTitle,
+                postSessionReview: viewState.postSessionReview,
+                postSessionRecordingItem: viewState.postSessionRecordingItem,
+                sessionTitleDraft: Binding(
+                    get: { postSessionCoordinator.sessionTitleDraft },
+                    set: { postSessionCoordinator.sessionTitleDraft = $0 }
+                ),
+                onSaveSessionTitle: saveSessionTitle,
+                onSkipSessionTitle: skipSessionTitle,
+                onViewRecordings: { navigationState.selection = .recordings },
+                onEditSessionTitle: {
+                    editSessionTitle(using: viewState.postSessionRecordingItem)
+                },
+                onAcknowledgeVoiceIsolationRisk: acknowledgeVoiceIsolationRisk,
+                onOpenSettings: { navigationState.selection = .settings },
+                onRetryCapture: toggleRecording,
+                onToggleRecording: toggleRecording
+            )
+        case .recordings:
+            RecordingsView(viewModel: recordingsViewModel)
+        case .settings:
+            SettingsView(
+                microphonePermission: microphonePermission,
+                speechPermission: speechPermission,
+                microphoneDevices: microphoneDevices,
+                preferencesStore: preferencesStore,
+                overlayPreferencesStore: overlayPreferencesStore,
+                audioCapturePreferencesStore: audioCapturePreferencesStore,
+                coachingProfileStore: coachingProfileStore,
+                hasAcceptedDisclosure: hasAcceptedDisclosure,
                 recordingsPath: PathDisplayFormatter.displayPath(
                     RecordingManager.shared.recordingsDirectoryURL()
-                )
-            ) {
-                hasAcceptedDisclosure = true
-            }
-            .interactiveDismissDisabled(true)
-        }
-        .sheet(isPresented: $isQuickStartSheetPresented) {
-            QuickStartSheet {
-                quickStartStore.hasSeenQuickStart = true
-                isQuickStartSheetPresented = false
-            }
+                ),
+                showOpenSettingsAction: viewState.showOpenSettingsAction,
+                showOpenSoundSettingsAction: viewState.showOpenSoundSettingsAction,
+                showOpenSpeechSettingsAction: viewState.showOpenSpeechSettingsAction,
+                onRequestMicAccess: microphonePermission.requestAccess,
+                onRequestSpeechAccess: speechPermission.requestAccess,
+                onOpenSystemSettings: settingsActionModel.openSystemSettings,
+                onOpenSoundSettings: soundSettingsActionModel.openSoundSettings,
+                onOpenSpeechSettings: speechSettingsActionModel.openSystemSettings
+            )
         }
     }
 
@@ -398,9 +490,10 @@ struct ContentView: View {
 }
 
 #if DEBUG
+@MainActor
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        ContentView(appState: CalliopeAppState())
             .environmentObject(AppNavigationState())
     }
 }
