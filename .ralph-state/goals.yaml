@@ -322,3 +322,13 @@ goals:
     notes:
       - "New 2026-02-07: Ensure diagnostics exports capture device, backend, and format context to support privacy verification and troubleshooting."
       - "Validated 2026-02-07: Diagnostics export now includes capture backend status, input/output device names, and input format snapshot with unit coverage."
+  - id: G56
+    title: End-to-end validation of core user flows
+    status: BELOW_TARGET
+    notes:
+      - "New 2026-02-07: Ensure core flows (start/stop session, post-session recap, recordings playback, settings edits) are validated end-to-end to reduce regressions."
+  - id: G57
+    title: Release packaging verification on supported macOS versions
+    status: BELOW_TARGET
+    notes:
+      - "New 2026-02-07: Confirm packaged app launches, permissions, recordings storage, and session flows on supported macOS versions; document results."

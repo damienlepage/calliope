@@ -67,7 +67,10 @@ class RecordingManager {
             guard ext == "m4a" || ext == "wav" else {
                 return nil
             }
-            guard let fileSize = values?.fileSize, fileSize > 0 else {
+            let resourceSize = values?.fileSize ?? 0
+            let fallbackSize = (try? fileManager.attributesOfItem(atPath: url.path)[.size] as? NSNumber)?.intValue ?? 0
+            let fileSize = max(resourceSize, fallbackSize)
+            guard fileSize > 0 else {
                 return nil
             }
             let modified = values?.contentModificationDate ?? .distantPast
