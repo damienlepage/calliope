@@ -163,6 +163,8 @@ struct ContentView: View {
                         onSkipSessionTitle: skipSessionTitle,
                         onViewRecordings: { navigationState.selection = .recordings },
                         onAcknowledgeVoiceIsolationRisk: acknowledgeVoiceIsolationRisk,
+                        onOpenSettings: { navigationState.selection = .settings },
+                        onRetryCapture: toggleRecording,
                         onToggleRecording: toggleRecording
                     )
                 case .recordings:

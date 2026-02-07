@@ -28,6 +28,8 @@ struct SessionView: View {
     let onSkipSessionTitle: () -> Void
     let onViewRecordings: () -> Void
     let onAcknowledgeVoiceIsolationRisk: () -> Void
+    let onOpenSettings: () -> Void
+    let onRetryCapture: () -> Void
     let onToggleRecording: () -> Void
 
     var body: some View {
@@ -47,6 +49,9 @@ struct SessionView: View {
             backendStatus: audioCapture.backendStatus,
             isRecording: audioCapture.isRecording
         )
+        let recoveryAction = CaptureRecoveryActionMapper.recoveryAction(for: audioCapture.status)
+        let shouldShowVoiceIsolationAcknowledgement = voiceIsolationAcknowledgementMessage != nil
+            && recoveryAction?.kind != .acknowledgeVoiceIsolationRisk
         let routeWarningText = audioCapture.isRecording
             ? AudioRouteWarningEvaluator.warningText(
                 inputDeviceName: audioCapture.inputDeviceName,
@@ -80,6 +85,23 @@ struct SessionView: View {
                         .foregroundColor(.orange)
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: 320)
+                }
+                if let recoveryAction {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(recoveryAction.hint)
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Button(recoveryAction.actionTitle) {
+                            handleRecoveryAction(recoveryAction)
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(
+                            recoveryAction.kind == .retryStart
+                                && (audioCapture.isTestingMic || !canStartRecording)
+                        )
+                    }
+                    .frame(maxWidth: 320, alignment: .leading)
                 }
                 if let captureStatusText {
                     Text(captureStatusText)
@@ -206,7 +228,7 @@ struct SessionView: View {
                     .accessibilityLabel("Session title prompt")
                 }
 
-                if let voiceIsolationAcknowledgementMessage {
+                if shouldShowVoiceIsolationAcknowledgement, let voiceIsolationAcknowledgementMessage {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(voiceIsolationAcknowledgementMessage)
                             .font(.footnote)
@@ -250,6 +272,17 @@ struct SessionView: View {
             return .red
         case .error:
             return .orange
+        }
+    }
+
+    private func handleRecoveryAction(_ action: CaptureRecoveryAction) {
+        switch action.kind {
+        case .retryStart:
+            onRetryCapture()
+        case .openSettings:
+            onOpenSettings()
+        case .acknowledgeVoiceIsolationRisk:
+            onAcknowledgeVoiceIsolationRisk()
         }
     }
 }
@@ -310,6 +343,8 @@ private struct SessionViewPreview: View {
             onSkipSessionTitle: {},
             onViewRecordings: {},
             onAcknowledgeVoiceIsolationRisk: {},
+            onOpenSettings: {},
+            onRetryCapture: {},
             onToggleRecording: {}
         )
     }
