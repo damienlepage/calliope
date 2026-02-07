@@ -34,112 +34,109 @@ struct CompactFeedbackOverlay: View {
             pauseCount: pauseCount,
             durationSeconds: sessionDurationSeconds
         )
-        VStack(alignment: .leading, spacing: 6) {
-            if let sessionDurationText {
-                Text(sessionDurationText)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+        let crutchLevel = CrutchWordFeedback.level(for: crutchWords)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Live Feedback")
+                    .font(.headline)
+                Spacer()
+                if let elapsedText = ElapsedTimeFormatter.labelText(sessionDurationText) {
+                    Text(elapsedText)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
             }
-            Text(captureStatusText)
-                .font(.caption2)
-                .foregroundColor(.secondary)
-            if let activeProfileLabel {
-                Text(activeProfileLabel)
-                    .font(.caption2)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(captureStatusText)
+                    .font(.footnote)
                     .foregroundColor(.secondary)
+                if let activeProfileLabel {
+                    Text(activeProfileLabel)
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                }
             }
-            HStack(spacing: 12) {
-                metric(
-                    title: "Pace",
-                    value: PaceFeedback.valueText(for: pace),
-                    color: paceColor(pace),
-                    subtitle: PaceFeedback.label(for: pace, minPace: paceMin, maxPace: paceMax)
-                )
-                metric(
-                    title: "Crutch",
+
+            OverlayCard(title: "Pace") {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(PaceFeedback.valueText(for: pace))
+                        .font(.title3)
+                        .foregroundColor(paceColor(pace))
+                    Text(PaceFeedback.label(for: pace, minPace: paceMin, maxPace: paceMax))
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Text(PaceFeedback.targetRangeText(minPace: paceMin, maxPace: paceMax))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+
+            HStack(spacing: 10) {
+                OverlayStatCard(
+                    title: "Crutch Words",
                     value: "\(crutchWords)",
-                    color: crutchWords > 5 ? .orange : .green
+                    valueColor: crutchColor(crutchLevel),
+                    subtitle: "Target: \u{2264} 5"
                 )
-                metric(
-                    title: "Pause",
+                OverlayStatCard(
+                    title: "Pauses",
                     value: "\(pauseCount)",
-                    color: .primary,
+                    valueColor: .primary,
                     subtitle: pauseSubtitleText(rateText: pauseRateText)
                 )
             }
-            InputLevelMeterView(level: inputLevel)
-                .frame(width: 180)
-            HStack(spacing: 6) {
-                Text("Processing:")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                Text(ProcessingLatencyFormatter.statusText(
-                    status: processingLatencyStatus,
-                    average: processingLatencyAverage
-                ))
-                    .font(.caption)
-                    .foregroundColor(processingStatusColor(processingLatencyStatus))
-            }
-            HStack(spacing: 6) {
-                Text("Load:")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                Text(ProcessingUtilizationFormatter.statusText(
-                    status: processingUtilizationStatus,
-                    average: processingUtilizationAverage
-                ))
-                    .font(.caption)
-                    .foregroundColor(utilizationStatusColor(processingUtilizationStatus))
-            }
-            if let warningText = RecordingStorageWarningFormatter.warningText(status: storageStatus) {
-                Text(warningText)
-                    .font(.caption)
-                    .foregroundColor(.orange)
-            }
-            if let interruptionMessage {
-                Text(interruptionMessage)
-                    .font(.caption)
-                    .foregroundColor(.orange)
-            }
-            if showSilenceWarning {
-                Text("No mic input detected")
-                    .font(.caption)
-                    .foregroundColor(.orange)
-                Text("Check your microphone or input selection in Settings.")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
-            if showWaitingForSpeech {
-                Text("Waiting for speech")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+
+            OverlayCard(title: "Input & Processing") {
+                VStack(alignment: .leading, spacing: 8) {
+                    InputLevelMeterView(level: inputLevel)
+                        .frame(width: 180)
+                    statusLine(
+                        label: "Processing",
+                        value: ProcessingLatencyFormatter.statusText(
+                            status: processingLatencyStatus,
+                            average: processingLatencyAverage
+                        ),
+                        color: processingStatusColor(processingLatencyStatus)
+                    )
+                    statusLine(
+                        label: "Load",
+                        value: ProcessingUtilizationFormatter.statusText(
+                            status: processingUtilizationStatus,
+                            average: processingUtilizationAverage
+                        ),
+                        color: utilizationStatusColor(processingUtilizationStatus)
+                    )
+                    if let warningText = ProcessingLatencyFormatter.warningText(status: processingLatencyStatus) {
+                        feedbackNote(warningText)
+                    }
+                    if let warningText = ProcessingUtilizationFormatter.warningText(status: processingUtilizationStatus) {
+                        feedbackNote(warningText)
+                    }
+                    if let warningText = RecordingStorageWarningFormatter.warningText(status: storageStatus) {
+                        feedbackWarning(warningText)
+                    }
+                    if let interruptionMessage {
+                        feedbackWarning(interruptionMessage)
+                    }
+                    if showSilenceWarning {
+                        feedbackWarning("No mic input detected")
+                        feedbackNote("Check your microphone or input selection in Settings.")
+                    }
+                    if showWaitingForSpeech {
+                        feedbackNote("Waiting for speech")
+                    }
+                }
             }
         }
         .padding(12)
-        .background(Color(NSColor.windowBackgroundColor).opacity(0.95))
+        .background(Color(NSColor.controlBackgroundColor))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.secondary.opacity(0.2))
+                .stroke(Color.secondary.opacity(0.15))
         )
         .cornerRadius(12)
         .shadow(radius: 4)
-    }
-
-    private func metric(title: String, value: String, color: Color, subtitle: String? = nil) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
-            Text(value)
-                .font(.headline)
-                .foregroundColor(color)
-            if let subtitle {
-                Text(subtitle)
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
-        }
-        .frame(minWidth: 52, alignment: .leading)
     }
 
     private func paceColor(_ pace: Double) -> Color {
@@ -163,6 +160,15 @@ struct CompactFeedbackOverlay: View {
         )
     }
 
+    private func crutchColor(_ level: CrutchWordFeedbackLevel) -> Color {
+        switch level {
+        case .calm:
+            return .green
+        case .caution:
+            return .orange
+        }
+    }
+
     private func processingStatusColor(_ status: ProcessingLatencyStatus) -> Color {
         switch status {
         case .ok:
@@ -182,6 +188,89 @@ struct CompactFeedbackOverlay: View {
             return .orange
         case .critical:
             return .red
+        }
+    }
+
+    private func statusLine(label: String, value: String, color: Color) -> some View {
+        HStack(spacing: 6) {
+            Text("\(label):")
+                .font(.footnote)
+                .foregroundColor(.secondary)
+            Text(value)
+                .font(.footnote)
+                .foregroundColor(color)
+        }
+    }
+
+    private func feedbackNote(_ text: String) -> some View {
+        Text(text)
+            .font(.footnote)
+            .foregroundColor(.secondary)
+    }
+
+    private func feedbackWarning(_ text: String) -> some View {
+        Text(text)
+            .font(.footnote)
+            .foregroundColor(.orange)
+    }
+}
+
+private struct OverlayCard<Content: View>: View {
+    let title: String
+    let content: Content
+
+    init(title: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondary)
+            content
+        }
+        .padding(10)
+        .background(Color(NSColor.windowBackgroundColor).opacity(0.85))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.secondary.opacity(0.12))
+        )
+        .cornerRadius(10)
+    }
+}
+
+private struct OverlayStatCard: View {
+    let title: String
+    let value: String
+    let valueColor: Color
+    let subtitle: String?
+
+    init(
+        title: String,
+        value: String,
+        valueColor: Color,
+        subtitle: String? = nil
+    ) {
+        self.title = title
+        self.value = value
+        self.valueColor = valueColor
+        self.subtitle = subtitle
+    }
+
+    var body: some View {
+        OverlayCard(title: title) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(value)
+                    .font(.title3)
+                    .foregroundColor(valueColor)
+                if let subtitle {
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
         }
     }
 }
