@@ -34,7 +34,6 @@ struct SessionView: View {
     let onRetryCapture: () -> Void
     let onToggleRecording: () -> Void
     @State private var postSessionDetailItem: RecordingItem?
-    @State private var showCaptions: Bool = true
     private enum Layout {
         static let contentMaxWidth: CGFloat = 340
     }
@@ -123,7 +122,6 @@ struct SessionView: View {
                     liveTranscript: feedbackViewModel.liveTranscript,
                     coachingProfiles: coachingProfiles,
                     activeProfileLabel: activeProfileLabel,
-                    showCaptions: $showCaptions,
                     selectedCoachingProfileID: $selectedCoachingProfileID
                 )
                 .opacity(isSessionActive ? 1.0 : 0.55)
@@ -235,11 +233,6 @@ struct SessionView: View {
         .padding()
         .sheet(item: $postSessionDetailItem) { item in
             RecordingDetailView(item: item)
-        }
-        .onChange(of: audioCapture.isRecording) { isRecording in
-            if isRecording {
-                showCaptions = true
-            }
         }
     }
 

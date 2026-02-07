@@ -26,7 +26,6 @@ struct FeedbackPanel: View {
     let liveTranscript: String
     let coachingProfiles: [CoachingProfile]
     let activeProfileLabel: String?
-    @Binding var showCaptions: Bool
     @Binding var selectedCoachingProfileID: UUID?
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -245,40 +244,23 @@ struct FeedbackPanel: View {
     private func captionsCard() -> some View {
         FeedbackCard(title: "Live captions") {
             VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text("Closed captions")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    Spacer()
-                    Toggle("CC", isOn: $showCaptions)
-                        .toggleStyle(.switch)
-                        .labelsHidden()
-                        .accessibilityLabel("Closed captions")
-                        .accessibilityValue(showCaptions ? "On" : "Off")
-                        .accessibilityHint("Toggle live captions on or off.")
-                }
-                if showCaptions {
-                    Text(captionBodyText(for: liveTranscript))
-                        .font(.callout)
-                        .foregroundColor(.secondary)
-                        .lineLimit(SupplementaryLayout.captionLineLimit)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(12)
-                        .background(Color.secondary.opacity(0.08))
-                        .cornerRadius(12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.secondary.opacity(0.12))
-                        )
-                        .accessibilityLabel("Live captions")
-                        .accessibilityValue(captionBodyText(for: liveTranscript))
-                } else {
-                    Text("Captions are off")
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
-                        .accessibilityLabel("Live captions")
-                        .accessibilityValue("Off")
-                }
+                Text("Closed captions")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Text(captionBodyText(for: liveTranscript))
+                    .font(.callout)
+                    .foregroundColor(.secondary)
+                    .lineLimit(SupplementaryLayout.captionLineLimit)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(12)
+                    .background(Color.secondary.opacity(0.08))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.secondary.opacity(0.12))
+                    )
+                    .accessibilityLabel("Live captions")
+                    .accessibilityValue(captionBodyText(for: liveTranscript))
             }
         }
     }
@@ -490,7 +472,6 @@ private struct PauseRateBadge: View {
 #if DEBUG
 struct FeedbackPanel_Previews: PreviewProvider {
     private struct PreviewWrapper: View {
-        @State private var showCaptions = true
         @State private var selectedProfileID: UUID? = CoachingProfile.default().id
         private let profiles = [
             CoachingProfile.default(),
@@ -516,7 +497,6 @@ struct FeedbackPanel_Previews: PreviewProvider {
                 liveTranscript: "Let's focus on the key takeaways for the next steps.",
                 coachingProfiles: profiles,
                 activeProfileLabel: "Profile: Default (App: Default)",
-                showCaptions: $showCaptions,
                 selectedCoachingProfileID: $selectedProfileID
             )
             .padding()

@@ -23,7 +23,6 @@ final class FeedbackPanelTests: XCTestCase {
             liveTranscript: "Testing live captions.",
             coachingProfiles: [defaultProfile],
             activeProfileLabel: "Profile: Default (App: Default)",
-            showCaptions: .constant(true),
             selectedCoachingProfileID: .constant(defaultProfile.id)
         )
 

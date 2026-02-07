@@ -1,6 +1,6 @@
 ---
 id: cal-arfp
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-07T22:15:51Z
@@ -18,4 +18,3 @@ Make live captions always visible and remove the CC toggle.
 - Live captions are always visible during sessions.
 - CC toggle is removed from the session UI.
 - Layout remains stable without introducing scrolling.
-
