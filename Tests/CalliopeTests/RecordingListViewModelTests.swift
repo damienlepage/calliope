@@ -1170,6 +1170,26 @@ final class RecordingListViewModelTests: XCTestCase {
         XCTAssertEqual(workspace.selections, [[manager.recordingsDirectory]])
     }
 
+    func testActionAvailabilityForSavedRecording() {
+        let url = URL(fileURLWithPath: "/tmp/saved-session.m4a")
+        let manager = MockRecordingManager(recordings: [url])
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) },
+            durationProvider: { _ in nil },
+            fileSizeProvider: { _ in nil }
+        )
+
+        viewModel.loadRecordings()
+
+        let availability = viewModel.actionAvailability(for: viewModel.recordings[0])
+
+        XCTAssertTrue(availability.canPlay)
+        XCTAssertTrue(availability.canReveal)
+        XCTAssertTrue(availability.canDelete)
+    }
+
     func testLoadRecordingsIncludesSummary() {
         let url = URL(fileURLWithPath: "/tmp/summary.m4a")
         let manager = MockRecordingManager(recordings: [url])

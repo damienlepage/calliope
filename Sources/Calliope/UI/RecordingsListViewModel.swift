@@ -465,6 +465,12 @@ enum RecordingDeleteRequest: Identifiable, Equatable {
     }
 }
 
+struct RecordingActionAvailability: Equatable {
+    let canPlay: Bool
+    let canReveal: Bool
+    let canDelete: Bool
+}
+
 enum RecordingSortOption: String, CaseIterable, Identifiable {
     case dateNewest
     case dateOldest
@@ -927,6 +933,14 @@ final class RecordingListViewModel: ObservableObject {
 
     func openRecordingsFolder() {
         workspace.activateFileViewerSelecting([manager.recordingsDirectoryURL()])
+    }
+
+    func actionAvailability(for _: RecordingItem) -> RecordingActionAvailability {
+        RecordingActionAvailability(
+            canPlay: !isRecording,
+            canReveal: true,
+            canDelete: !isRecording
+        )
     }
 
     func requestDelete(_ item: RecordingItem) {

@@ -401,6 +401,7 @@ private extension RecordingsListView {
     func recordingActions(for item: RecordingItem, isRecording: Bool) -> some View {
         let isActive = viewModel.activePlaybackURL == item.url
         let isPlaying = isActive && !viewModel.isPlaybackPaused
+        let availability = viewModel.actionAvailability(for: item)
         HStack(spacing: 8) {
             Button {
                 viewModel.togglePlayPause(item)
@@ -408,7 +409,7 @@ private extension RecordingsListView {
                 Image(systemName: isPlaying ? "pause.fill" : "play.fill")
             }
             .buttonStyle(.bordered)
-            .disabled(isRecording)
+            .disabled(!availability.canPlay)
             .accessibilityLabel(isPlaying ? "Pause playback" : "Play recording")
             .accessibilityHint("Controls playback for \(item.displayName).")
 
@@ -420,13 +421,14 @@ private extension RecordingsListView {
                 Button("Reveal") {
                     viewModel.reveal(item)
                 }
+                .disabled(!availability.canReveal)
                 Button("Details") {
                     viewModel.detailItem = item
                 }
                 Button("Delete", role: .destructive) {
                     viewModel.requestDelete(item)
                 }
-                .disabled(isRecording)
+                .disabled(!availability.canDelete)
             } label: {
                 Image(systemName: "ellipsis.circle")
             }
