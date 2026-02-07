@@ -34,6 +34,7 @@ struct ContentView: View {
     @State private var isQuickStartSheetPresented: Bool
     @State private var isQuickStartPending: Bool
     @State private var pendingSessionForTitle: CompletedRecordingSession?
+    @State private var pendingSessionSummary: SessionTitleSummary?
     @State private var sessionTitleDraft: String = ""
     private let settingsActionModel: MicrophoneSettingsActionModel
     private let soundSettingsActionModel: SoundSettingsActionModel
@@ -156,6 +157,7 @@ struct ContentView: View {
                         activeProfileLabel: activeProfileLabel,
                         showTitlePrompt: pendingSessionForTitle != nil,
                         defaultSessionTitle: defaultSessionTitle,
+                        titleSummary: pendingSessionSummary,
                         sessionTitleDraft: $sessionTitleDraft,
                         onSaveSessionTitle: saveSessionTitle,
                         onSkipSessionTitle: skipSessionTitle,
@@ -290,7 +292,15 @@ struct ContentView: View {
             guard let newValue else { return }
             writeDefaultMetadata(for: newValue)
             pendingSessionForTitle = newValue
+            pendingSessionSummary = loadSessionSummary(for: newValue)
             sessionTitleDraft = ""
+        }
+        .onChange(of: pendingSessionForTitle) { newValue in
+            guard let newValue else {
+                pendingSessionSummary = nil
+                return
+            }
+            pendingSessionSummary = loadSessionSummary(for: newValue)
         }
         .onChange(of: audioCapture.isRecording) { isRecording in
             if !isRecording {
@@ -388,11 +398,13 @@ struct ContentView: View {
         }
         recordingsViewModel.refreshRecordings()
         pendingSessionForTitle = nil
+        pendingSessionSummary = nil
         sessionTitleDraft = ""
     }
 
     private func skipSessionTitle() {
         pendingSessionForTitle = nil
+        pendingSessionSummary = nil
         sessionTitleDraft = ""
     }
 
@@ -402,6 +414,22 @@ struct ContentView: View {
             createdAt: session.createdAt,
             coachingProfile: coachingProfileStore.selectedProfile
         )
+    }
+
+    private func loadSessionSummary(for session: CompletedRecordingSession) -> SessionTitleSummary? {
+        var bestSummary: AnalysisSummary?
+        for url in session.recordingURLs {
+            guard let summary = RecordingManager.shared.readSummary(for: url) else { continue }
+            if let best = bestSummary {
+                if summary.durationSeconds > best.durationSeconds {
+                    bestSummary = summary
+                }
+            } else {
+                bestSummary = summary
+            }
+        }
+        guard let summary = bestSummary else { return nil }
+        return SessionTitleSummary(summary: summary)
     }
 
     private func blockingReasonsText(_ reasons: [RecordingEligibility.Reason]) -> String? {

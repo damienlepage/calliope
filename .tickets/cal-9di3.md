@@ -1,6 +1,6 @@
 ---
 id: cal-9di3
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-07T01:33:19Z

@@ -985,13 +985,7 @@ final class RecordingListViewModel: ObservableObject {
     }
 
     private static func defaultSummary(_ url: URL) -> AnalysisSummary? {
-        let summaryURL = url
-            .deletingPathExtension()
-            .appendingPathExtension("summary.json")
-        guard let data = try? Data(contentsOf: summaryURL) else {
-            return nil
-        }
-        return try? JSONDecoder().decode(AnalysisSummary.self, from: data)
+        RecordingManager.shared.readSummary(for: url)
     }
 
     private static func defaultIntegrityReport(_ url: URL) -> RecordingIntegrityReport? {

@@ -22,6 +22,7 @@ struct SessionView: View {
     let activeProfileLabel: String?
     let showTitlePrompt: Bool
     let defaultSessionTitle: String?
+    let titleSummary: SessionTitleSummary?
     @Binding var sessionTitleDraft: String
     let onSaveSessionTitle: () -> Void
     let onSkipSessionTitle: () -> Void
@@ -153,6 +154,31 @@ struct SessionView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Name this session")
                             .font(.headline)
+                        if let titleSummary {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Session summary")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Text(titleSummary.paceText)
+                                Text(titleSummary.crutchText)
+                                Text(titleSummary.pauseText)
+                                Text(titleSummary.speakingText)
+                            }
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                            .accessibilityElement(children: .combine)
+                            .accessibilityLabel("Session summary")
+                            .accessibilityValue(
+                                [titleSummary.paceText,
+                                 titleSummary.crutchText,
+                                 titleSummary.pauseText,
+                                 titleSummary.speakingText].joined(separator: ", ")
+                            )
+                        } else {
+                            Text("Summary is still processing. You can review stats in Recordings.")
+                                .font(.footnote)
+                                .foregroundColor(.secondary)
+                        }
                         TextField("Optional title", text: $sessionTitleDraft)
                             .textFieldStyle(.roundedBorder)
                         Text(titlePromptState.helperText)
@@ -256,6 +282,29 @@ private struct SessionViewPreview: View {
             activeProfileLabel: "Profile: Default (App: Default)",
             showTitlePrompt: true,
             defaultSessionTitle: "Session Jan 1, 2026 at 9:00 AM",
+            titleSummary: SessionTitleSummary(
+                summary: AnalysisSummary(
+                    version: 1,
+                    createdAt: Date(),
+                    durationSeconds: 180,
+                    pace: AnalysisSummary.PaceStats(
+                        averageWPM: 140,
+                        minWPM: 100,
+                        maxWPM: 180,
+                        totalWords: 420
+                    ),
+                    pauses: AnalysisSummary.PauseStats(
+                        count: 6,
+                        thresholdSeconds: 0.8,
+                        averageDurationSeconds: 1.4
+                    ),
+                    crutchWords: AnalysisSummary.CrutchWordStats(
+                        totalCount: 5,
+                        counts: ["um": 3, "you know": 2]
+                    ),
+                    speaking: AnalysisSummary.SpeakingStats(timeSeconds: 72, turnCount: 6)
+                )
+            ),
             sessionTitleDraft: $sessionTitle,
             onSaveSessionTitle: {},
             onSkipSessionTitle: {},

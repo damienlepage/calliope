@@ -178,6 +178,14 @@ extension RecordingManager: AnalysisSummaryWriting {
         try data.write(to: url, options: [.atomic])
     }
 
+    func readSummary(for recordingURL: URL) -> AnalysisSummary? {
+        let url = summaryURL(for: recordingURL)
+        guard let data = try? Data(contentsOf: url) else {
+            return nil
+        }
+        return try? JSONDecoder().decode(AnalysisSummary.self, from: data)
+    }
+
     func deleteSummary(for recordingURL: URL) throws {
         let url = summaryURL(for: recordingURL)
         if fileManager.fileExists(atPath: url.path) {
