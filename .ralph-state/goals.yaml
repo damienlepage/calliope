@@ -345,6 +345,7 @@ goals:
       - "New 2026-02-07: Live feedback shows input level, WPM count with target zone indicator, elapsed time, speaking time, pauses, crutch words, live captions, and coaching profile."
   - id: G60
     title: Pace visualization communicates target zone at a glance
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "New 2026-02-07: WPM display includes a clear target zone indicator aligned with the active coaching profile range."
+      - "Validated 2026-02-07: Added target zone bar to compact overlay and labeled target range text in live feedback."

@@ -261,48 +261,6 @@ enum FeedbackPanelLayout {
     }
 }
 
-private struct PaceRangeBar: View {
-    let pace: Double
-    let paceMin: Double
-    let paceMax: Double
-    let indicatorColor: Color
-
-    var body: some View {
-        GeometryReader { geometry in
-            let barWidth = geometry.size.width
-            let layout = PaceRangeBarLayout.compute(
-                pace: pace,
-                minPace: paceMin,
-                maxPace: paceMax
-            )
-            let indicatorSize: CGFloat = 8
-            let indicatorOffset = max(
-                0,
-                min(
-                    barWidth - indicatorSize,
-                    barWidth * CGFloat(layout.pacePosition) - indicatorSize / 2
-                )
-            )
-
-            ZStack(alignment: .leading) {
-                Capsule()
-                    .fill(Color.secondary.opacity(0.12))
-                Capsule()
-                    .fill(Color.green.opacity(0.24))
-                    .frame(width: barWidth * CGFloat(layout.targetWidth))
-                    .offset(x: barWidth * CGFloat(layout.targetStart))
-                Circle()
-                    .fill(indicatorColor)
-                    .frame(width: indicatorSize, height: indicatorSize)
-                    .offset(x: indicatorOffset, y: -1)
-            }
-        }
-        .frame(height: 8)
-        .accessibilityHidden(true)
-    }
-
-}
-
 private struct FeedbackCard<Content: View>: View {
     let title: String
     let content: Content

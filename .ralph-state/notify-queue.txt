@@ -1,0 +1,1 @@
+Goal completed: Pace visualization communicates target zone at a glance

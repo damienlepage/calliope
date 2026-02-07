@@ -55,7 +55,7 @@ enum PaceFeedback {
     ) -> String {
         let lower = min(minPace, maxPace)
         let upper = max(minPace, maxPace)
-        return "\(Int(lower))-\(Int(upper)) WPM"
+        return "Target \(Int(lower))-\(Int(upper)) WPM"
     }
 
     static func valueText(for pace: Double) -> String {

@@ -98,6 +98,14 @@ struct CompactFeedbackOverlay: View {
                             .foregroundColor(.secondary)
                     }
                 }
+                PaceRangeBar(
+                    pace: pace,
+                    paceMin: paceMin,
+                    paceMax: paceMax,
+                    indicatorColor: paceColor(pace),
+                    barHeight: 6
+                )
+                .padding(.top, 4)
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Pace")
