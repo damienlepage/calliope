@@ -44,6 +44,15 @@ final class SessionTitlePromptStateTests: XCTestCase {
         XCTAssertFalse(state.wasTruncated)
     }
 
+    func testEmptyTitleWithoutDefaultShowsPromptHelper() {
+        let state = SessionTitlePromptState(draft: "", defaultTitle: nil)
+
+        XCTAssertFalse(state.isValid)
+        XCTAssertEqual(state.helperText, "Enter a title or choose Skip.")
+        XCTAssertEqual(state.helperTone, .warning)
+        XCTAssertFalse(state.wasTruncated)
+    }
+
     func testLongTitleShowsTruncationHelper() {
         let longTitle = String(repeating: "A", count: RecordingMetadata.maxTitleLength + 5)
         let state = SessionTitlePromptState(draft: longTitle)

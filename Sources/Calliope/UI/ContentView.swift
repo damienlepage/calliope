@@ -159,6 +159,7 @@ struct ContentView: View {
                         sessionTitleDraft: $sessionTitleDraft,
                         onSaveSessionTitle: saveSessionTitle,
                         onSkipSessionTitle: skipSessionTitle,
+                        onViewRecordings: { navigationState.selection = .recordings },
                         onAcknowledgeVoiceIsolationRisk: acknowledgeVoiceIsolationRisk,
                         onToggleRecording: toggleRecording
                     )

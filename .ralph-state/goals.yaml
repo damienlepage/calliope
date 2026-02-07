@@ -176,3 +176,18 @@ goals:
     notes:
       - "2026-02-07: Goal created to offer preset and per-profile crutch word lists with clear guidance."
       - "Validated 2026-02-07: Settings, coaching profiles, and per-app profiles show preset matching/labels plus guidance for multi-word phrases."
+  - id: G32
+    title: Post-session review and quick actions
+    status: BELOW_TARGET
+    notes:
+      - "2026-02-07: Goal created to surface immediate post-session stats and provide quick actions without blocking the title prompt."
+  - id: G33
+    title: Session recovery guidance for capture failures
+    status: BELOW_TARGET
+    notes:
+      - "2026-02-07: Goal created to provide clear recovery messaging/actions when capture fails or input drops mid-session."
+  - id: G34
+    title: Feedback visualization polish for calm focus
+    status: BELOW_TARGET
+    notes:
+      - "2026-02-07: Goal created to refine real-time feedback visuals for a calmer, more intuitive coaching experience."

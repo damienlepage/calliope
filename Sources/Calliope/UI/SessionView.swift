@@ -25,6 +25,7 @@ struct SessionView: View {
     @Binding var sessionTitleDraft: String
     let onSaveSessionTitle: () -> Void
     let onSkipSessionTitle: () -> Void
+    let onViewRecordings: () -> Void
     let onAcknowledgeVoiceIsolationRisk: () -> Void
     let onToggleRecording: () -> Void
 
@@ -164,6 +165,8 @@ struct SessionView: View {
                             Button("Skip", action: onSkipSessionTitle)
                                 .buttonStyle(.bordered)
                         }
+                        Button("View Recordings", action: onViewRecordings)
+                            .buttonStyle(.link)
                     }
                     .frame(maxWidth: 320, alignment: .leading)
                     .padding()
@@ -256,6 +259,7 @@ private struct SessionViewPreview: View {
             sessionTitleDraft: $sessionTitle,
             onSaveSessionTitle: {},
             onSkipSessionTitle: {},
+            onViewRecordings: {},
             onAcknowledgeVoiceIsolationRisk: {},
             onToggleRecording: {}
         )
