@@ -43,13 +43,7 @@ struct SessionViewState: Equatable {
     }
 
     var shouldShowStatus: Bool {
-        if isRecording {
-            return true
-        }
-        if case .error = status {
-            return true
-        }
-        return false
+        false
     }
 
     var shouldShowActiveProfileLabel: Bool {

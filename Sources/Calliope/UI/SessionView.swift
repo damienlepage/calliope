@@ -53,12 +53,6 @@ struct SessionView: View {
         let titleHintColor: Color = titlePromptState.helperTone == .warning ? .orange : .secondary
         let postSessionActionsDisabled = audioCapture.isRecording
         let postSessionItemUnavailable = postSessionRecordingItem == nil
-        let captureStatusText = CaptureStatusFormatter.statusText(
-            inputDeviceName: audioCapture.inputDeviceName,
-            backendStatus: audioCapture.backendStatus,
-            isRecording: audioCapture.isRecording
-        )
-        let captureRecoveryBanner = CaptureRecoveryBannerState.from(status: audioCapture.status)
         let shouldShowVoiceIsolationAcknowledgement = voiceIsolationAcknowledgementMessage != nil
         let routeWarningText = audioCapture.isRecording
             ? AudioRouteWarningEvaluator.warningText(
@@ -92,64 +86,6 @@ struct SessionView: View {
                     .accessibilityAddTraits(.isHeader)
             }
 
-            if viewState.shouldShowStatus {
-                HStack {
-                    Circle()
-                        .fill(statusColor(for: audioCapture.status))
-                        .frame(width: 12, height: 12)
-                    Text(audioCapture.statusText)
-                        .font(.headline)
-                }
-                .accessibilityElement(children: .combine)
-                .accessibilityLabel("Session status")
-                .accessibilityValue(audioCapture.statusText)
-            }
-            if let captureRecoveryBanner {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(captureRecoveryBanner.title)
-                        .font(.headline)
-                    Text(captureRecoveryBanner.message)
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                    HStack(spacing: 12) {
-                        Button(captureRecoveryBanner.primaryActionTitle, action: onRetryCapture)
-                            .buttonStyle(.borderedProminent)
-                            .disabled(audioCapture.isTestingMic || !canStartRecording)
-                        Button(captureRecoveryBanner.secondaryActionTitle, action: onOpenSettings)
-                            .buttonStyle(.bordered)
-                    }
-                }
-                .frame(maxWidth: 340, alignment: .leading)
-                .padding()
-                .background(Color.orange.opacity(0.12))
-                .cornerRadius(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.orange.opacity(0.25))
-                )
-                .accessibilityElement(children: .contain)
-                .accessibilityLabel("Capture recovery")
-                .accessibilityValue("\(captureRecoveryBanner.title). \(captureRecoveryBanner.message)")
-            }
-            if viewState.shouldShowRecordingDetails, let interruptionMessage = audioCapture.interruptionMessage {
-                Text(interruptionMessage)
-                    .font(.footnote)
-                    .foregroundColor(.orange)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 320)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .accessibilityLabel("Capture interruption")
-                    .accessibilityValue(interruptionMessage)
-            }
-            if viewState.shouldShowRecordingDetails, let captureStatusText {
-                Text(captureStatusText)
-                    .font(.footnote)
-                    .foregroundColor(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .accessibilityLabel("Capture status")
-                    .accessibilityValue(captureStatusText)
-            }
             if let routeWarningText {
                 Text(routeWarningText)
                     .font(.footnote)
@@ -304,17 +240,6 @@ struct SessionView: View {
             if isRecording {
                 showCaptions = true
             }
-        }
-    }
-
-    private func statusColor(for status: AudioCaptureStatus) -> Color {
-        switch status {
-        case .idle:
-            return .gray
-        case .recording:
-            return .red
-        case .error:
-            return .orange
         }
     }
 

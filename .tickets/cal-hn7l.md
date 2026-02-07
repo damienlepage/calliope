@@ -1,6 +1,6 @@
 ---
 id: cal-hn7l
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-07T22:15:49Z
@@ -19,3 +19,8 @@ Remove non-essential status/error surfaces and capture indicators from the sessi
 - Remove recording indicator and input/capture text at the top of the session screen.
 - Remove the error message indicating Calliope is inactive.
 
+## Notes
+
+**2026-02-07T23:10:00Z**
+
+Removed session status banner, capture recovery banner, and top capture/interruption text from `SessionView` so the session surface no longer shows status/error indicators or inactive messages.
