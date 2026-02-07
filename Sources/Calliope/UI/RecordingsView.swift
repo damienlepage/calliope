@@ -9,6 +9,7 @@ import SwiftUI
 
 struct RecordingsView: View {
     @ObservedObject var viewModel: RecordingListViewModel
+    let onExportDiagnostics: () -> Void
 
     var body: some View {
         ScrollView {
@@ -18,7 +19,10 @@ struct RecordingsView: View {
                     .fontWeight(.bold)
                     .accessibilityAddTraits(.isHeader)
 
-                RecordingsListView(viewModel: viewModel)
+                RecordingsListView(
+                    viewModel: viewModel,
+                    onExportDiagnostics: onExportDiagnostics
+                )
             }
             .padding()
         }
@@ -27,5 +31,5 @@ struct RecordingsView: View {
 }
 
 #Preview {
-    RecordingsView(viewModel: RecordingListViewModel())
+    RecordingsView(viewModel: RecordingListViewModel()) {}
 }

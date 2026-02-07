@@ -17,7 +17,7 @@ final class RecordingsListViewTests: XCTestCase {
 
     func testRecordingsListViewBuilds() {
         let viewModel = RecordingListViewModel(manager: TestRecordingManager())
-        let view = RecordingsListView(viewModel: viewModel)
+        let view = RecordingsListView(viewModel: viewModel) {}
 
         _ = view.body
     }

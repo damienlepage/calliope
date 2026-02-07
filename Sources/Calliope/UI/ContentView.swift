@@ -17,6 +17,7 @@ struct ContentView: View {
     @ObservedObject private var speechPermission: SpeechPermissionManager
     @ObservedObject private var microphoneDevices: MicrophoneDeviceManager
     @ObservedObject private var audioCapturePreferencesStore: AudioCapturePreferencesStore
+    @ObservedObject private var recordingPreferencesStore: RecordingRetentionPreferencesStore
     @ObservedObject private var preferencesStore: AnalysisPreferencesStore
     @ObservedObject private var activePreferencesStore: ActiveAnalysisPreferencesStore
     @ObservedObject private var recordingsViewModel: RecordingListViewModel
@@ -34,6 +35,7 @@ struct ContentView: View {
     private let settingsActionModel: MicrophoneSettingsActionModel
     private let soundSettingsActionModel: SoundSettingsActionModel
     private let speechSettingsActionModel: SpeechSettingsActionModel
+    private let diagnosticsExportActionModel: DiagnosticsExportActionModel
     private enum Layout {
         static let sessionWidth: CGFloat = 420
         static let recordingsWidth: CGFloat = 760
@@ -71,6 +73,9 @@ struct ContentView: View {
         _audioCapturePreferencesStore = ObservedObject(
             initialValue: appState.audioCapturePreferencesStore
         )
+        _recordingPreferencesStore = ObservedObject(
+            initialValue: appState.recordingPreferencesStore
+        )
         _preferencesStore = ObservedObject(initialValue: appState.preferencesStore)
         _activePreferencesStore = ObservedObject(initialValue: appState.activePreferencesStore)
         _recordingsViewModel = ObservedObject(initialValue: appState.recordingsViewModel)
@@ -90,6 +95,7 @@ struct ContentView: View {
         self.settingsActionModel = appState.settingsActionModel
         self.soundSettingsActionModel = appState.soundSettingsActionModel
         self.speechSettingsActionModel = appState.speechSettingsActionModel
+        self.diagnosticsExportActionModel = DiagnosticsExportActionModel()
     }
 
     var body: some View {
@@ -367,7 +373,10 @@ struct ContentView: View {
                 onToggleRecording: toggleRecording
             )
         case .recordings:
-            RecordingsView(viewModel: recordingsViewModel)
+            RecordingsView(
+                viewModel: recordingsViewModel,
+                onExportDiagnostics: exportDiagnosticsReport
+            )
         case .settings:
             SettingsView(
                 microphonePermission: microphonePermission,
@@ -421,6 +430,19 @@ struct ContentView: View {
                 hasAcknowledgedVoiceIsolationRisk: hasAcknowledgedVoiceIsolationRisk
             )
         }
+    }
+
+    private func exportDiagnosticsReport() {
+        let report = DiagnosticsReport.make(
+            appVersion: AppVersionInfo(),
+            systemVersion: ProcessInfo.processInfo.operatingSystemVersionString,
+            microphonePermission: microphonePermission.state,
+            speechPermission: speechPermission.state,
+            capturePreferences: audioCapturePreferencesStore.current,
+            retentionPreferences: recordingPreferencesStore.current,
+            recordingsCount: RecordingManager.shared.getAllRecordings().count
+        )
+        diagnosticsExportActionModel.export(report: report)
     }
 
     private func refreshRecordings() {

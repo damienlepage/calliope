@@ -9,6 +9,7 @@ import SwiftUI
 
 struct RecordingsListView: View {
     @ObservedObject var viewModel: RecordingListViewModel
+    let onExportDiagnostics: () -> Void
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     private enum Layout {
         static let recordingColumnMin: CGFloat = 180
@@ -269,6 +270,7 @@ private extension RecordingsListView {
             sortPicker
             refreshButton
             openFolderButton
+            exportDiagnosticsButton
             deleteAllButton
         }
     }
@@ -282,6 +284,7 @@ private extension RecordingsListView {
             HStack(spacing: 8) {
                 refreshButton
                 openFolderButton
+                exportDiagnosticsButton
                 deleteAllButton
             }
         }
@@ -326,6 +329,15 @@ private extension RecordingsListView {
         .accessibilityHint("Open the recordings folder in Finder.")
     }
 
+    var exportDiagnosticsButton: some View {
+        Button("Export Diagnostics") {
+            onExportDiagnostics()
+        }
+        .buttonStyle(.bordered)
+        .accessibilityLabel("Export diagnostics")
+        .accessibilityHint("Create a diagnostics report for support.")
+    }
+
     var deleteAllButton: some View {
         Button("Delete All") {
             viewModel.requestDeleteAll()
@@ -339,6 +351,6 @@ private extension RecordingsListView {
 }
 
 #Preview {
-    RecordingsListView(viewModel: RecordingListViewModel())
+    RecordingsListView(viewModel: RecordingListViewModel()) {}
         .padding()
 }

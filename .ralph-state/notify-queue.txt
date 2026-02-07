@@ -1,1 +1,1 @@
-Goal completed: Speaking-time target coaching control
+Goal completed: Support diagnostics export entry point
