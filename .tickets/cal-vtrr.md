@@ -1,6 +1,6 @@
 ---
 id: cal-vtrr
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-07T22:16:00Z

@@ -76,7 +76,30 @@ struct RecordingsListView: View {
             viewModel.loadRecordings()
         }
         .sheet(item: $viewModel.detailItem) { item in
-            RecordingDetailView(item: item)
+            RecordingDetailView(item: item) {
+                viewModel.requestEditTitle(item)
+            }
+        }
+        .sheet(
+            isPresented: Binding(
+                get: { viewModel.titleEditItem != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        viewModel.cancelTitleEdit()
+                    }
+                }
+            )
+        ) {
+            if let item = viewModel.titleEditItem {
+                RecordingTitleEditorSheet(
+                    recordingName: item.displayName,
+                    defaultTitle: viewModel.titleEditDefaultTitle,
+                    draft: $viewModel.titleEditDraft,
+                    onSave: viewModel.saveTitleEdit,
+                    onCancel: viewModel.cancelTitleEdit,
+                    onReset: viewModel.resetTitleEdit
+                )
+            }
         }
         .alert(item: $viewModel.pendingDelete) { request in
             switch request {
@@ -422,6 +445,10 @@ private extension RecordingsListView {
                     viewModel.reveal(item)
                 }
                 .disabled(!availability.canReveal)
+                Button("Edit Title") {
+                    viewModel.requestEditTitle(item)
+                }
+                .disabled(isRecording)
                 Button("Details") {
                     viewModel.detailItem = item
                 }

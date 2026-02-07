@@ -232,7 +232,7 @@ struct SessionView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding()
         .sheet(item: $postSessionDetailItem) { item in
-            RecordingDetailView(item: item)
+            RecordingDetailView(item: item, onEditTitle: onEditSessionTitle)
         }
     }
 

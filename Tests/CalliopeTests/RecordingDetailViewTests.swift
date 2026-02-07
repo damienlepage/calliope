@@ -39,7 +39,7 @@ final class RecordingDetailViewTests: XCTestCase {
             integrityReport: nil
         )
 
-        let view = RecordingDetailView(item: item)
+        let view = RecordingDetailView(item: item, onEditTitle: nil)
 
         _ = view.body
     }
@@ -57,7 +57,7 @@ final class RecordingDetailViewTests: XCTestCase {
             )
         )
 
-        let view = RecordingDetailView(item: item)
+        let view = RecordingDetailView(item: item, onEditTitle: nil)
 
         _ = view.body
     }

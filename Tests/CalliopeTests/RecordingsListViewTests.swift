@@ -8,6 +8,12 @@ final class RecordingsListViewTests: XCTestCase {
         func getAllRecordings() -> [URL] { [] }
         func cleanupOrphanedMetadata(for recordings: [URL]) {}
         func backfillMetadataIfNeeded(for recordings: [URL]) {}
+        func saveSessionTitle(
+            _ rawTitle: String,
+            for recordingURLs: [URL],
+            createdAt: Date?,
+            coachingProfile: CoachingProfile?
+        ) -> Bool { true }
         func deleteRecording(at url: URL) throws {}
         func deleteAllRecordings() throws {}
         func deleteRecordings(olderThan cutoff: Date) -> Int { 0 }

@@ -18,6 +18,15 @@ final class RecordingsFolderActionModelTests: XCTestCase {
 
         func backfillMetadataIfNeeded(for recordings: [URL]) {}
 
+        func saveSessionTitle(
+            _ rawTitle: String,
+            for recordingURLs: [URL],
+            createdAt: Date?,
+            coachingProfile: CoachingProfile?
+        ) -> Bool {
+            true
+        }
+
         func deleteRecording(at url: URL) throws {}
 
         func deleteAllRecordings() throws {}

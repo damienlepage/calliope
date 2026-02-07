@@ -9,6 +9,7 @@ import SwiftUI
 
 struct RecordingDetailView: View {
     let item: RecordingItem
+    let onEditTitle: (() -> Void)?
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -92,6 +93,14 @@ struct RecordingDetailView: View {
                 Text("Recording Details")
                     .font(.headline)
             }
+            if let onEditTitle {
+                ToolbarItem(placement: .primaryAction) {
+                    Button("Edit Title") {
+                        dismiss()
+                        onEditTitle()
+                    }
+                }
+            }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Close") {
                     dismiss()
@@ -161,5 +170,5 @@ private struct DetailSection: View {
             issues: [.missingSummary]
         )
     )
-    RecordingDetailView(item: item)
+    RecordingDetailView(item: item, onEditTitle: nil)
 }

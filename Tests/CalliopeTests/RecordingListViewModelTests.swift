@@ -26,6 +26,11 @@ final class RecordingListViewModelTests: XCTestCase {
         var recordingsDirectory = URL(fileURLWithPath: "/tmp/CalliopeRecordings")
         var deleteError: Error?
         var deleteAllError: Error?
+        var savedTitle: String?
+        var savedURLs: [URL] = []
+        var savedCreatedAt: Date?
+        var saveCallCount = 0
+        var saveSessionTitleResult = true
 
         init(recordings: [URL]) {
             self.recordings = recordings
@@ -39,6 +44,19 @@ final class RecordingListViewModelTests: XCTestCase {
         func backfillMetadataIfNeeded(for recordings: [URL]) {
             backfillCount += 1
             backfillTargets.append(recordings)
+        }
+
+        func saveSessionTitle(
+            _ rawTitle: String,
+            for recordingURLs: [URL],
+            createdAt: Date?,
+            coachingProfile: CoachingProfile?
+        ) -> Bool {
+            saveCallCount += 1
+            savedTitle = rawTitle
+            savedURLs = recordingURLs
+            savedCreatedAt = createdAt
+            return saveSessionTitleResult
         }
 
         func cleanupOrphanedMetadata(for recordings: [URL]) {
@@ -307,6 +325,45 @@ final class RecordingListViewModelTests: XCTestCase {
         viewModel.searchText = "weekly"
 
         XCTAssertEqual(viewModel.recordings.map(\.url), [urlB])
+    }
+
+    func testSaveTitleEditUpdatesSessionGroup() {
+        let sessionID = "session-123"
+        let urlA = URL(fileURLWithPath: "/tmp/recording_1_A_session-\(sessionID)_part-01.m4a")
+        let urlB = URL(fileURLWithPath: "/tmp/recording_2_B_session-\(sessionID)_part-02.m4a")
+        let manager = MockRecordingManager(recordings: [urlA, urlB])
+        let createdAtA = Date(timeIntervalSince1970: 100)
+        let createdAtB = Date(timeIntervalSince1970: 200)
+        let metadata: [URL: RecordingMetadata] = [
+            urlA: RecordingMetadata(title: "Old", createdAt: createdAtA),
+            urlB: RecordingMetadata(title: "Old", createdAt: createdAtB)
+        ]
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { _ in Date(timeIntervalSince1970: 1) },
+            durationProvider: { _ in nil },
+            fileSizeProvider: { _ in nil },
+            metadataProvider: { metadata[$0] }
+        )
+
+        viewModel.loadRecordings()
+
+        guard let item = viewModel.recordings.first(where: { $0.url == urlA }) else {
+            XCTFail("Expected recording item")
+            return
+        }
+
+        viewModel.requestEditTitle(item)
+        viewModel.titleEditDraft = "Team Sync"
+        viewModel.saveTitleEdit()
+
+        XCTAssertEqual(manager.savedTitle, "Team Sync")
+        XCTAssertEqual(Set(manager.savedURLs), Set([urlA, urlB]))
+        XCTAssertEqual(manager.savedCreatedAt, createdAtA)
+        XCTAssertEqual(manager.saveCallCount, 1)
+        XCTAssertEqual(manager.loadCount, 2)
+        XCTAssertNil(viewModel.titleEditItem)
     }
 
     func testSortOptionOrdersByDurationWithMissingDurationsLast() {

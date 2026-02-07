@@ -14,6 +14,12 @@ protocol RecordingManaging {
     func getAllRecordings() -> [URL]
     func cleanupOrphanedMetadata(for recordings: [URL])
     func backfillMetadataIfNeeded(for recordings: [URL])
+    func saveSessionTitle(
+        _ rawTitle: String,
+        for recordingURLs: [URL],
+        createdAt: Date?,
+        coachingProfile: CoachingProfile?
+    ) -> Bool
     func deleteRecording(at url: URL) throws
     func deleteAllRecordings() throws
     func deleteRecordings(olderThan cutoff: Date) -> Int
@@ -519,6 +525,9 @@ final class RecordingListViewModel: ObservableObject {
     }
     @Published var pendingDelete: RecordingDeleteRequest?
     @Published var detailItem: RecordingItem?
+    @Published var titleEditItem: RecordingItem?
+    @Published var titleEditDraft: String = ""
+    @Published private(set) var titleEditDefaultTitle: String = ""
     @Published var deleteErrorMessage: String?
     @Published private(set) var activePlaybackURL: URL?
     @Published private(set) var isPlaybackPaused = false
@@ -938,6 +947,41 @@ final class RecordingListViewModel: ObservableObject {
         workspace.activateFileViewerSelecting([manager.recordingsDirectoryURL()])
     }
 
+    func requestEditTitle(_ item: RecordingItem) {
+        let defaultTitle = RecordingMetadata.defaultSessionTitle(for: item.sessionDate)
+        titleEditItem = item
+        titleEditDefaultTitle = defaultTitle
+        titleEditDraft = item.title ?? defaultTitle
+    }
+
+    func resetTitleEdit() {
+        titleEditDraft = titleEditDefaultTitle
+    }
+
+    func cancelTitleEdit() {
+        titleEditItem = nil
+        titleEditDraft = ""
+        titleEditDefaultTitle = ""
+    }
+
+    func saveTitleEdit() {
+        guard let item = titleEditItem else { return }
+        guard let titleInfo = RecordingMetadata.normalizedTitleInfo(titleEditDraft) else {
+            return
+        }
+        let urls = recordingGroupURLs(for: item)
+        let createdAt = titleEditCreatedAt(for: urls, fallback: item.sessionDate)
+        let saved = manager.saveSessionTitle(
+            titleInfo.normalized,
+            for: urls,
+            createdAt: createdAt,
+            coachingProfile: nil
+        )
+        guard saved else { return }
+        cancelTitleEdit()
+        loadRecordings()
+    }
+
     func actionAvailability(for _: RecordingItem) -> RecordingActionAvailability {
         RecordingActionAvailability(
             canPlay: !isRecording,
@@ -1079,5 +1123,31 @@ final class RecordingListViewModel: ObservableObject {
 
     private static func defaultMetadata(_ url: URL) -> RecordingMetadata? {
         RecordingManager.shared.readMetadata(for: url)
+    }
+
+    private func recordingGroupURLs(for item: RecordingItem) -> [URL] {
+        guard let targetSessionID = sessionID(from: item.url) else {
+            return [item.url]
+        }
+        let urls = allRecordings
+            .filter { sessionID(from: $0.url) == targetSessionID }
+            .map(\.url)
+        return urls.isEmpty ? [item.url] : urls
+    }
+
+    private func titleEditCreatedAt(for urls: [URL], fallback: Date) -> Date {
+        let createdAt = urls
+            .compactMap { metadataProvider($0)?.createdAt }
+            .min()
+        return createdAt ?? fallback
+    }
+
+    private func sessionID(from url: URL) -> String? {
+        let name = url.deletingPathExtension().lastPathComponent
+        guard let sessionRange = name.range(of: "_session-") else { return nil }
+        let sessionPart = name[sessionRange.upperBound...]
+        guard let partRange = sessionPart.range(of: "_part-") else { return nil }
+        let sessionID = String(sessionPart[..<partRange.lowerBound])
+        return sessionID.isEmpty ? nil : sessionID
     }
 }
