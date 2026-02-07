@@ -371,11 +371,11 @@ goals:
       - "Validated 2026-02-07: Hide compact overlay while Session view is visible to avoid overlapping panels and duplicate sections; Stop button remains unobstructed."
   - id: G64
     title: Release QA verification on supported macOS versions
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "New 2026-02-07: Run packaged app QA on macOS 13/14/15, capture results in release report, and confirm core session + recordings flows."
   - id: G65
     title: Real-world privacy verification in conferencing calls
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "New 2026-02-07: Validate in live Zoom/Meet/Teams calls that only the local speaker is detected, with headset and speaker scenarios, and document outcomes."

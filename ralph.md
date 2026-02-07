@@ -43,6 +43,7 @@ Build Calliope into a privacy-first, low-latency macOS communication coach that 
       - task-level phrasing
       - single-screen tweaks
       - testing goals
+      - verification goals that can't be automatically testing, such as compatibility with conference calls software
       - release or packaging goals
 8. When a goal is complete:
    - Update its status to `AT_TARGET` in `ralph-state/goals.yaml` with a note explaining what you validated
