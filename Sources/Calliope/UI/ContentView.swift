@@ -38,6 +38,7 @@ struct ContentView: View {
     private let soundSettingsActionModel: SoundSettingsActionModel
     private let speechSettingsActionModel: SpeechSettingsActionModel
     private let recordingsFolderActionModel: RecordingsFolderActionModel
+    private let diagnosticsExportActionModel: DiagnosticsExportActionModel
 
     init(
         audioCapturePreferencesStore: AudioCapturePreferencesStore = AudioCapturePreferencesStore(),
@@ -51,7 +52,8 @@ struct ContentView: View {
         settingsActionModel: MicrophoneSettingsActionModel = MicrophoneSettingsActionModel(),
         soundSettingsActionModel: SoundSettingsActionModel = SoundSettingsActionModel(),
         speechSettingsActionModel: SpeechSettingsActionModel = SpeechSettingsActionModel(),
-        recordingsFolderActionModel: RecordingsFolderActionModel = RecordingsFolderActionModel()
+        recordingsFolderActionModel: RecordingsFolderActionModel = RecordingsFolderActionModel(),
+        diagnosticsExportActionModel: DiagnosticsExportActionModel = DiagnosticsExportActionModel()
     ) {
         let basePreferencesStore = AnalysisPreferencesStore()
         let frontmostAppMonitor = FrontmostAppMonitor()
@@ -93,6 +95,7 @@ struct ContentView: View {
         self.soundSettingsActionModel = soundSettingsActionModel
         self.speechSettingsActionModel = speechSettingsActionModel
         self.recordingsFolderActionModel = recordingsFolderActionModel
+        self.diagnosticsExportActionModel = diagnosticsExportActionModel
     }
 
     var body: some View {
@@ -206,6 +209,7 @@ struct ContentView: View {
                         onOpenSoundSettings: soundSettingsActionModel.openSoundSettings,
                         onOpenSpeechSettings: speechSettingsActionModel.openSystemSettings,
                         onOpenRecordingsFolder: recordingsFolderActionModel.openRecordingsFolder,
+                        onExportDiagnostics: exportDiagnostics,
                         onRunMicTest: runMicTest,
                         onShowQuickStart: showQuickStart
                     )
@@ -385,6 +389,19 @@ struct ContentView: View {
 
     private func openRecordingsFolder() {
         recordingsViewModel.openRecordingsFolder()
+    }
+
+    private func exportDiagnostics() {
+        let report = DiagnosticsReport.make(
+            appVersion: AppVersionInfo(),
+            systemVersion: ProcessInfo.processInfo.operatingSystemVersionString,
+            microphonePermission: microphonePermission.state,
+            speechPermission: speechPermission.state,
+            capturePreferences: audioCapturePreferencesStore.current,
+            retentionPreferences: recordingPreferencesStore.current,
+            recordingsCount: RecordingManager.shared.getAllRecordings().count
+        )
+        diagnosticsExportActionModel.export(report: report)
     }
 
     private func showQuickStart() {

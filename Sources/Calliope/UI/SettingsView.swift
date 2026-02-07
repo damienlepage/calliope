@@ -32,6 +32,7 @@ struct SettingsView: View {
     let onOpenSoundSettings: () -> Void
     let onOpenSpeechSettings: () -> Void
     let onOpenRecordingsFolder: () -> Void
+    let onExportDiagnostics: () -> Void
     let onRunMicTest: () -> Void
     let onShowQuickStart: () -> Void
     @State private var isPerAppProfilesPresented = false
@@ -530,6 +531,19 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 VStack(alignment: .leading, spacing: 8) {
+                    Text("Diagnostics")
+                        .font(.headline)
+                    Text("Export a privacy-safe diagnostics report (no audio or transcripts).")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                    Button("Export Diagnostics") {
+                        onExportDiagnostics()
+                    }
+                    .buttonStyle(.bordered)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                VStack(alignment: .leading, spacing: 8) {
                     Text("About")
                         .font(.headline)
                     Text(appVersionText)
@@ -636,6 +650,7 @@ struct SettingsView: View {
         onOpenSoundSettings: {},
         onOpenSpeechSettings: {},
         onOpenRecordingsFolder: {},
+        onExportDiagnostics: {},
         onRunMicTest: {},
         onShowQuickStart: {}
     )

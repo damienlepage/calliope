@@ -1,1 +1,1 @@
-Goal completed: Recordings list sorting includes speaking-time percentage
+Goal completed: Local diagnostics export for support and troubleshooting
