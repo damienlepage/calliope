@@ -53,10 +53,15 @@ struct RecordingMetadataDisplayFormatter {
             now: now
         )
         let baseName: String
-        if let normalizedTitle {
+        if let sessionDate {
+            let dateText = conciseDateText(for: sessionDate)
+            if let normalizedTitle {
+                baseName = "\(dateText) - \(normalizedTitle)"
+            } else {
+                baseName = dateText
+            }
+        } else if let normalizedTitle {
             baseName = normalizedTitle
-        } else if let sessionDate {
-            baseName = conciseDateText(for: sessionDate)
         } else if let segmentLabel = segmentLabel(from: name) {
             baseName = segmentLabel
         } else {
@@ -64,10 +69,11 @@ struct RecordingMetadataDisplayFormatter {
         }
 
         guard let segmentInfo else { return baseName }
-        if baseName.localizedCaseInsensitiveContains("Part \(segmentInfo.partLabel)") {
+        let partLabel = "Part \(segmentInfo.partLabel)"
+        if baseName.localizedCaseInsensitiveContains(partLabel) {
             return baseName
         }
-        return "\(baseName) - Part \(segmentInfo.partLabel)"
+        return "\(baseName) - \(partLabel)"
     }
 
     private struct SegmentInfo {

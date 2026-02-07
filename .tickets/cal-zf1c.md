@@ -1,6 +1,6 @@
 ---
 id: cal-zf1c
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-07T23:06:47Z

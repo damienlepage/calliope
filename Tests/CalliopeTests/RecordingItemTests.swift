@@ -8,7 +8,8 @@ final class RecordingItemTests: XCTestCase {
         title: String? = nil,
         partLabel: String? = nil
     ) -> String {
-        let baseName = title ?? RecordingMetadataDisplayFormatter.conciseDateText(for: date)
+        let dateText = RecordingMetadataDisplayFormatter.conciseDateText(for: date)
+        let baseName = title.map { "\(dateText) - \($0)" } ?? dateText
         guard let partLabel else { return baseName }
         return "\(baseName) - Part \(partLabel)"
     }
@@ -100,6 +101,17 @@ final class RecordingItemTests: XCTestCase {
         let displayName = RecordingItem.displayName(for: url, metadata: metadata)
 
         XCTAssertEqual(displayName, "Weekly Review")
+    }
+
+    func testDisplayNameIncludesDateAndTitleWhenAvailable() {
+        let timestampMs = 1_700_000_000_000.0
+        let date = Date(timeIntervalSince1970: timestampMs / 1000)
+        let url = URL(fileURLWithPath: "/tmp/recording_\(Int(timestampMs))_ABC.m4a")
+        let metadata = RecordingMetadata(title: "Team Sync")
+
+        let displayName = RecordingItem.displayName(for: url, metadata: metadata)
+
+        XCTAssertEqual(displayName, expectedDisplayName(date: date, title: "Team Sync"))
     }
 
     func testDisplayNameUsesMetadataTitleWithPartLabelForSegments() {
