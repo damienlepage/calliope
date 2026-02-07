@@ -67,7 +67,24 @@ struct SessionView: View {
                 backendStatus: audioCapture.backendStatus
             )
             : nil
-        VStack(spacing: 20) {
+        let isSessionActive = audioCapture.isRecording
+        VStack(spacing: 16) {
+            HStack(spacing: 12) {
+                Button(action: onToggleRecording) {
+                    Text(viewState.primaryButtonTitle)
+                        .frame(minWidth: 100, minHeight: 40)
+                        .padding(.horizontal, 8)
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(
+                    audioCapture.isTestingMic || (!audioCapture.isRecording && !canStartRecording)
+                )
+                .accessibilityLabel(viewState.primaryButtonAccessibilityLabel)
+                .accessibilityHint(viewState.primaryButtonAccessibilityHint)
+                Spacer()
+            }
+            .frame(maxWidth: Layout.contentMaxWidth, alignment: .leading)
+
             if viewState.shouldShowTitle {
                 Text("Calliope")
                     .font(.largeTitle)
@@ -173,6 +190,8 @@ struct SessionView: View {
                     showCaptions: $showCaptions,
                     selectedCoachingProfileID: $selectedCoachingProfileID
                 )
+                .opacity(isSessionActive ? 1.0 : 0.55)
+                .saturation(isSessionActive ? 1.0 : 0.0)
             }
 
             if let postSessionReview, !audioCapture.isRecording {
@@ -264,20 +283,6 @@ struct SessionView: View {
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("Voice isolation warning")
                 .accessibilityValue(voiceIsolationAcknowledgementMessage)
-            }
-
-            HStack(spacing: 20) {
-                Button(action: onToggleRecording) {
-                    Text(viewState.primaryButtonTitle)
-                        .frame(minWidth: 100, minHeight: 40)
-                        .padding(.horizontal, 8)
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(
-                    audioCapture.isTestingMic || (!audioCapture.isRecording && !canStartRecording)
-                )
-                .accessibilityLabel(viewState.primaryButtonAccessibilityLabel)
-                .accessibilityHint(viewState.primaryButtonAccessibilityHint)
             }
 
             if viewState.shouldShowBlockingReasons, let blockingReasonsText {

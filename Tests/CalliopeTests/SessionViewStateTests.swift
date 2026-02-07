@@ -19,7 +19,7 @@ final class SessionViewStateTests: XCTestCase {
 
         XCTAssertFalse(state.shouldShowTitle)
         XCTAssertTrue(state.shouldShowIdlePrompt)
-        XCTAssertFalse(state.shouldShowFeedbackPanel)
+        XCTAssertTrue(state.shouldShowFeedbackPanel)
         XCTAssertFalse(state.shouldShowRecordingDetails)
         XCTAssertFalse(state.shouldShowStatus)
         XCTAssertFalse(state.shouldShowBlockingReasons)
@@ -59,7 +59,7 @@ final class SessionViewStateTests: XCTestCase {
 
         XCTAssertTrue(state.shouldShowTitle)
         XCTAssertFalse(state.shouldShowIdlePrompt)
-        XCTAssertFalse(state.shouldShowFeedbackPanel)
+        XCTAssertTrue(state.shouldShowFeedbackPanel)
         XCTAssertFalse(state.shouldShowRecordingDetails)
         XCTAssertTrue(state.shouldShowStatus)
         XCTAssertTrue(state.shouldShowBlockingReasons)
@@ -79,7 +79,7 @@ final class SessionViewStateTests: XCTestCase {
 
         XCTAssertFalse(state.shouldShowTitle)
         XCTAssertFalse(state.shouldShowIdlePrompt)
-        XCTAssertFalse(state.shouldShowFeedbackPanel)
+        XCTAssertTrue(state.shouldShowFeedbackPanel)
         XCTAssertFalse(state.shouldShowRecordingDetails)
         XCTAssertFalse(state.shouldShowStatus)
         XCTAssertTrue(state.shouldShowBlockingReasons)

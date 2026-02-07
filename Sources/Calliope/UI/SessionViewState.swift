@@ -35,7 +35,7 @@ struct SessionViewState: Equatable {
     }
 
     var shouldShowFeedbackPanel: Bool {
-        isRecording
+        true
     }
 
     var shouldShowRecordingDetails: Bool {
