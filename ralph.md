@@ -17,6 +17,7 @@ Build Calliope into a privacy-first, low-latency macOS communication coach that 
 - Do not add cloud features, remote processing, or shared analytics.
 - Do not add multi-user profiles or team dashboards in MVP.
 - Avoid new dependencies unless clearly justified.
+- Do not create goals for packaging, releases or QA
 
 ## Source of Truth
 - Product requirements are defined in PRD.md.
@@ -38,7 +39,11 @@ Build Calliope into a privacy-first, low-latency macOS communication coach that 
    - Architecture (component organization and interactions).
    - Existing patterns (code conventions, testing approach, error handling).
    - Current state (what works, what's incomplete, technical debt).
-   - Goals must be high-level and outcome-oriented at the feature/UX capability level (avoid task-level phrasing, single-screen tweaks, or test-only goals).
+   - Goals must be high-level, outcome-oriented and focused on the feature/UX capability level. Avoid:
+      - task-level phrasing
+      - single-screen tweaks
+      - testing goals
+      - release or packaging goals
 8. When a goal is complete:
    - Update its status to `AT_TARGET` in `ralph-state/goals.yaml` with a note explaining what you validated
    - Run this command to append a notification line for ralph.sh to send:

@@ -22,6 +22,24 @@ enum AudioBufferCopy {
 
         newBuffer.frameLength = buffer.frameLength
 
+        if format.isInterleaved {
+            switch format.commonFormat {
+            case .pcmFormatFloat32, .pcmFormatInt16, .pcmFormatInt32:
+                break
+            default:
+                return nil
+            }
+            let sourceBuffer = buffer.audioBufferList.pointee.mBuffers
+            let destinationBuffer = newBuffer.audioBufferList.pointee.mBuffers
+            guard let sourceData = sourceBuffer.mData,
+                  let destinationData = destinationBuffer.mData else {
+                return nil
+            }
+            let bytesToCopy = min(Int(sourceBuffer.mDataByteSize), Int(destinationBuffer.mDataByteSize))
+            memcpy(destinationData, sourceData, bytesToCopy)
+            return newBuffer
+        }
+
         if format.commonFormat == .pcmFormatFloat32, let source = buffer.floatChannelData, let destination = newBuffer.floatChannelData {
             let frames = Int(buffer.frameLength)
             let channels = Int(buffer.format.channelCount)

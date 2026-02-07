@@ -105,6 +105,49 @@ final class AudioBufferCopyTests: XCTestCase {
         XCTAssertEqual(copied.int32ChannelData?.pointee[3], -4000)
     }
 
+    func testCopyPreservesInterleavedSamples() {
+        guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat32,
+                                         sampleRate: 44_100,
+                                         channels: 2,
+                                         interleaved: true) else {
+            XCTFail("Missing interleaved format")
+            return
+        }
+
+        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: 2) else {
+            XCTFail("Missing interleaved buffer")
+            return
+        }
+
+        buffer.frameLength = 2
+        let sourceBuffer = buffer.audioBufferList.pointee.mBuffers
+        guard let sourceData = sourceBuffer.mData else {
+            XCTFail("Missing interleaved source data")
+            return
+        }
+        let sourceSamples = sourceData.assumingMemoryBound(to: Float.self)
+        sourceSamples[0] = 0.1
+        sourceSamples[1] = 0.2
+        sourceSamples[2] = 0.3
+        sourceSamples[3] = 0.4
+
+        guard let copied = AudioBufferCopy.copy(buffer) else {
+            XCTFail("Copy failed")
+            return
+        }
+
+        let copiedBuffer = copied.audioBufferList.pointee.mBuffers
+        guard let copiedData = copiedBuffer.mData else {
+            XCTFail("Missing interleaved copied data")
+            return
+        }
+        let copiedSamples = copiedData.assumingMemoryBound(to: Float.self)
+        XCTAssertEqual(copiedSamples[0], 0.1, accuracy: 0.0001)
+        XCTAssertEqual(copiedSamples[1], 0.2, accuracy: 0.0001)
+        XCTAssertEqual(copiedSamples[2], 0.3, accuracy: 0.0001)
+        XCTAssertEqual(copiedSamples[3], 0.4, accuracy: 0.0001)
+    }
+
     func testCopyReturnsNilForUnsupportedFormat() {
         guard let format = AVAudioFormat(commonFormat: .pcmFormatFloat64,
                                          sampleRate: 44_100,

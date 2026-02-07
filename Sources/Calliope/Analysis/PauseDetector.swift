@@ -30,7 +30,7 @@ class PauseDetector {
 
     func detectPause(in audioBuffer: AVAudioPCMBuffer) -> Bool {
         let currentTime = now()
-        let rms = rmsAmplitude(in: audioBuffer)
+        let rms = audioBuffer.rmsAmplitude()
         let isSpeech = rms >= speechThreshold
 
         if isSpeech {
@@ -80,41 +80,6 @@ class PauseDetector {
     }
 
     private func rmsAmplitude(in buffer: AVAudioPCMBuffer) -> Float {
-        let frameLength = Int(buffer.frameLength)
-        guard frameLength > 0 else { return 0 }
-
-        if let floatChannelData = buffer.floatChannelData {
-            let samples = floatChannelData[0]
-            var sum: Float = 0
-            for index in 0..<frameLength {
-                let sample = samples[index]
-                sum += sample * sample
-            }
-            return sqrt(sum / Float(frameLength))
-        }
-
-        if let int16ChannelData = buffer.int16ChannelData {
-            let samples = int16ChannelData[0]
-            var sum: Float = 0
-            let scale = 1.0 as Float / Float(Int16.max)
-            for index in 0..<frameLength {
-                let sample = Float(samples[index]) * scale
-                sum += sample * sample
-            }
-            return sqrt(sum / Float(frameLength))
-        }
-
-        if let int32ChannelData = buffer.int32ChannelData {
-            let samples = int32ChannelData[0]
-            var sum: Float = 0
-            let scale = 1.0 as Float / Float(Int32.max)
-            for index in 0..<frameLength {
-                let sample = Float(samples[index]) * scale
-                sum += sample * sample
-            }
-            return sqrt(sum / Float(frameLength))
-        }
-
-        return 0
+        buffer.rmsAmplitude()
     }
 }

@@ -1,1 +1,0 @@
-Goal completed: Live guidance screen layout is single-panel and fully usable

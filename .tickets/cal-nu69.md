@@ -1,6 +1,6 @@
 ---
 id: cal-nu69
-status: open
+status: closed
 deps: []
 links: []
 created: 2026-02-07T21:41:42Z
