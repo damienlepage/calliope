@@ -6,19 +6,32 @@ final class OverlayVisibilityTests: XCTestCase {
         XCTAssertFalse(
             OverlayVisibility.shouldShowCompactOverlay(
                 isEnabled: false,
-                isRecording: true
+                isRecording: true,
+                isSessionVisible: false
             )
         )
         XCTAssertFalse(
             OverlayVisibility.shouldShowCompactOverlay(
                 isEnabled: true,
-                isRecording: false
+                isRecording: false,
+                isSessionVisible: false
             )
         )
         XCTAssertTrue(
             OverlayVisibility.shouldShowCompactOverlay(
                 isEnabled: true,
-                isRecording: true
+                isRecording: true,
+                isSessionVisible: false
+            )
+        )
+    }
+
+    func testCompactOverlayHiddenDuringSession() {
+        XCTAssertFalse(
+            OverlayVisibility.shouldShowCompactOverlay(
+                isEnabled: true,
+                isRecording: true,
+                isSessionVisible: true
             )
         )
     }

@@ -359,11 +359,13 @@ goals:
       - "Validated 2026-02-07: Reordered session feedback panel to match required metric sequence with each element shown once."
   - id: G62
     title: Built-in mic voice detection parity with Bluetooth devices
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "New 2026-02-07: Voice detection fails on built-in mic; works only with Bluetooth. Must work seamlessly on both, including mid-session device switches."
+      - "Validated 2026-02-07: RMS analysis now handles multi-channel + interleaved buffers, and tests cover multi-channel speaking detection plus interleaved buffer copy."
   - id: G63
     title: Live guidance screen layout is single-panel and fully usable
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "New 2026-02-07: Live guidance shows overlapping panels, duplicates the Pauses section, and hides the Stop button. Must show one main panel with clean sections and visible Stop without scrolling."
+      - "Validated 2026-02-07: Hide compact overlay while Session view is visible to avoid overlapping panels and duplicate sections; Stop button remains unobstructed."

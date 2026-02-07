@@ -312,7 +312,8 @@ struct ContentView: View {
     private func overlayView(_ viewState: ViewState) -> some View {
         if OverlayVisibility.shouldShowCompactOverlay(
             isEnabled: overlayPreferencesStore.showCompactOverlay,
-            isRecording: audioCapture.isRecording
+            isRecording: audioCapture.isRecording,
+            isSessionVisible: navigationState.selection == .session
         ) {
             CompactFeedbackOverlay(
                 pace: feedbackViewModel.state.pace,
