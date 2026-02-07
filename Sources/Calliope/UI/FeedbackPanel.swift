@@ -45,23 +45,31 @@ struct FeedbackPanel: View {
             .padding(.bottom, 5)
             
             // Pace indicator
-            HStack {
-                HStack(spacing: 6) {
-                    Text("Pace:")
-                        .font(.subheadline)
-                    Text(PaceFeedback.targetRangeText(minPace: paceMin, maxPace: paceMax))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    HStack(spacing: 6) {
+                        Text("Pace:")
+                            .font(.subheadline)
+                        Text(PaceFeedback.targetRangeText(minPace: paceMin, maxPace: paceMax))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    Spacer()
+                    HStack(spacing: 6) {
+                        Text(PaceFeedback.valueText(for: pace))
+                            .font(.subheadline)
+                            .foregroundColor(paceColor(pace))
+                        Text(PaceFeedback.label(for: pace, minPace: paceMin, maxPace: paceMax))
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
                 }
-                Spacer()
-                HStack(spacing: 6) {
-                    Text(PaceFeedback.valueText(for: pace))
-                        .font(.subheadline)
-                        .foregroundColor(paceColor(pace))
-                    Text(PaceFeedback.label(for: pace, minPace: paceMin, maxPace: paceMax))
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
+                PaceRangeBar(
+                    pace: pace,
+                    paceMin: paceMin,
+                    paceMax: paceMax,
+                    indicatorColor: paceColor(pace)
+                )
             }
             
             // Crutch words indicator
@@ -75,16 +83,21 @@ struct FeedbackPanel: View {
             }
             
             // Pauses indicator
-            HStack {
-                Text("Pauses:")
-                    .font(.subheadline)
-                Spacer()
-                HStack(spacing: 6) {
-                    Text("\(pauseCount)")
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("Pauses:")
                         .font(.subheadline)
-                    Text(pauseDetailsText(rateText: pauseRateText))
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+                    Spacer()
+                    HStack(spacing: 6) {
+                        Text("\(pauseCount)")
+                            .font(.subheadline)
+                        Text(pauseDetailsText(rateText: pauseRateText))
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                if let pauseRateText {
+                    PauseRateBadge(text: pauseRateText)
                 }
             }
 
@@ -187,6 +200,65 @@ struct FeedbackPanel: View {
         case .critical:
             return .red
         }
+    }
+}
+
+private struct PaceRangeBar: View {
+    let pace: Double
+    let paceMin: Double
+    let paceMax: Double
+    let indicatorColor: Color
+
+    var body: some View {
+        GeometryReader { geometry in
+            let barWidth = geometry.size.width
+            let layout = PaceRangeBarLayout.compute(
+                pace: pace,
+                minPace: paceMin,
+                maxPace: paceMax
+            )
+            let indicatorSize: CGFloat = 8
+            let indicatorOffset = max(
+                0,
+                min(
+                    barWidth - indicatorSize,
+                    barWidth * CGFloat(layout.pacePosition) - indicatorSize / 2
+                )
+            )
+
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(Color.secondary.opacity(0.15))
+                Capsule()
+                    .fill(Color.green.opacity(0.28))
+                    .frame(width: barWidth * CGFloat(layout.targetWidth))
+                    .offset(x: barWidth * CGFloat(layout.targetStart))
+                Circle()
+                    .fill(indicatorColor)
+                    .frame(width: indicatorSize, height: indicatorSize)
+                    .offset(x: indicatorOffset, y: -1)
+            }
+        }
+        .frame(height: 6)
+        .accessibilityHidden(true)
+    }
+
+}
+
+private struct PauseRateBadge: View {
+    let text: String
+
+    var body: some View {
+        Text(text)
+            .font(.caption)
+            .foregroundColor(.secondary)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(
+                Capsule()
+                    .fill(Color.secondary.opacity(0.12))
+            )
+            .accessibilityLabel("Pause rate \(text)")
     }
 }
 
