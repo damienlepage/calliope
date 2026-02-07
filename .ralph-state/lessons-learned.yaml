@@ -3,3 +3,5 @@ lessons:
     note: "swift test fails with ModuleCache permission errors under /Users/dlepage/.cache/clang/ModuleCache; cache permissions need adjustment."
   - date: 2026-02-06
     note: "swift test also warns that SwiftPM user cache paths under /Users/dlepage/Library are not writable; build aborts with ModuleCache permission errors."
+  - date: 2026-02-07
+    note: "swift build for packaging hit sandbox/module cache permission errors unless build scripts pin local cache paths and use --disable-sandbox."

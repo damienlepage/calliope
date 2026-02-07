@@ -12,6 +12,13 @@ RESOURCES_DIR="${CONTENTS_DIR}/Resources"
 INFO_TEMPLATE="${ROOT_DIR}/scripts/app/Info.plist"
 PKGINFO_TEMPLATE="${ROOT_DIR}/scripts/app/PkgInfo"
 ICON_TEMPLATE="${ROOT_DIR}/scripts/app/AppIcon.icns"
+MODULE_CACHE_DIR="${ROOT_DIR}/.build/module-cache"
+SWIFTPM_CACHE_DIR="${ROOT_DIR}/.build/swiftpm-cache"
+LOCAL_HOME="${ROOT_DIR}/.swift-build-home"
+XDG_CACHE_DIR="${LOCAL_HOME}/.cache"
+TMP_DIR="${LOCAL_HOME}/tmp"
+SWIFTPM_CONFIG_DIR="${LOCAL_HOME}/.swiftpm/config"
+SWIFTPM_SECURITY_DIR="${LOCAL_HOME}/.swiftpm/security"
 
 if [[ ! -f "${INFO_TEMPLATE}" ]]; then
   echo "Missing Info.plist template at ${INFO_TEMPLATE}" >&2
@@ -28,7 +35,22 @@ if [[ ! -f "${ICON_TEMPLATE}" ]]; then
   exit 1
 fi
 
-swift build -c release --package-path "${ROOT_DIR}"
+mkdir -p "${MODULE_CACHE_DIR}" "${SWIFTPM_CACHE_DIR}" "${XDG_CACHE_DIR}" "${TMP_DIR}" "${SWIFTPM_CONFIG_DIR}" "${SWIFTPM_SECURITY_DIR}"
+
+export HOME="${LOCAL_HOME}"
+export CFFIXED_USER_HOME="${LOCAL_HOME}"
+export TMPDIR="${TMP_DIR}"
+export XDG_CACHE_HOME="${XDG_CACHE_DIR}"
+export SWIFTPM_CACHE_PATH="${SWIFTPM_CACHE_DIR}"
+export SWIFTPM_CONFIG_PATH="${SWIFTPM_CONFIG_DIR}"
+export SWIFTPM_SECURITY_PATH="${SWIFTPM_SECURITY_DIR}"
+export SWIFTPM_MODULECACHE_OVERRIDE="${MODULE_CACHE_DIR}"
+export CLANG_MODULE_CACHE_PATH="${MODULE_CACHE_DIR}"
+
+swift build -c release --disable-sandbox --package-path "${ROOT_DIR}" \
+  -Xcc -fmodules-cache-path="${MODULE_CACHE_DIR}" \
+  -Xswiftc -module-cache-path \
+  -Xswiftc "${MODULE_CACHE_DIR}"
 
 if [[ ! -x "${BUILD_DIR}/${APP_NAME}" ]]; then
   echo "Release binary not found at ${BUILD_DIR}/${APP_NAME}" >&2
