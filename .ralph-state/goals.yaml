@@ -357,3 +357,13 @@ goals:
     notes:
       - "New 2026-02-07: Live feedback shows each element only once in that order: input level, WPM count with target zone indicator, elapsed time, speaking time, pauses, crutch words, live captions, and coaching profile."
       - "Validated 2026-02-07: Reordered session feedback panel to match required metric sequence with each element shown once."
+  - id: G62
+    title: Built-in mic voice detection parity with Bluetooth devices
+    status: BELOW_TARGET
+    notes:
+      - "New 2026-02-07: Voice detection fails on built-in mic; works only with Bluetooth. Must work seamlessly on both, including mid-session device switches."
+  - id: G63
+    title: Live guidance screen layout is single-panel and fully usable
+    status: BELOW_TARGET
+    notes:
+      - "New 2026-02-07: Live guidance shows overlapping panels, duplicates the Pauses section, and hides the Stop button. Must show one main panel with clean sections and visible Stop without scrolling."
