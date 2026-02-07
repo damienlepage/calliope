@@ -23,7 +23,18 @@ struct FeedbackPanel: View {
     let sessionDurationText: String?
     let sessionDurationSeconds: Int?
     let storageStatus: RecordingStorageStatus
+    let liveTranscript: String
+    let coachingProfiles: [CoachingProfile]
+    let activeProfileLabel: String?
+    @Binding var showCaptions: Bool
+    @Binding var selectedCoachingProfileID: UUID?
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    private enum SupplementaryLayout {
+        static let captionLineLimit = 3
+        static let profilePickerWidth: CGFloat = 200
+        static let spacing: CGFloat = 12
+    }
     
     var body: some View {
         let pauseRateText = PauseRateFormatter.rateText(
@@ -147,6 +158,19 @@ struct FeedbackPanel: View {
                 )
             }
 
+            if shouldShowSupplementaryPanel {
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .top, spacing: SupplementaryLayout.spacing) {
+                        captionsCard()
+                        profileCard()
+                    }
+                    VStack(alignment: .leading, spacing: SupplementaryLayout.spacing) {
+                        captionsCard()
+                        profileCard()
+                    }
+                }
+            }
+
             if !statusMessages.isEmpty {
                 FeedbackCard(title: "Session Status") {
                     VStack(alignment: .leading, spacing: 8) {
@@ -212,10 +236,97 @@ struct FeedbackPanel: View {
         return "Target: \(target)% of session"
     }
 
+    private var shouldShowSupplementaryPanel: Bool {
+        true
+    }
+
+    @ViewBuilder
+    private func captionsCard() -> some View {
+        FeedbackCard(title: "Live captions") {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Closed captions")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Toggle("CC", isOn: $showCaptions)
+                        .toggleStyle(.switch)
+                        .labelsHidden()
+                        .accessibilityLabel("Closed captions")
+                        .accessibilityValue(showCaptions ? "On" : "Off")
+                        .accessibilityHint("Toggle live captions on or off.")
+                }
+                if showCaptions {
+                    Text(captionBodyText(for: liveTranscript))
+                        .font(.callout)
+                        .foregroundColor(.secondary)
+                        .lineLimit(SupplementaryLayout.captionLineLimit)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(12)
+                        .background(Color.secondary.opacity(0.08))
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.secondary.opacity(0.12))
+                        )
+                        .accessibilityLabel("Live captions")
+                        .accessibilityValue(captionBodyText(for: liveTranscript))
+                } else {
+                    Text("Captions are off")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                        .accessibilityLabel("Live captions")
+                        .accessibilityValue("Off")
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func profileCard() -> some View {
+        FeedbackCard(title: "Coaching profile") {
+            let selectedProfileName = coachingProfiles.first(where: { $0.id == selectedCoachingProfileID })?.name
+            let fallbackProfileText = "Profile: \(selectedProfileName ?? "Default")"
+            let profileText = activeProfileLabel ?? fallbackProfileText
+            VStack(alignment: .leading, spacing: 6) {
+                if coachingProfiles.count > 1 {
+                    Picker("Coaching profile", selection: $selectedCoachingProfileID) {
+                        ForEach(coachingProfiles) { profile in
+                            Text(profile.name)
+                                .tag(profile.id as UUID?)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .frame(maxWidth: SupplementaryLayout.profilePickerWidth, alignment: .leading)
+                    .accessibilityLabel("Coaching profile")
+                    .accessibilityHint("Choose which coaching profile to apply to this session.")
+                    Text(profileText)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityLabel("Active profile")
+                        .accessibilityValue(profileText)
+                } else {
+                    Text(profileText)
+                        .font(.subheadline)
+                        .foregroundColor(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityLabel("Active profile")
+                        .accessibilityValue(profileText)
+                }
+            }
+        }
+    }
+
     private func feedbackNote(_ text: String) -> some View {
         Text(text)
             .font(.footnote)
             .foregroundColor(.secondary)
+    }
+
+    private func captionBodyText(for transcript: String) -> String {
+        let trimmed = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "Listening for speech..." : trimmed
     }
 
     private func feedbackWarning(_ text: String) -> some View {
@@ -377,24 +488,42 @@ private struct PauseRateBadge: View {
 
 #if DEBUG
 struct FeedbackPanel_Previews: PreviewProvider {
-    static var previews: some View {
-        FeedbackPanel(
-            pace: 150,
-            crutchWords: 3,
-            pauseCount: 2,
-            pauseAverageDuration: 1.4,
-            speakingTimeSeconds: 72,
-            speakingTimeTargetPercent: Constants.speakingTimeTargetPercent,
-            inputLevel: 0.4,
-            showSilenceWarning: false,
-            showWaitingForSpeech: false,
-            paceMin: Constants.targetPaceMin,
-            paceMax: Constants.targetPaceMax,
-            sessionDurationText: "02:15",
-            sessionDurationSeconds: 135,
-            storageStatus: .ok
-        )
+    private struct PreviewWrapper: View {
+        @State private var showCaptions = true
+        @State private var selectedProfileID: UUID? = CoachingProfile.default().id
+        private let profiles = [
+            CoachingProfile.default(),
+            CoachingProfile(id: UUID(), name: "Focused", preferences: .default)
+        ]
+
+        var body: some View {
+            FeedbackPanel(
+                pace: 150,
+                crutchWords: 3,
+                pauseCount: 2,
+                pauseAverageDuration: 1.4,
+                speakingTimeSeconds: 72,
+                speakingTimeTargetPercent: Constants.speakingTimeTargetPercent,
+                inputLevel: 0.4,
+                showSilenceWarning: false,
+                showWaitingForSpeech: false,
+                paceMin: Constants.targetPaceMin,
+                paceMax: Constants.targetPaceMax,
+                sessionDurationText: "02:15",
+                sessionDurationSeconds: 135,
+                storageStatus: .ok,
+                liveTranscript: "Let's focus on the key takeaways for the next steps.",
+                coachingProfiles: profiles,
+                activeProfileLabel: "Profile: Default (App: Default)",
+                showCaptions: $showCaptions,
+                selectedCoachingProfileID: $selectedProfileID
+            )
             .padding()
+        }
+    }
+
+    static var previews: some View {
+        PreviewWrapper()
     }
 }
 #endif

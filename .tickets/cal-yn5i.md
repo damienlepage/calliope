@@ -1,6 +1,6 @@
 ---
 id: cal-yn5i
-status: open
+status: blocked
 deps: [cal-45td]
 links: []
 created: 2026-02-07T08:38:47Z
@@ -70,3 +70,15 @@ Still blocked in this environment: cannot launch packaged app or access macOS 13
 **2026-02-07T18:45:06Z**
 
 2026-02-07: Still blocked in this environment; cannot launch packaged app or access macOS 13/14/15 hardware for smoke tests. Manual QA required to update release/QA-2026-02-07.md with results.
+
+**2026-02-07T18:52:00Z**
+
+2026-02-07: Still blocked here; cannot launch packaged app or access macOS 13/14/15 hardware for smoke tests. Manual QA required to update release/QA-2026-02-07.md with results.
+
+**2026-02-07T18:53:46Z**
+
+2026-02-07: Still blocked in this environment; cannot run packaged app or access macOS 13/14/15 hardware for smoke tests. Manual QA needed to update release/QA-2026-02-07.md with results.
+
+**2026-02-07T19:14:00Z**
+
+2026-02-07: Marking blocked until packaged app can be tested on macOS 13/14/15 hardware. Unable to run the required QA in this environment.

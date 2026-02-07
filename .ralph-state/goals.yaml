@@ -341,9 +341,10 @@ goals:
       - "Validated 2026-02-07: Captions/profile section now uses adaptive layout with line-limited captions to prevent overflow at default window size."
   - id: G59
     title: Live feedback includes all glanceable metrics
-    status: BELOW_TARGET
+    status: AT_TARGET
     notes:
       - "New 2026-02-07: Live feedback shows input level, WPM count with target zone indicator, elapsed time, speaking time, pauses, crutch words, live captions, and coaching profile."
+      - "Validated 2026-02-07: Feedback panel now includes live captions with CC toggle and coaching profile picker/label alongside all required metrics."
   - id: G60
     title: Pace visualization communicates target zone at a glance
     status: AT_TARGET

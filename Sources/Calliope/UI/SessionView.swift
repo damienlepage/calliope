@@ -37,9 +37,6 @@ struct SessionView: View {
     @State private var showCaptions: Bool = true
     private enum Layout {
         static let contentMaxWidth: CGFloat = 340
-        static let profilePickerWidth: CGFloat = 200
-        static let captionLineLimit = 3
-        static let supplementarySpacing: CGFloat = 12
     }
 
     var body: some View {
@@ -56,7 +53,6 @@ struct SessionView: View {
         let titleHintColor: Color = titlePromptState.helperTone == .warning ? .orange : .secondary
         let postSessionActionsDisabled = audioCapture.isRecording
         let postSessionItemUnavailable = postSessionRecordingItem == nil
-        let selectedProfileName = coachingProfiles.first(where: { $0.id == selectedCoachingProfileID })?.name
         let captureStatusText = CaptureStatusFormatter.statusText(
             inputDeviceName: audioCapture.inputDeviceName,
             backendStatus: audioCapture.backendStatus,
@@ -147,13 +143,6 @@ struct SessionView: View {
                     .accessibilityLabel("Audio route warning")
                     .accessibilityValue(routeWarningText)
             }
-            if viewState.shouldShowActiveProfileLabel, let activeProfileLabel {
-                Text(activeProfileLabel)
-                    .font(.footnote)
-                    .foregroundColor(.secondary)
-                    .accessibilityLabel("Active profile")
-                    .accessibilityValue(activeProfileLabel)
-            }
             if viewState.shouldShowIdlePrompt {
                 Text("Ready when you are. Press Start to begin coaching.")
                     .font(.title3)
@@ -177,30 +166,13 @@ struct SessionView: View {
                     paceMax: analysisPreferences.paceMax,
                     sessionDurationText: sessionDurationText,
                     sessionDurationSeconds: sessionDurationSeconds,
-                    storageStatus: storageStatus
+                    storageStatus: storageStatus,
+                    liveTranscript: feedbackViewModel.liveTranscript,
+                    coachingProfiles: coachingProfiles,
+                    activeProfileLabel: activeProfileLabel,
+                    showCaptions: $showCaptions,
+                    selectedCoachingProfileID: $selectedCoachingProfileID
                 )
-            }
-
-            if shouldShowSupplementaryPanel(isRecording: audioCapture.isRecording) {
-                ViewThatFits(in: .horizontal) {
-                    HStack(alignment: .top, spacing: Layout.supplementarySpacing) {
-                        if audioCapture.isRecording {
-                            captionsCard()
-                        }
-                        if coachingProfiles.count > 1 {
-                            profilePickerCard(selectedProfileName: selectedProfileName)
-                        }
-                    }
-                    VStack(alignment: .leading, spacing: Layout.supplementarySpacing) {
-                        if audioCapture.isRecording {
-                            captionsCard()
-                        }
-                        if coachingProfiles.count > 1 {
-                            profilePickerCard(selectedProfileName: selectedProfileName)
-                        }
-                    }
-                }
-                .frame(maxWidth: Layout.contentMaxWidth, alignment: .leading)
             }
 
             if let postSessionReview, !audioCapture.isRecording {
@@ -330,78 +302,6 @@ struct SessionView: View {
         }
     }
 
-    private func shouldShowSupplementaryPanel(isRecording: Bool) -> Bool {
-        isRecording || coachingProfiles.count > 1
-    }
-
-    @ViewBuilder
-    private func captionsCard() -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("Live captions")
-                    .font(.headline)
-                    .accessibilityAddTraits(.isHeader)
-                Spacer()
-                Toggle("CC", isOn: $showCaptions)
-                    .toggleStyle(.switch)
-                    .labelsHidden()
-                    .accessibilityLabel("Closed captions")
-                    .accessibilityValue(showCaptions ? "On" : "Off")
-                    .accessibilityHint("Toggle live captions on or off.")
-            }
-            if showCaptions {
-                Text(captionBodyText(for: feedbackViewModel.liveTranscript))
-                    .font(.callout)
-                    .foregroundColor(.secondary)
-                    .lineLimit(Layout.captionLineLimit)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(12)
-                    .background(Color.secondary.opacity(0.08))
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.secondary.opacity(0.12))
-                    )
-                    .accessibilityLabel("Live captions")
-                    .accessibilityValue(
-                        captionBodyText(for: feedbackViewModel.liveTranscript)
-                    )
-            }
-        }
-        .padding(.top, 4)
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    @ViewBuilder
-    private func profilePickerCard(selectedProfileName: String?) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Coaching profile")
-                .font(.caption)
-                .foregroundColor(.secondary)
-            Picker("Coaching profile", selection: $selectedCoachingProfileID) {
-                ForEach(coachingProfiles) { profile in
-                    Text(profile.name)
-                        .tag(profile.id as UUID?)
-                }
-            }
-            .pickerStyle(.menu)
-            .frame(maxWidth: Layout.profilePickerWidth, alignment: .leading)
-            .accessibilityLabel("Coaching profile")
-            .accessibilityValue(
-                AccessibilityFormatting.profileValue(selectedName: selectedProfileName)
-            )
-            .accessibilityHint("Choose which coaching profile to apply to this session.")
-        }
-        .padding(12)
-        .background(Color.secondary.opacity(0.08))
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.secondary.opacity(0.12))
-        )
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
     private func statusColor(for status: AudioCaptureStatus) -> Color {
         switch status {
         case .idle:
@@ -411,11 +311,6 @@ struct SessionView: View {
         case .error:
             return .orange
         }
-    }
-
-    private func captionBodyText(for transcript: String) -> String {
-        let trimmed = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? "Listening for speech..." : trimmed
     }
 
 }

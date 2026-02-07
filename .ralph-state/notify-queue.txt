@@ -1,0 +1,1 @@
+Goal completed: Live feedback includes all glanceable metrics
