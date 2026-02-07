@@ -25,6 +25,13 @@ final class ActiveAnalysisPreferencesStore: ObservableObject, AnalysisPreference
     private let perAppProfileStore: PerAppFeedbackProfileStore
     private var cancellables = Set<AnyCancellable>()
 
+    private typealias CombinedBaseState = (
+        AnalysisPreferences,
+        CoachingProfile?,
+        [PerAppFeedbackProfile],
+        String?
+    )
+
     init(
         basePreferencesStore: AnalysisPreferencesStore,
         coachingProfileStore: CoachingProfileStore,
@@ -61,7 +68,7 @@ final class ActiveAnalysisPreferencesStore: ObservableObject, AnalysisPreference
             ),
             recordingPublisher
         )
-        .map { combined, isRecording in
+        .map { (combined: CombinedBaseState, isRecording: Bool) in
             let (basePreferences, coachingProfile, profiles, frontmostApp) = combined
             let resolvedBase = isRecording ? coachingProfile?.preferences ?? basePreferences : basePreferences
             let resolvedAppIdentifier = isRecording ? frontmostApp : nil

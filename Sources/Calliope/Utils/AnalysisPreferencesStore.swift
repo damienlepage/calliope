@@ -39,6 +39,20 @@ struct AnalysisPreferences: Equatable, Codable {
         case speakingTimeTargetPercent
     }
 
+    init(
+        paceMin: Double,
+        paceMax: Double,
+        pauseThreshold: TimeInterval,
+        crutchWords: [String],
+        speakingTimeTargetPercent: Double
+    ) {
+        self.paceMin = paceMin
+        self.paceMax = paceMax
+        self.pauseThreshold = pauseThreshold
+        self.crutchWords = crutchWords
+        self.speakingTimeTargetPercent = speakingTimeTargetPercent
+    }
+
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         paceMin = try container.decode(Double.self, forKey: .paceMin)
@@ -119,11 +133,12 @@ final class AnalysisPreferencesStore: ObservableObject {
         crutchWords = normalized.crutchWords
         speakingTimeTargetPercent = normalized.speakingTimeTargetPercent
 
-        if normalized.paceMin != storedPaceMin
+        let shouldPersist = normalized.paceMin != storedPaceMin
             || normalized.paceMax != storedPaceMax
             || normalized.pauseThreshold != storedPauseThreshold
             || normalized.crutchWords != storedCrutchWords
-            || normalized.speakingTimeTargetPercent != storedSpeakingTimeTarget {
+            || normalized.speakingTimeTargetPercent != storedSpeakingTimeTarget
+        if shouldPersist {
             persist(
                 paceMin: normalized.paceMin,
                 paceMax: normalized.paceMax,
@@ -133,16 +148,17 @@ final class AnalysisPreferencesStore: ObservableObject {
             )
         }
 
-        Publishers.CombineLatest5(
+        Publishers.CombineLatest4(
             $paceMin,
             $paceMax,
             $pauseThreshold,
-            $crutchWords,
-            $speakingTimeTargetPercent
+            $crutchWords
         )
+        .combineLatest($speakingTimeTargetPercent)
             .dropFirst()
-            .sink { [weak self] paceMin, paceMax, pauseThreshold, crutchWords, speakingTimeTargetPercent in
+            .sink { [weak self] combined, speakingTimeTargetPercent in
                 guard let self = self else { return }
+                let (paceMin, paceMax, pauseThreshold, crutchWords) = combined
                 let normalized = Self.normalize(
                     paceMin: paceMin,
                     paceMax: paceMax,
@@ -184,15 +200,16 @@ final class AnalysisPreferencesStore: ObservableObject {
     }
 
     var preferencesPublisher: AnyPublisher<AnalysisPreferences, Never> {
-        Publishers.CombineLatest5(
+        Publishers.CombineLatest4(
             $paceMin,
             $paceMax,
             $pauseThreshold,
-            $crutchWords,
-            $speakingTimeTargetPercent
+            $crutchWords
         )
-            .map { paceMin, paceMax, pauseThreshold, crutchWords, speakingTimeTargetPercent in
-                AnalysisPreferences(
+            .combineLatest($speakingTimeTargetPercent)
+            .map { combined, speakingTimeTargetPercent in
+                let (paceMin, paceMax, pauseThreshold, crutchWords) = combined
+                return AnalysisPreferences(
                     paceMin: paceMin,
                     paceMax: paceMax,
                     pauseThreshold: pauseThreshold,

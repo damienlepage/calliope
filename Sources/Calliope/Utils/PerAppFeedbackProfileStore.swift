@@ -40,6 +40,22 @@ struct PerAppFeedbackProfile: Codable, Equatable, Identifiable {
         case speakingTimeTargetPercent
     }
 
+    init(
+        appIdentifier: String,
+        paceMin: Double,
+        paceMax: Double,
+        pauseThreshold: TimeInterval,
+        crutchWords: [String],
+        speakingTimeTargetPercent: Double
+    ) {
+        self.appIdentifier = appIdentifier
+        self.paceMin = paceMin
+        self.paceMax = paceMax
+        self.pauseThreshold = pauseThreshold
+        self.crutchWords = crutchWords
+        self.speakingTimeTargetPercent = speakingTimeTargetPercent
+    }
+
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         appIdentifier = try container.decode(String.self, forKey: .appIdentifier)
