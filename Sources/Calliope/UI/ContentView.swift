@@ -31,6 +31,7 @@ struct ContentView: View {
     @State private var isDisclosureSheetPresented: Bool
     @State private var isQuickStartSheetPresented: Bool
     @State private var isQuickStartPending: Bool
+    @State private var postSessionCoordinator = PostSessionReviewCoordinator()
     private let settingsActionModel: MicrophoneSettingsActionModel
     private let soundSettingsActionModel: SoundSettingsActionModel
     private let speechSettingsActionModel: SpeechSettingsActionModel
@@ -171,6 +172,25 @@ struct ContentView: View {
                     isQuickStartSheetPresented = false
                 }
             }
+            .sheet(
+                isPresented: Binding(
+                    get: { postSessionCoordinator.pendingSessionForTitle != nil },
+                    set: { newValue in
+                        if !newValue {
+                            skipSessionTitlePrompt()
+                        }
+                    }
+                )
+            ) {
+                if let session = postSessionCoordinator.pendingSessionForTitle {
+                    SessionTitlePromptSheet(
+                        defaultTitle: RecordingMetadata.defaultSessionTitle(for: session.createdAt),
+                        draft: $postSessionCoordinator.sessionTitleDraft,
+                        onSave: { saveSessionTitle(for: session) },
+                        onSkip: skipSessionTitlePrompt
+                    )
+                }
+            }
     }
 
     @ViewBuilder
@@ -247,10 +267,14 @@ struct ContentView: View {
             .onChange(of: audioCapture.completedRecordingSession) { newValue in
                 guard let newValue else { return }
                 writeDefaultMetadata(for: newValue)
-                navigationState.selection = .recordings
-                recordingsViewModel.focusOnNewRecording(recordingURLs: newValue.recordingURLs)
+                postSessionCoordinator.handleCompletedSession(newValue) { session in
+                    PostSessionReview(session: session)
+                }
             }
             .onChange(of: audioCapture.isRecording) { isRecording in
+                if isRecording {
+                    postSessionCoordinator.handleRecordingStarted()
+                }
                 if !isRecording {
                     hasAcknowledgedVoiceIsolationRisk = false
                 }
@@ -436,6 +460,29 @@ struct ContentView: View {
             createdAt: session.createdAt,
             coachingProfile: coachingProfileStore.selectedProfile
         )
+    }
+
+    private func saveSessionTitle(for session: CompletedRecordingSession) {
+        guard let titleInfo = RecordingMetadata.normalizedTitleInfo(
+            postSessionCoordinator.sessionTitleDraft
+        ) else {
+            return
+        }
+        let saved = RecordingManager.shared.saveSessionTitle(
+            titleInfo.normalized,
+            for: session.recordingURLs,
+            createdAt: session.createdAt,
+            coachingProfile: coachingProfileStore.selectedProfile
+        )
+        guard saved else { return }
+        postSessionCoordinator.handleTitleSaved()
+        recordingsViewModel.refreshRecordings()
+    }
+
+    private func skipSessionTitlePrompt() {
+        guard postSessionCoordinator.pendingSessionForTitle != nil else { return }
+        postSessionCoordinator.handleTitleSkipped()
+        recordingsViewModel.refreshRecordings()
     }
 
     private func acknowledgeVoiceIsolationRisk() {

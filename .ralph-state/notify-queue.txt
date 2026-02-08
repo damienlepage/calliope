@@ -1,1 +1,1 @@
-Goal completed: Recordings-centric stop flow and editable naming with WPM visibility
+Goal completed: Post-session naming prompt aligned with PRD

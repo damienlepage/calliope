@@ -415,3 +415,9 @@ goals:
     notes:
       - "New 2026-02-08: Remove post-stop naming flow; freeze feedback values in a greyed panel; add WPM column in recordings; make Part label editable to store optional title; on Stop, switch to Recordings tab, highlight the new recording, and focus the editable session name (default empty)."
       - "Validated 2026-02-08: Removed post-stop title prompt, added recordings tab switch + selection on stop, inline title edit defaults empty with Part placeholder, and added Avg WPM column with coverage."
+  - id: G72
+    title: Post-session naming prompt aligned with PRD
+    status: AT_TARGET
+    notes:
+      - "New 2026-02-08: PRD requires a macOS-style sheet prompt for optional session titles after Stop without blocking access to stats."
+      - "Validated 2026-02-08: Stopping a session now presents the optional title sheet with Save/Skip, keeps the session view visible, and allows access to Recordings."
