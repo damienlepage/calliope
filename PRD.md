@@ -49,17 +49,15 @@ Calliope is a native macOS app that acts as a real-time communication coach duri
    - Coaching profile.
 4. Closed captions are captured on the fly, visible by default, and toggleable via a clearly visible CC control.
 5. Local storage of recordings and analysis artifacts on the user’s file system.
-6. Each session is saved with a default name including session date and start time.
-7. Users can optionally add a title after clicking Stop (e.g. “1:1 with Alex”).
-8. Session metadata and statistics are browsable and searchable.
+6. Each session is saved as a single audio file (append on Resume) with a default name including session date and start time.
+7. Session statistics are browsable.
 9. For each session, record:
    - Number of times the user spoke.
-   - Total duration of user speech.
-10. Users can apply different coaching profiles per session, including:
-    - Pace min/max.
-    - Pause boundaries.
-    - Crutch word list.
-    - Speaking-time target.
+   - Total time
+   - Speaking time
+   - WPM
+   - Pauses
+   - Crutch words
 11. Privacy safeguards ensuring other participants’ voices are not recorded.
 12. Crutch word counts in live feedback must match post-session statistics.
 13. WPM detection accuracy must closely align with actual speech.
@@ -85,9 +83,8 @@ Calliope is a native macOS app that acts as a real-time communication coach duri
 
 ### Information Architecture
 - **Main Window**: Live session control and feedback only.
-- **Settings Window**: All configuration, permissions, and privacy disclosures.
+- **Settings Window**: All configuration, permissions, and privacy guardrails.
 - **Recordings View/Window**: Browsing, playback, and management of past sessions.
-- Privacy disclosures are shown at first launch and persist in Settings thereafter.
 
 ### Main Session Screen (Default)
 - Prominent Start/Stop control with clear recording state.
@@ -100,7 +97,6 @@ Calliope is a native macOS app that acts as a real-time communication coach duri
   - Pauses.
   - Crutch words.
   - Live captions.
-  - Coaching profile.
 - No scrolling at default window size.
 - Minimal idle state:
   - Short friendly prompt.
@@ -112,45 +108,45 @@ Calliope is a native macOS app that acts as a real-time communication coach duri
 ### Post-Session Behavior
 - On Stop:
   - Do not show a session recap panel; keep the live feedback panel visible and greyed out while retaining the latest values.
-  - Prompt for optional session title using a macOS-style sheet.
-  - Dismissing the sheet must not block access to stats.
-- Naming a session is optional and never required to proceed.
- - Stop transitions the primary action to **Resume** so the user can continue the same session where it left off.
+  - Stop transitions the primary action to **Resume** so the user can continue the same session where it left off.
+  - Resume appends audio into the same recording and updates the same summary file (no new file per resume).
+  - Show an **End Session** button next to Resume; ending the session returns the primary action to **Start** for a new session.
 
 ### Settings & Permissions
 - Presented in a dedicated macOS Settings window.
 - Clean, grouped sections with user-facing language only.
 - Only show the following controls:
-  - Microphone access and preferred input.
+  - Microphone access.
   - Speech recognition permission state.
-  - Coaching profiles.
   - Sensitivity preferences.
   - Pause detection boundaries:
     - Low boundary default: 1s.
     - High boundary default: 5s.
   - Crutch word list management.
-  - Overlay preferences (if enabled).
-  - Privacy disclosures and guardrails.
+  - Privacy guardrails.
 - Remove:
   - Zoom/Meet/Teams verification status.
   - Validation checklists.
   - Diagnostics or system health indicators.
+  - Preferred input selection.
+  - Compact overlay controls.
+  - About section.
+  - Privacy disclosure acceptance flow.
 
 ### Recordings
 - Accessible via a dedicated view or separate window.
 - Never blocks or precedes the session start flow.
 - Table-based layout using macOS table conventions.
 - Columns:
-  - Recording name/title (primary column).
-  - Date.
+  - Recording name (primary column).
   - Duration.
   - Speaking-time %.
-- Supports:
-  - Search.
-  - Sorting by column headers.
+  - Avg WPM
+- Supports sorting by column headers.
 - “Open Folder,” playback, and delete actions live only in this view.
 - Detailed metadata is hidden behind a Details action.
 - Recording details are shown in a modal or sheet with a clear Close button.
+ - Each session has a single audio file and a single summary file; no additional metadata file is stored.
 
 ### Navigation & Behavior
 - macOS-standard toolbar with a segmented control or sidebar for:
@@ -158,8 +154,6 @@ Calliope is a native macOS app that acts as a real-time communication coach duri
   - Recordings
   - Settings
 - App always defaults to Session on launch.
-- Session uses the currently selected coaching profile by default.
-- Coaching profile may be changed mid-session.
 - Keyboard navigation and standard shortcuts must work as expected.
 
 ## Visual & Accessibility Requirements
@@ -172,8 +166,6 @@ Calliope is a native macOS app that acts as a real-time communication coach duri
 ## Data & Privacy
 - All audio and analysis remain on-device.
 - No network transmission of audio or transcripts.
-- Clear, explicit disclosure:
-  > “Only your microphone input is analyzed. Other participants are never recorded.”
 
 ## Assumptions
 - The app can access microphone and speech recognition permissions.

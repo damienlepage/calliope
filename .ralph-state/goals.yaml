@@ -421,3 +421,18 @@ goals:
     notes:
       - "New 2026-02-08: PRD requires a macOS-style sheet prompt for optional session titles after Stop without blocking access to stats."
       - "Validated 2026-02-08: Stopping a session now presents the optional title sheet with Save/Skip, keeps the session view visible, and allows access to Recordings."
+  - id: G73
+    title: Simplified UX with fewer settings and session naming removed
+    status: BELOW_TARGET
+    notes:
+      - "New 2026-02-08: Remove coaching profiles, session titles, search, diagnostics export, recordings date column, preferred input selection, compact overlay toggle, About section, and disclosure acceptance; keep Privacy Guardrails text at bottom of Settings."
+  - id: G74
+    title: Resume appends to a single recording with no metadata file
+    status: BELOW_TARGET
+    notes:
+      - "New 2026-02-08: After Stop, Resume continues the same session, appending audio into one file with a single summary; remove the additional metadata file."
+  - id: G75
+    title: End Session control to reset to Start
+    status: BELOW_TARGET
+    notes:
+      - "New 2026-02-08: After Stop, show End Session next to Resume; ending a session reverts the primary action to Start for a new session."

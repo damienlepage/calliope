@@ -11,9 +11,8 @@ struct PrivacyGuardrails {
     }
 
     static let disclosureTitle = "Privacy Guardrails"
-    static let disclosureBody = "Calliope only processes your microphone input for live coaching."
+    static let disclosureBody = "All audio processing stays on this Mac."
     static let settingsStatements = [
-        "All audio processing stays on this Mac.",
         "Only your microphone input is analyzed.",
         "System audio and other participants are never recorded."
     ]
