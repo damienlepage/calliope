@@ -397,3 +397,14 @@ goals:
     notes:
       - "New 2026-02-07: Speaking time should keep increasing through short pauses and only stop when a pause exceeds the high threshold that counts as a turn-ending pause."
       - "Validated 2026-02-07: Speaking time now continues through short pauses, stops only after exceeding pause threshold, and unit coverage locks turn-count behavior."
+  - id: G69
+    title: Stop-to-resume session flow without recap panel
+    status: AT_TARGET
+    notes:
+      - "New 2026-02-07: On Stop, do not show a recap panel; keep feedback panel visible and greyed out with latest values. Primary action becomes Resume to continue the same session."
+      - "Validated 2026-02-08: Session stop keeps feedback panel visible (greyed), hides recap, and Start transitions to Resume for same-session continuation with tests."
+  - id: G70
+    title: Audio fixture analysis regression test for 203 WPM sample
+    status: BELOW_TARGET
+    notes:
+      - "New 2026-02-07: Add analysis test using /Tests/Resources/sample-203wpm.wav with 10% tolerance for 29s duration, 203 WPM, 0 pauses, 100% speaking time, 0 crutch words."

@@ -111,10 +111,11 @@ Calliope is a native macOS app that acts as a real-time communication coach duri
 
 ### Post-Session Behavior
 - On Stop:
-  - Immediately show summary statistics inline.
+  - Do not show a session recap panel; keep the live feedback panel visible and greyed out while retaining the latest values.
   - Prompt for optional session title using a macOS-style sheet.
   - Dismissing the sheet must not block access to stats.
 - Naming a session is optional and never required to proceed.
+ - Stop transitions the primary action to **Resume** so the user can continue the same session where it left off.
 
 ### Settings & Permissions
 - Presented in a dedicated macOS Settings window.

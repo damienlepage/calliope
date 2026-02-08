@@ -50,9 +50,7 @@ struct ContentView: View {
         let overlayCaptureStatusText: String
         let activeProfileLabel: String?
         let pendingSessionForTitle: CompletedRecordingSession?
-        let postSessionReview: PostSessionReview?
         let defaultSessionTitle: String?
-        let postSessionRecordingItem: RecordingItem?
         let requiresVoiceIsolationAcknowledgement: Bool
         let blockingReasons: [RecordingEligibility.Reason]
         let canStartRecording: Bool
@@ -119,12 +117,8 @@ struct ContentView: View {
             perAppProfile: activePreferencesStore.activeProfile
         )
         let pendingSessionForTitle = postSessionCoordinator.pendingSessionForTitle
-        let postSessionReview = postSessionCoordinator.postSessionReview
         let defaultSessionTitle = pendingSessionForTitle.map {
             RecordingMetadata.defaultSessionTitle(for: $0.createdAt)
-        }
-        let postSessionRecordingItem = postSessionReview.map {
-            recordingsViewModel.item(for: $0.recordingURL)
         }
         let requiresVoiceIsolationAcknowledgement = voiceIsolationAcknowledgementRequired()
         let blockingReasons = RecordingEligibility.blockingReasons(
@@ -151,9 +145,7 @@ struct ContentView: View {
             overlayCaptureStatusText: overlayCaptureStatusText,
             activeProfileLabel: activeProfileLabel,
             pendingSessionForTitle: pendingSessionForTitle,
-            postSessionReview: postSessionReview,
             defaultSessionTitle: defaultSessionTitle,
-            postSessionRecordingItem: postSessionRecordingItem,
             requiresVoiceIsolationAcknowledgement: requiresVoiceIsolationAcknowledgement,
             blockingReasons: blockingReasons,
             canStartRecording: canStartRecording,
@@ -356,18 +348,12 @@ struct ContentView: View {
                 activeProfileLabel: viewState.activeProfileLabel,
                 showTitlePrompt: viewState.pendingSessionForTitle != nil,
                 defaultSessionTitle: viewState.defaultSessionTitle,
-                postSessionReview: viewState.postSessionReview,
-                postSessionRecordingItem: viewState.postSessionRecordingItem,
                 sessionTitleDraft: Binding(
                     get: { postSessionCoordinator.sessionTitleDraft },
                     set: { postSessionCoordinator.sessionTitleDraft = $0 }
                 ),
                 onSaveSessionTitle: saveSessionTitle,
                 onSkipSessionTitle: skipSessionTitle,
-                onViewRecordings: { navigationState.selection = .recordings },
-                onEditSessionTitle: {
-                    editSessionTitle(using: viewState.postSessionRecordingItem)
-                },
                 onAcknowledgeVoiceIsolationRisk: acknowledgeVoiceIsolationRisk,
                 onOpenSettings: { navigationState.selection = .settings },
                 onRetryCapture: toggleRecording,
@@ -482,17 +468,6 @@ struct ContentView: View {
 
     private func skipSessionTitle() {
         postSessionCoordinator.handleTitleSkipped()
-    }
-
-    private func editSessionTitle(using recordingItem: RecordingItem?) {
-        guard postSessionCoordinator.pendingSessionForTitle == nil else { return }
-        if let title = recordingItem?.metadata?.title,
-           let normalized = RecordingMetadata.normalizedTitle(title) {
-            postSessionCoordinator.sessionTitleDraft = normalized
-        } else {
-            postSessionCoordinator.sessionTitleDraft = ""
-        }
-        postSessionCoordinator.handleEditTitle()
     }
 
     private func writeDefaultMetadata(for session: CompletedRecordingSession) {

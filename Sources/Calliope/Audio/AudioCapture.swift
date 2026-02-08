@@ -143,6 +143,13 @@ struct CompletedRecordingSession: Equatable {
     let createdAt: Date
 }
 
+struct PausedRecordingSession: Equatable {
+    let sessionID: String
+    let recordingURLs: [URL]
+    let createdAt: Date
+    let lastSegmentIndex: Int
+}
+
 enum AudioInputSource: Equatable {
     case microphone
     case systemAudio
@@ -355,6 +362,7 @@ class AudioCapture: NSObject, ObservableObject {
     @Published private(set) var micTestStatus: MicTestStatus = .idle
     @Published private(set) var currentRecordingURL: URL?
     @Published private(set) var completedRecordingSession: CompletedRecordingSession?
+    @Published private(set) var hasPausedSession: Bool = false
     @Published private(set) var inputDeviceName: String = "Unknown Microphone"
     @Published private(set) var outputDeviceName: String = "Unknown Output"
     @Published private(set) var backendStatus: AudioCaptureBackendStatus = .standard
@@ -406,6 +414,8 @@ class AudioCapture: NSObject, ObservableObject {
     private var recordingFileSettings: [String: Any]?
     private var recordedSegmentURLs: [URL] = []
     private var maxSegmentDuration: TimeInterval = 0
+    private var pausedSession: PausedRecordingSession?
+    private var resumeSessionPending = false
 
     var statusText: String {
         switch status {
@@ -557,13 +567,21 @@ class AudioCapture: NSObject, ObservableObject {
 
         // Recordings are written locally only; no network transmission.
         // Create audio file
-        recordingSessionID = UUID().uuidString
-        recordingSegmentIndex = 0
+        let resumeSession = pausedSession
+        if resumeSession == nil {
+            pausedSession = nil
+            hasPausedSession = false
+            resumeSessionPending = false
+        } else {
+            resumeSessionPending = true
+        }
+        recordingSessionID = resumeSession?.sessionID ?? UUID().uuidString
+        recordingSegmentIndex = resumeSession?.lastSegmentIndex ?? 0
         recordingSegmentStart = nil
-        recordingSessionStart = nil
+        recordingSessionStart = resumeSession?.createdAt
         recordingFileSettings = recordingFormat.settings
         maxSegmentDuration = max(0, preferences.maxSegmentDuration)
-        recordedSegmentURLs = []
+        recordedSegmentURLs = resumeSession?.recordingURLs ?? []
         completedRecordingSession = nil
         guard startNewRecordingSegment() else {
             self.backend = nil
@@ -708,7 +726,11 @@ class AudioCapture: NSObject, ObservableObject {
 
     func stopRecording() {
         if isRecording || awaitingRecordingStart {
-            stopRecordingInternal(statusOverride: .idle, shouldPublishCompletedSession: true)
+            stopRecordingInternal(
+                statusOverride: .idle,
+                shouldPublishCompletedSession: true,
+                shouldPreserveSessionForResume: true
+            )
             return
         }
         if case .error = status {
@@ -718,12 +740,15 @@ class AudioCapture: NSObject, ObservableObject {
 
     private func stopRecordingInternal(
         statusOverride: AudioCaptureStatus,
-        shouldPublishCompletedSession: Bool = false
+        shouldPublishCompletedSession: Bool = false,
+        shouldPreserveSessionForResume: Bool = false
     ) {
         let wasRecording = isRecording
         let completedSessionID = recordingSessionID
         let completedSessionStart = recordingSessionStart ?? now()
         let completedSegmentURLs = recordedSegmentURLs
+        let lastSegmentIndex = recordingSegmentIndex
+        let wasResuming = resumeSessionPending
         cancelRecordingStartTimeout()
         cancelCaptureStartValidation()
         stopStorageMonitoring()
@@ -740,6 +765,35 @@ class AudioCapture: NSObject, ObservableObject {
         recordingFileSettings = nil
         maxSegmentDuration = 0
         recordedSegmentURLs = []
+
+        if shouldPreserveSessionForResume,
+           wasRecording,
+           let completedSessionID,
+           !completedSegmentURLs.isEmpty {
+            pausedSession = PausedRecordingSession(
+                sessionID: completedSessionID,
+                recordingURLs: completedSegmentURLs,
+                createdAt: completedSessionStart,
+                lastSegmentIndex: lastSegmentIndex
+            )
+            if Thread.isMainThread {
+                hasPausedSession = true
+            } else {
+                DispatchQueue.main.async { [weak self] in
+                    self?.hasPausedSession = true
+                }
+            }
+        } else if !wasResuming {
+            pausedSession = nil
+            if Thread.isMainThread {
+                hasPausedSession = false
+            } else {
+                DispatchQueue.main.async { [weak self] in
+                    self?.hasPausedSession = false
+                }
+            }
+        }
+        resumeSessionPending = false
 
         isRecording = false
         updateStatus(statusOverride)
@@ -949,6 +1003,17 @@ class AudioCapture: NSObject, ObservableObject {
     }
 
     private func markRecordingStarted() {
+        if resumeSessionPending {
+            pausedSession = nil
+            if Thread.isMainThread {
+                hasPausedSession = false
+            } else {
+                DispatchQueue.main.async { [weak self] in
+                    self?.hasPausedSession = false
+                }
+            }
+            resumeSessionPending = false
+        }
         isRecording = true
         updateStatus(.recording)
         startStorageMonitoring()

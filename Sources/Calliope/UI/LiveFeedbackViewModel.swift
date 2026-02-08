@@ -17,6 +17,7 @@ final class LiveFeedbackViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private var staleFeedbackWorkItem: DispatchWorkItem?
     private var isRecording = false
+    private var shouldResumeOnNextStart = false
 
     init(initialState: FeedbackState = .zero) {
         self.state = initialState
@@ -25,6 +26,7 @@ final class LiveFeedbackViewModel: ObservableObject {
     func bind(
         feedbackPublisher: AnyPublisher<FeedbackState, Never>,
         recordingPublisher: AnyPublisher<Bool, Never>,
+        pausedSessionPublisher: AnyPublisher<Bool, Never> = Just(false).eraseToAnyPublisher(),
         transcriptionPublisher: AnyPublisher<String, Never> = Empty().eraseToAnyPublisher(),
         receiveOn queue: DispatchQueue = .main,
         throttleInterval: DispatchQueue.SchedulerTimeType.Stride = .milliseconds(200),
@@ -46,17 +48,40 @@ final class LiveFeedbackViewModel: ObservableObject {
 
         let recordingState = recordingPublisher
             .removeDuplicates()
+        let pausedSessionState = pausedSessionPublisher
+            .removeDuplicates()
+            .receive(on: queue)
+        let recordingTransitions = recordingState
+            .scan((previous: false, current: false)) { state, newValue in
+                (previous: state.current, current: newValue)
+            }
 
-        recordingState
-            .filter { $0 }
+        pausedSessionState
+            .sink { [weak self] isPaused in
+                guard let self else { return }
+                if isPaused {
+                    self.shouldResumeOnNextStart = true
+                }
+            }
+            .store(in: &cancellables)
+
+        recordingTransitions
+            .filter { !$0.previous && $0.current }
             .receive(on: queue)
             .sink { [weak self] _ in
                 guard let self else { return }
-                if !self.liveTranscript.isEmpty {
-                    self.liveTranscript = ""
-                }
-                if self.state != .zero {
-                    self.state = .zero
+                if self.shouldResumeOnNextStart {
+                    self.shouldResumeOnNextStart = false
+                } else {
+                    if !self.liveTranscript.isEmpty {
+                        self.liveTranscript = ""
+                    }
+                    if self.state != .zero {
+                        self.state = .zero
+                    }
+                    if self.sessionDurationSeconds != nil {
+                        self.sessionDurationSeconds = nil
+                    }
                 }
             }
             .store(in: &cancellables)
@@ -118,13 +143,16 @@ final class LiveFeedbackViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
-        recordingState
-            .filter { !$0 }
+        recordingTransitions
+            .filter { $0.previous && !$0.current }
             .receive(on: queue)
             .sink { [weak self] _ in
                 guard let self else { return }
-                queue.async { [weak self] in
+                performOnQueue { [weak self] in
                     guard let self else { return }
+                    if self.shouldResumeOnNextStart {
+                        return
+                    }
                     self.state = .zero
                     self.sessionDurationSeconds = nil
                     self.liveTranscript = ""
@@ -146,11 +174,12 @@ final class LiveFeedbackViewModel: ObservableObject {
                     return Empty<Int?, Never>().eraseToAnyPublisher()
                 }
                 let start = now()
+                let offset = self.sessionDurationSeconds ?? 0
                 return timerPublisherFactory()
                     .map { date in
-                        max(0, Int(date.timeIntervalSince(start)))
+                        max(0, Int(date.timeIntervalSince(start))) + offset
                     }
-                    .prepend(0)
+                    .prepend(offset)
                     .map(Optional.init)
                     .eraseToAnyPublisher()
             }

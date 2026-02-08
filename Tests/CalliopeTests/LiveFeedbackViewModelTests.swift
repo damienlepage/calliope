@@ -12,6 +12,11 @@ import XCTest
 final class LiveFeedbackViewModelTests: XCTestCase {
     private var cancellables = Set<AnyCancellable>()
 
+    override func tearDown() {
+        cancellables.removeAll()
+        super.tearDown()
+    }
+
     func testUpdatesStateFromFeedbackPublisher() {
         let feedbackSubject = PassthroughSubject<FeedbackState, Never>()
         let recordingSubject = CurrentValueSubject<Bool, Never>(false)
@@ -42,13 +47,15 @@ final class LiveFeedbackViewModelTests: XCTestCase {
 
     func testResetsWhenRecordingStops() {
         let feedbackSubject = PassthroughSubject<FeedbackState, Never>()
-        let recordingSubject = CurrentValueSubject<Bool, Never>(true)
+        let recordingSubject = CurrentValueSubject<Bool, Never>(false)
+        let queue = DispatchQueue(label: "LiveFeedbackViewModelTests.stop")
         let viewModel = LiveFeedbackViewModel()
 
         viewModel.bind(
             feedbackPublisher: feedbackSubject.eraseToAnyPublisher(),
             recordingPublisher: recordingSubject.eraseToAnyPublisher(),
-            receiveOn: .main
+            receiveOn: queue,
+            throttleInterval: .milliseconds(0)
         )
 
         let expectation = expectation(description: "Resets on stop")
@@ -62,6 +69,7 @@ final class LiveFeedbackViewModelTests: XCTestCase {
             }
             .store(in: &cancellables)
 
+        recordingSubject.send(true)
         feedbackSubject.send(
             FeedbackState(
                 pace: 140,
@@ -72,6 +80,47 @@ final class LiveFeedbackViewModelTests: XCTestCase {
             )
         )
         recordingSubject.send(false)
+
+        wait(for: [expectation], timeout: 1.0)
+    }
+
+    func testPauseKeepsStateAndDurationForResume() {
+        let feedbackSubject = PassthroughSubject<FeedbackState, Never>()
+        let recordingSubject = CurrentValueSubject<Bool, Never>(true)
+        let pausedSubject = CurrentValueSubject<Bool, Never>(false)
+        let ticker = PassthroughSubject<Date, Never>()
+        let startDate = Date(timeIntervalSince1970: 0)
+        let viewModel = LiveFeedbackViewModel()
+
+        viewModel.bind(
+            feedbackPublisher: feedbackSubject.eraseToAnyPublisher(),
+            recordingPublisher: recordingSubject.eraseToAnyPublisher(),
+            pausedSessionPublisher: pausedSubject.eraseToAnyPublisher(),
+            receiveOn: .main,
+            throttleInterval: .milliseconds(0),
+            now: { startDate },
+            timerPublisherFactory: { ticker.eraseToAnyPublisher() }
+        )
+
+        let expectedState = FeedbackState(
+            pace: 140,
+            crutchWords: 3,
+            pauseCount: 2,
+            inputLevel: 0.7,
+            showSilenceWarning: true
+        )
+
+        feedbackSubject.send(expectedState)
+        ticker.send(Date(timeIntervalSince1970: 3))
+        pausedSubject.send(true)
+        recordingSubject.send(false)
+
+        let expectation = expectation(description: "Pause preserves state and duration")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            XCTAssertEqual(viewModel.state, expectedState)
+            XCTAssertEqual(viewModel.sessionDurationSeconds, 3)
+            expectation.fulfill()
+        }
 
         wait(for: [expectation], timeout: 1.0)
     }

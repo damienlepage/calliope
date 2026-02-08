@@ -11,7 +11,8 @@ import XCTest
 final class SessionViewStateTests: XCTestCase {
     func testIdleStateShowsFeedbackAndStart() {
         let state = SessionViewState(
-            isRecording: false
+            isRecording: false,
+            hasPausedSession: false
         )
 
         XCTAssertEqual(state.primaryButtonTitle, "Start")
@@ -21,11 +22,23 @@ final class SessionViewStateTests: XCTestCase {
 
     func testRecordingStateShowsFeedbackAndStop() {
         let state = SessionViewState(
-            isRecording: true
+            isRecording: true,
+            hasPausedSession: false
         )
 
         XCTAssertEqual(state.primaryButtonTitle, "Stop")
         XCTAssertEqual(state.primaryButtonAccessibilityLabel, "Stop recording")
         XCTAssertEqual(state.primaryButtonAccessibilityHint, "Ends the current coaching session.")
+    }
+
+    func testPausedStateShowsResume() {
+        let state = SessionViewState(
+            isRecording: false,
+            hasPausedSession: true
+        )
+
+        XCTAssertEqual(state.primaryButtonTitle, "Resume")
+        XCTAssertEqual(state.primaryButtonAccessibilityLabel, "Resume recording")
+        XCTAssertEqual(state.primaryButtonAccessibilityHint, "Continues the current coaching session.")
     }
 }

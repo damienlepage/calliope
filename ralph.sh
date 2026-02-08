@@ -145,6 +145,7 @@ main_loop() {
   while true; do
     if [[ -f "$STOP_FILE" ]]; then
       log "STOP file detected, exiting"
+      notify "Ralph stopped as requested"
       rm -f "$STOP_FILE"
       exit 0
     fi
@@ -158,6 +159,7 @@ main_loop() {
     local next_iteration=$((current_iteration + 1))
     if [[ "$next_iteration" -gt "$max_iteration" ]]; then
       log "Reached max iterations (${MAX_ITERATIONS}) from start (${start_iteration}), exiting"
+      notify "Ralph stopped, reached max iterations (${MAX_ITERATIONS})"
       exit 0
     fi
 
@@ -167,10 +169,6 @@ main_loop() {
       successes=$((successes + 1))
       write_status "$next_iteration" "SUCCESS" "$successes" 0
       flush_notifications
-      if (( successes % 10 == 0 )); then
-        local start_iteration=$((next_iteration - 9))
-        notify "Ralph iterations ${start_iteration}-${next_iteration} succeeded."
-      fi
     else
       local failures
       failures=$(read_status_value "consecutive_failures")

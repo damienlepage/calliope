@@ -1,0 +1,1 @@
+Goal completed: Stop-to-resume session flow without recap panel

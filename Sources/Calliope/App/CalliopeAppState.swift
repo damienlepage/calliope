@@ -97,6 +97,7 @@ final class CalliopeAppState: ObservableObject {
         feedbackViewModel.bind(
             feedbackPublisher: audioAnalyzer.feedbackPublisher,
             recordingPublisher: audioCapture.$isRecording.eraseToAnyPublisher(),
+            pausedSessionPublisher: audioCapture.$hasPausedSession.eraseToAnyPublisher(),
             transcriptionPublisher: audioAnalyzer.transcriptionPublisher
         )
         recordingsViewModel.bind(

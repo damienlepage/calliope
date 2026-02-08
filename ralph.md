@@ -45,8 +45,9 @@ Build Calliope into a privacy-first, low-latency macOS communication coach that 
       - testing goals
       - verification goals that can't be automatically testing, such as compatibility with conference calls software
       - release or packaging goals
+   - If the PRD looks completely implemented, run the command `touch .ralph-state/STOP`
 8. When a goal is complete:
-   - Update its status to `AT_TARGET` in `ralph-state/goals.yaml` with a note explaining what you validated
+   - Update its status to `AT_TARGET` in `.ralph-state/goals.yaml` with a note explaining what you validated
    - Run this command to append a notification line for ralph.sh to send:
      - `printf '%s\n' "Goal completed: $title" >> .ralph-state/notify-queue.txt` where $title is replaced with the goal title
 9. Commit all changes in the repository with the details of the iteration.
