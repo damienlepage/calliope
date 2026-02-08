@@ -86,7 +86,7 @@ final class LiveFeedbackViewModelTests: XCTestCase {
 
     func testPauseKeepsStateAndDurationForResume() {
         let feedbackSubject = PassthroughSubject<FeedbackState, Never>()
-        let recordingSubject = CurrentValueSubject<Bool, Never>(true)
+        let recordingSubject = CurrentValueSubject<Bool, Never>(false)
         let pausedSubject = CurrentValueSubject<Bool, Never>(false)
         let ticker = PassthroughSubject<Date, Never>()
         let startDate = Date(timeIntervalSince1970: 0)
@@ -110,6 +110,7 @@ final class LiveFeedbackViewModelTests: XCTestCase {
             showSilenceWarning: true
         )
 
+        recordingSubject.send(true)
         feedbackSubject.send(expectedState)
         ticker.send(Date(timeIntervalSince1970: 3))
         pausedSubject.send(true)
