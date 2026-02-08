@@ -6,9 +6,12 @@ final class AudioFixtureAnalysisTests: XCTestCase {
     func test203WpmFixtureAnalysisMatchesExpectedMetrics() throws {
         let resourceURL = try XCTUnwrap(Bundle.module.url(forResource: "sample-203wpm", withExtension: "wav"))
         let file = try AVAudioFile(forReading: resourceURL)
-        let expectedDuration = Double(file.length) / file.processingFormat.sampleRate
+        let actualDuration = Double(file.length) / file.processingFormat.sampleRate
         let targetWpm = 203.0
-        let expectedWordCount = Int((targetWpm * expectedDuration / 60.0).rounded())
+        let expectedDurationSeconds = 29.0
+        let durationTolerance = expectedDurationSeconds * 0.1
+        let expectedWordCount = Int((targetWpm * expectedDurationSeconds / 60.0).rounded())
+        XCTAssertEqual(actualDuration, expectedDurationSeconds, accuracy: durationTolerance)
 
         let clock = AdvancingClock(start: Date(timeIntervalSince1970: 0))
         let backend = FixtureAudioFileBackend(fileURL: resourceURL, clock: clock)
@@ -76,13 +79,12 @@ final class AudioFixtureAnalysisTests: XCTestCase {
             return
         }
 
-        let durationTolerance = expectedDuration * 0.1
-        XCTAssertEqual(summary.durationSeconds, expectedDuration, accuracy: durationTolerance)
+        XCTAssertEqual(summary.durationSeconds, expectedDurationSeconds, accuracy: durationTolerance)
         XCTAssertEqual(summary.pace.averageWPM, targetWpm, accuracy: targetWpm * 0.1)
         XCTAssertEqual(summary.pace.totalWords, expectedWordCount)
         XCTAssertEqual(summary.pauses.count, 0)
         XCTAssertEqual(summary.crutchWords.totalCount, 0)
-        XCTAssertEqual(summary.speaking.timeSeconds, expectedDuration, accuracy: durationTolerance)
+        XCTAssertEqual(summary.speaking.timeSeconds, expectedDurationSeconds, accuracy: durationTolerance)
     }
 }
 
