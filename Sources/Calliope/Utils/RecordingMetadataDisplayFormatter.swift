@@ -83,6 +83,12 @@ struct RecordingMetadataDisplayFormatter {
         return "\(baseName) - \(partLabel)"
     }
 
+    static func partLabelText(for url: URL) -> String? {
+        let name = url.deletingPathExtension().lastPathComponent
+        guard let segmentInfo = segmentInfo(from: name) else { return nil }
+        return "Part \(segmentInfo.partLabel)"
+    }
+
     private struct SegmentInfo {
         let sessionID: String
         let partLabel: String

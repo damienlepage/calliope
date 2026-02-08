@@ -11,10 +11,14 @@ struct RecordingsListView: View {
     @ObservedObject var viewModel: RecordingListViewModel
     let onExportDiagnostics: () -> Void
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @FocusState private var focusedTitleID: RecordingItem.ID?
     private enum Layout {
         static let recordingColumnMin: CGFloat = 180
         static let recordingColumnIdeal: CGFloat = 240
         static let recordingColumnMax: CGFloat = 320
+        static let wpmColumnMin: CGFloat = 70
+        static let wpmColumnIdeal: CGFloat = 80
+        static let wpmColumnMax: CGFloat = 90
         static let dateColumnMin: CGFloat = 110
         static let dateColumnIdeal: CGFloat = 130
         static let dateColumnMax: CGFloat = 160
@@ -75,30 +79,17 @@ struct RecordingsListView: View {
         .onAppear {
             viewModel.loadRecordings()
         }
+        .onChange(of: viewModel.titleEditItem?.id) { newValue in
+            focusedTitleID = newValue
+        }
+        .onChange(of: focusedTitleID) { newValue in
+            if newValue == nil, viewModel.titleEditItem != nil {
+                viewModel.saveTitleEdit()
+            }
+        }
         .sheet(item: $viewModel.detailItem) { item in
             RecordingDetailView(item: item) {
                 viewModel.requestEditTitle(item)
-            }
-        }
-        .sheet(
-            isPresented: Binding(
-                get: { viewModel.titleEditItem != nil },
-                set: { isPresented in
-                    if !isPresented {
-                        viewModel.cancelTitleEdit()
-                    }
-                }
-            )
-        ) {
-            if let item = viewModel.titleEditItem {
-                RecordingTitleEditorSheet(
-                    recordingName: item.displayName,
-                    defaultTitle: viewModel.titleEditDefaultTitle,
-                    draft: $viewModel.titleEditDraft,
-                    onSave: viewModel.saveTitleEdit,
-                    onCancel: viewModel.cancelTitleEdit,
-                    onReset: viewModel.resetTitleEdit
-                )
             }
         }
         .alert(item: $viewModel.pendingDelete) { request in
@@ -272,19 +263,26 @@ private extension RecordingsListView {
 
     var tableList: some View {
         let isRecording = viewModel.isRecording
-        return Table(viewModel.recordings) {
+        return Table(viewModel.recordings, selection: $viewModel.selectedRecordingID) {
             TableColumn("Recording") { item in
-                Text(item.displayName)
-                    .font(.subheadline)
-                    .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .accessibilityLabel("Recording name")
-                    .accessibilityValue(item.displayName)
+                recordingNameCell(for: item)
             }
             .width(
                 min: Layout.recordingColumnMin,
                 ideal: Layout.recordingColumnIdeal,
                 max: Layout.recordingColumnMax
+            )
+            TableColumn("Avg WPM") { item in
+                Text(item.averageWPMText)
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+                    .accessibilityLabel("Average words per minute")
+                    .accessibilityValue(item.averageWPMText)
+            }
+            .width(
+                min: Layout.wpmColumnMin,
+                ideal: Layout.wpmColumnIdeal,
+                max: Layout.wpmColumnMax
             )
             TableColumn("Date") { item in
                 Text(item.dateText)
@@ -341,19 +339,37 @@ private extension RecordingsListView {
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Recordings list")
-        .accessibilityHint("Shows recording name, date, duration, speaking percentage, status, and actions.")
+        .accessibilityHint(
+            "Shows recording name, average words per minute, date, duration, speaking percentage, status, and actions."
+        )
     }
 
     var accessibleList: some View {
         let isRecording = viewModel.isRecording
         return LazyVStack(alignment: .leading, spacing: 12) {
             ForEach(viewModel.recordings) { item in
+                let isSelected = viewModel.selectedRecordingID == item.id
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(item.displayName)
-                        .font(.headline)
-                        .fixedSize(horizontal: false, vertical: true)
+                    if viewModel.titleEditItem?.id == item.id {
+                        TextField(viewModel.titleEditPlaceholder, text: $viewModel.titleEditDraft)
+                            .textFieldStyle(.roundedBorder)
+                            .focused($focusedTitleID, equals: item.id)
+                            .onSubmit {
+                                viewModel.saveTitleEdit()
+                            }
+                            .onExitCommand {
+                                viewModel.cancelTitleEdit()
+                            }
+                            .accessibilityLabel("Recording title")
+                            .accessibilityHint("Enter a title for this recording.")
+                    } else {
+                        Text(item.displayName)
+                            .font(.headline)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
 
                     VStack(alignment: .leading, spacing: 4) {
+                        Text("Avg WPM: \(item.averageWPMText)")
                         Text("Date: \(item.dateText)")
                         Text("Duration: \(item.durationText)")
                         Text("Speaking: \(item.speakingPercentText)")
@@ -366,7 +382,15 @@ private extension RecordingsListView {
                     recordingActions(for: item, isRecording: isRecording)
                 }
                 .padding(12)
-                .background(Color(NSColor.windowBackgroundColor).opacity(0.85))
+                .background(
+                    Group {
+                        if isSelected {
+                            Color.accentColor.opacity(0.12)
+                        } else {
+                            Color(NSColor.windowBackgroundColor).opacity(0.85)
+                        }
+                    }
+                )
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
                         .stroke(Color.secondary.opacity(0.12))
@@ -376,6 +400,7 @@ private extension RecordingsListView {
                 .accessibilityLabel(item.displayName)
                 .accessibilityValue(
                     AccessibilityFormatting.detailLinesValue([
+                        "Avg WPM: \(item.averageWPMText)",
                         "Date: \(item.dateText)",
                         "Duration: \(item.durationText)",
                         "Speaking: \(item.speakingPercentText)",
@@ -387,6 +412,30 @@ private extension RecordingsListView {
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Recordings list")
         .accessibilityHint("Shows recording details and actions in a stacked layout.")
+    }
+
+    @ViewBuilder
+    func recordingNameCell(for item: RecordingItem) -> some View {
+        if viewModel.titleEditItem?.id == item.id {
+            TextField(viewModel.titleEditPlaceholder, text: $viewModel.titleEditDraft)
+                .textFieldStyle(.roundedBorder)
+                .focused($focusedTitleID, equals: item.id)
+                .onSubmit {
+                    viewModel.saveTitleEdit()
+                }
+                .onExitCommand {
+                    viewModel.cancelTitleEdit()
+                }
+                .accessibilityLabel("Recording title")
+                .accessibilityHint("Enter a title for this recording.")
+        } else {
+            Text(item.displayName)
+                .font(.subheadline)
+                .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityLabel("Recording name")
+                .accessibilityValue(item.displayName)
+        }
     }
 
     @ViewBuilder

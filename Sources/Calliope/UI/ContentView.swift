@@ -31,7 +31,6 @@ struct ContentView: View {
     @State private var isDisclosureSheetPresented: Bool
     @State private var isQuickStartSheetPresented: Bool
     @State private var isQuickStartPending: Bool
-    @State private var postSessionCoordinator = PostSessionReviewCoordinator()
     private let settingsActionModel: MicrophoneSettingsActionModel
     private let soundSettingsActionModel: SoundSettingsActionModel
     private let speechSettingsActionModel: SpeechSettingsActionModel
@@ -49,8 +48,6 @@ struct ContentView: View {
         let activePreferences: AnalysisPreferences
         let overlayCaptureStatusText: String
         let activeProfileLabel: String?
-        let pendingSessionForTitle: CompletedRecordingSession?
-        let defaultSessionTitle: String?
         let requiresVoiceIsolationAcknowledgement: Bool
         let blockingReasons: [RecordingEligibility.Reason]
         let canStartRecording: Bool
@@ -116,10 +113,6 @@ struct ContentView: View {
             coachingProfileName: coachingProfileStore.selectedProfile?.name,
             perAppProfile: activePreferencesStore.activeProfile
         )
-        let pendingSessionForTitle = postSessionCoordinator.pendingSessionForTitle
-        let defaultSessionTitle = pendingSessionForTitle.map {
-            RecordingMetadata.defaultSessionTitle(for: $0.createdAt)
-        }
         let requiresVoiceIsolationAcknowledgement = voiceIsolationAcknowledgementRequired()
         let blockingReasons = RecordingEligibility.blockingReasons(
             privacyState: privacyState,
@@ -144,8 +137,6 @@ struct ContentView: View {
             activePreferences: activePreferences,
             overlayCaptureStatusText: overlayCaptureStatusText,
             activeProfileLabel: activeProfileLabel,
-            pendingSessionForTitle: pendingSessionForTitle,
-            defaultSessionTitle: defaultSessionTitle,
             requiresVoiceIsolationAcknowledgement: requiresVoiceIsolationAcknowledgement,
             blockingReasons: blockingReasons,
             canStartRecording: canStartRecording,
@@ -256,14 +247,11 @@ struct ContentView: View {
             .onChange(of: audioCapture.completedRecordingSession) { newValue in
                 guard let newValue else { return }
                 writeDefaultMetadata(for: newValue)
-                postSessionCoordinator.handleCompletedSession(newValue) { session in
-                    loadPostSessionReview(for: session)
-                }
+                navigationState.selection = .recordings
+                recordingsViewModel.focusOnNewRecording(recordingURLs: newValue.recordingURLs)
             }
             .onChange(of: audioCapture.isRecording) { isRecording in
-                if isRecording {
-                    postSessionCoordinator.handleRecordingStarted()
-                } else {
+                if !isRecording {
                     hasAcknowledgedVoiceIsolationRisk = false
                 }
             }
@@ -346,14 +334,6 @@ struct ContentView: View {
                 canStartRecording: viewState.canStartRecording,
                 voiceIsolationAcknowledgementMessage: viewState.voiceIsolationAcknowledgementMessage,
                 activeProfileLabel: viewState.activeProfileLabel,
-                showTitlePrompt: viewState.pendingSessionForTitle != nil,
-                defaultSessionTitle: viewState.defaultSessionTitle,
-                sessionTitleDraft: Binding(
-                    get: { postSessionCoordinator.sessionTitleDraft },
-                    set: { postSessionCoordinator.sessionTitleDraft = $0 }
-                ),
-                onSaveSessionTitle: saveSessionTitle,
-                onSkipSessionTitle: skipSessionTitle,
                 onAcknowledgeVoiceIsolationRisk: acknowledgeVoiceIsolationRisk,
                 onOpenSettings: { navigationState.selection = .settings },
                 onRetryCapture: toggleRecording,
@@ -450,36 +430,12 @@ struct ContentView: View {
         recordingsViewModel.openRecordingsFolder()
     }
 
-    private func saveSessionTitle() {
-        guard let pendingSession = postSessionCoordinator.pendingSessionForTitle else { return }
-        let didSave = RecordingManager.shared.saveSessionTitle(
-            postSessionCoordinator.sessionTitleDraft,
-            for: pendingSession.recordingURLs,
-            createdAt: pendingSession.createdAt,
-            coachingProfile: coachingProfileStore.selectedProfile
-        )
-        guard didSave else {
-            skipSessionTitle()
-            return
-        }
-        recordingsViewModel.refreshRecordings()
-        postSessionCoordinator.handleTitleSaved()
-    }
-
-    private func skipSessionTitle() {
-        postSessionCoordinator.handleTitleSkipped()
-    }
-
     private func writeDefaultMetadata(for session: CompletedRecordingSession) {
         RecordingManager.shared.writeDefaultMetadataIfNeeded(
             for: session.recordingURLs,
             createdAt: session.createdAt,
             coachingProfile: coachingProfileStore.selectedProfile
         )
-    }
-
-    private func loadPostSessionReview(for session: CompletedRecordingSession) -> PostSessionReview? {
-        PostSessionReview(session: session)
     }
 
     private func acknowledgeVoiceIsolationRisk() {

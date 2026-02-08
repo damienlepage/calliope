@@ -366,6 +366,64 @@ final class RecordingListViewModelTests: XCTestCase {
         XCTAssertNil(viewModel.titleEditItem)
     }
 
+    func testRequestEditTitleDefaultsToEmptyForDefaultTitle() {
+        let timestampMs = 1_700_000_000_000.0
+        let date = Date(timeIntervalSince1970: timestampMs / 1000)
+        let url = URL(
+            fileURLWithPath: "/tmp/recording_\(Int(timestampMs))_ABC_session-123_part-01.m4a"
+        )
+        let manager = MockRecordingManager(recordings: [url])
+        let metadata: [URL: RecordingMetadata] = [
+            url: RecordingMetadata(title: RecordingMetadata.defaultSessionTitle(for: date), createdAt: date)
+        ]
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { _ in date },
+            durationProvider: { _ in nil },
+            fileSizeProvider: { _ in nil },
+            metadataProvider: { metadata[$0] }
+        )
+
+        viewModel.loadRecordings()
+
+        guard let item = viewModel.recordings.first else {
+            XCTFail("Expected recording item")
+            return
+        }
+
+        viewModel.requestEditTitle(item)
+
+        XCTAssertEqual(viewModel.titleEditDraft, "")
+        XCTAssertEqual(viewModel.titleEditPlaceholder, "Part 01")
+    }
+
+    func testFocusOnNewRecordingSelectsAndStartsEditing() {
+        let timestampMs = 1_700_000_000_000.0
+        let date = Date(timeIntervalSince1970: timestampMs / 1000)
+        let url = URL(
+            fileURLWithPath: "/tmp/recording_\(Int(timestampMs))_ABC_session-123_part-02.m4a"
+        )
+        let manager = MockRecordingManager(recordings: [url])
+        let metadata: [URL: RecordingMetadata] = [
+            url: RecordingMetadata(title: RecordingMetadata.defaultSessionTitle(for: date), createdAt: date)
+        ]
+        let viewModel = RecordingListViewModel(
+            manager: manager,
+            workspace: SpyWorkspace(),
+            modificationDateProvider: { _ in date },
+            durationProvider: { _ in nil },
+            fileSizeProvider: { _ in nil },
+            metadataProvider: { metadata[$0] }
+        )
+
+        viewModel.focusOnNewRecording(recordingURLs: [url])
+
+        XCTAssertEqual(viewModel.selectedRecordingID, url)
+        XCTAssertEqual(viewModel.titleEditItem?.url, url)
+        XCTAssertEqual(viewModel.titleEditDraft, "")
+    }
+
     func testSortOptionOrdersByDurationWithMissingDurationsLast() {
         let urlA = URL(fileURLWithPath: "/tmp/long.m4a")
         let urlB = URL(fileURLWithPath: "/tmp/short.m4a")

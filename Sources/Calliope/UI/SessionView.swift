@@ -18,11 +18,6 @@ struct SessionView: View {
     let canStartRecording: Bool
     let voiceIsolationAcknowledgementMessage: String?
     let activeProfileLabel: String?
-    let showTitlePrompt: Bool
-    let defaultSessionTitle: String?
-    @Binding var sessionTitleDraft: String
-    let onSaveSessionTitle: () -> Void
-    let onSkipSessionTitle: () -> Void
     let onAcknowledgeVoiceIsolationRisk: () -> Void
     let onOpenSettings: () -> Void
     let onRetryCapture: () -> Void
@@ -36,11 +31,6 @@ struct SessionView: View {
             isRecording: audioCapture.isRecording,
             hasPausedSession: audioCapture.hasPausedSession
         )
-        let titlePromptState = SessionTitlePromptState(
-            draft: sessionTitleDraft,
-            defaultTitle: defaultSessionTitle
-        )
-        let titleHintColor: Color = titlePromptState.helperTone == .warning ? .orange : .secondary
         let shouldShowVoiceIsolationAcknowledgement = voiceIsolationAcknowledgementMessage != nil
         let isSessionActive = audioCapture.isRecording
         VStack(spacing: 16) {
@@ -80,38 +70,6 @@ struct SessionView: View {
             .opacity(isSessionActive ? 1.0 : 0.55)
             .saturation(isSessionActive ? 1.0 : 0.0)
 
-            if showTitlePrompt {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Name this session")
-                        .font(.headline)
-                        .accessibilityAddTraits(.isHeader)
-                    TextField("Optional title", text: $sessionTitleDraft)
-                        .textFieldStyle(.roundedBorder)
-                        .accessibilityLabel("Session title")
-                        .accessibilityHint("Optional name for this session.")
-                    Text(titlePromptState.helperText)
-                        .font(.footnote)
-                        .foregroundColor(titleHintColor)
-                    HStack(spacing: 12) {
-                        Button("Save", action: onSaveSessionTitle)
-                            .buttonStyle(.borderedProminent)
-                            .disabled(!titlePromptState.isValid)
-                        Button("Skip", action: onSkipSessionTitle)
-                            .buttonStyle(.bordered)
-                    }
-                }
-                .frame(maxWidth: Layout.contentMaxWidth, alignment: .leading)
-                .padding()
-                .background(.thinMaterial)
-                .cornerRadius(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.secondary.opacity(0.2))
-                )
-                .accessibilityElement(children: .contain)
-                .accessibilityLabel("Session title prompt")
-            }
-
             if shouldShowVoiceIsolationAcknowledgement, let voiceIsolationAcknowledgementMessage {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(voiceIsolationAcknowledgementMessage)
@@ -144,7 +102,6 @@ struct SessionView: View {
 }
 
 private struct SessionViewPreview: View {
-    @State private var sessionTitle = ""
     private let defaultProfile = CoachingProfile.default()
     private let focusedProfile = CoachingProfile(id: UUID(), name: "Focused", preferences: .default)
 
@@ -163,11 +120,6 @@ private struct SessionViewPreview: View {
             canStartRecording: true,
             voiceIsolationAcknowledgementMessage: nil,
             activeProfileLabel: "Profile: Default (App: Default)",
-            showTitlePrompt: true,
-            defaultSessionTitle: "Session Jan 1, 2026 at 9:00 AM",
-            sessionTitleDraft: $sessionTitle,
-            onSaveSessionTitle: {},
-            onSkipSessionTitle: {},
             onAcknowledgeVoiceIsolationRisk: {},
             onOpenSettings: {},
             onRetryCapture: {},
@@ -177,7 +129,6 @@ private struct SessionViewPreview: View {
 }
 
 private struct SessionViewRecordingPreview: View {
-    @State private var sessionTitle = ""
     private let defaultProfile = CoachingProfile.default()
     private let focusedProfile = CoachingProfile(id: UUID(), name: "Focused", preferences: .default)
     private let audioCapture: AudioCapture = {
@@ -212,11 +163,6 @@ private struct SessionViewRecordingPreview: View {
             canStartRecording: true,
             voiceIsolationAcknowledgementMessage: nil,
             activeProfileLabel: "Profile: Default (App: Zoom)",
-            showTitlePrompt: false,
-            defaultSessionTitle: nil,
-            sessionTitleDraft: $sessionTitle,
-            onSaveSessionTitle: {},
-            onSkipSessionTitle: {},
             onAcknowledgeVoiceIsolationRisk: {},
             onOpenSettings: {},
             onRetryCapture: {},

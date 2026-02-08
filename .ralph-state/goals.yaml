@@ -409,3 +409,9 @@ goals:
     notes:
       - "New 2026-02-07: Add analysis test using /Tests/Resources/sample-203wpm.wav with 10% tolerance for 29s duration, 203 WPM, 0 pauses, 100% speaking time, 0 crutch words."
       - "Validated 2026-02-08: AudioFixtureAnalysisTests asserts 29s duration tolerance, 203 WPM within 10%, 0 pauses, 100% speaking time, and 0 crutch words for sample-203wpm.wav."
+  - id: G71
+    title: Recordings-centric stop flow and editable naming with WPM visibility
+    status: AT_TARGET
+    notes:
+      - "New 2026-02-08: Remove post-stop naming flow; freeze feedback values in a greyed panel; add WPM column in recordings; make Part label editable to store optional title; on Stop, switch to Recordings tab, highlight the new recording, and focus the editable session name (default empty)."
+      - "Validated 2026-02-08: Removed post-stop title prompt, added recordings tab switch + selection on stop, inline title edit defaults empty with Part placeholder, and added Avg WPM column with coverage."

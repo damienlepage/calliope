@@ -161,6 +161,58 @@ final class RecordingItemTests: XCTestCase {
         XCTAssertEqual(displayName, expectedDisplayName(date: date, partLabel: "03"))
     }
 
+    func testAverageWPMTextUsesSummary() {
+        let summary = AnalysisSummary(
+            version: 1,
+            createdAt: Date(),
+            durationSeconds: 60,
+            pace: AnalysisSummary.PaceStats(
+                averageWPM: 142.6,
+                minWPM: 120,
+                maxWPM: 160,
+                totalWords: 143
+            ),
+            pauses: AnalysisSummary.PauseStats(
+                count: 0,
+                thresholdSeconds: 1.0,
+                averageDurationSeconds: 0
+            ),
+            crutchWords: AnalysisSummary.CrutchWordStats(
+                totalCount: 0,
+                counts: [:]
+            ),
+            processing: AnalysisSummary.ProcessingStats(
+                latencyAverageMs: 0,
+                latencyPeakMs: 0,
+                utilizationAverage: 0,
+                utilizationPeak: 0
+            )
+        )
+        let item = RecordingItem(
+            url: URL(fileURLWithPath: "/tmp/recording.m4a"),
+            modifiedAt: Date(),
+            duration: 60,
+            fileSizeBytes: nil,
+            summary: summary,
+            integrityReport: nil
+        )
+
+        XCTAssertEqual(item.averageWPMText, "143")
+    }
+
+    func testAverageWPMTextUsesPlaceholderWhenMissingSummary() {
+        let item = RecordingItem(
+            url: URL(fileURLWithPath: "/tmp/recording.m4a"),
+            modifiedAt: Date(),
+            duration: 60,
+            fileSizeBytes: nil,
+            summary: nil,
+            integrityReport: nil
+        )
+
+        XCTAssertEqual(item.averageWPMText, "—")
+    }
+
     func testSessionDatePrefersMetadataCreatedAt() {
         let createdAt = Date(timeIntervalSince1970: 1_700_000_000)
         let modifiedAt = Date(timeIntervalSince1970: 1_800_000_000)

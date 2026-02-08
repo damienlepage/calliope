@@ -111,6 +111,12 @@ struct RecordingItem: Identifiable, Equatable {
         RecordingMetadataDisplayFormatter.dateTimeText(for: sessionDate)
     }
 
+    var averageWPMText: String {
+        guard let summary else { return "—" }
+        let pace = Int(summary.pace.averageWPM.rounded())
+        return "\(pace)"
+    }
+
     var durationText: String {
         RecordingItem.formatDuration(duration) ?? "—"
     }
@@ -214,6 +220,21 @@ struct RecordingItem: Identifiable, Equatable {
     var title: String? {
         guard let title = metadata?.title else { return nil }
         return RecordingMetadata.normalizedTitle(title)
+    }
+
+    var customTitle: String? {
+        guard let normalizedTitle = title else { return nil }
+        let defaultTitle = RecordingMetadata.defaultSessionTitle(for: sessionDate)
+        let normalizedDefault = RecordingMetadata.normalizedTitle(defaultTitle)
+        guard let normalizedDefault,
+              normalizedTitle == normalizedDefault else {
+            return normalizedTitle
+        }
+        return nil
+    }
+
+    var partLabelText: String? {
+        RecordingMetadataDisplayFormatter.partLabelText(for: url)
     }
 
     var detailMetadataText: String {
@@ -525,9 +546,11 @@ final class RecordingListViewModel: ObservableObject {
     }
     @Published var pendingDelete: RecordingDeleteRequest?
     @Published var detailItem: RecordingItem?
+    @Published var selectedRecordingID: RecordingItem.ID?
     @Published var titleEditItem: RecordingItem?
     @Published var titleEditDraft: String = ""
-    @Published private(set) var titleEditDefaultTitle: String = ""
+    @Published private(set) var titleEditPlaceholder: String = ""
+    @Published private(set) var titleEditOriginalTitle: String = ""
     @Published var deleteErrorMessage: String?
     @Published private(set) var activePlaybackURL: URL?
     @Published private(set) var isPlaybackPaused = false
@@ -897,6 +920,10 @@ final class RecordingListViewModel: ObservableObject {
         }
         allRecordings = items
         applyFiltersAndSort()
+        if let currentSelected = selectedRecordingID,
+           !recordings.contains(where: { $0.id == currentSelected }) {
+            selectedRecordingID = nil
+        }
     }
 
     func refreshRecordings() {
@@ -948,29 +975,60 @@ final class RecordingListViewModel: ObservableObject {
     }
 
     func requestEditTitle(_ item: RecordingItem) {
-        let defaultTitle = RecordingMetadata.defaultSessionTitle(for: item.sessionDate)
+        let existingTitle = item.customTitle ?? ""
         titleEditItem = item
-        titleEditDefaultTitle = defaultTitle
-        titleEditDraft = item.title ?? defaultTitle
+        selectedRecordingID = item.id
+        titleEditPlaceholder = item.partLabelText ?? "Add title"
+        titleEditDraft = existingTitle
+        titleEditOriginalTitle = existingTitle
+    }
+
+    func focusOnNewRecording(recordingURLs: [URL]) {
+        let urlSet = Set(recordingURLs)
+        guard !urlSet.isEmpty else { return }
+        refreshRecordings()
+        guard let item = recordings.first(where: { urlSet.contains($0.url) }) else { return }
+        requestEditTitle(item)
     }
 
     func resetTitleEdit() {
-        titleEditDraft = titleEditDefaultTitle
+        titleEditDraft = titleEditOriginalTitle
     }
 
     func cancelTitleEdit() {
         titleEditItem = nil
         titleEditDraft = ""
-        titleEditDefaultTitle = ""
+        titleEditPlaceholder = ""
+        titleEditOriginalTitle = ""
     }
 
     func saveTitleEdit() {
         guard let item = titleEditItem else { return }
-        guard let titleInfo = RecordingMetadata.normalizedTitleInfo(titleEditDraft) else {
-            return
-        }
         let urls = recordingGroupURLs(for: item)
         let createdAt = titleEditCreatedAt(for: urls, fallback: item.sessionDate)
+        let trimmed = titleEditDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+            if titleEditOriginalTitle.isEmpty {
+                cancelTitleEdit()
+                return
+            }
+            let defaultTitle = RecordingMetadata.defaultSessionTitle(for: createdAt)
+            let saved = manager.saveSessionTitle(
+                defaultTitle,
+                for: urls,
+                createdAt: createdAt,
+                coachingProfile: nil
+            )
+            guard saved else { return }
+            cancelTitleEdit()
+            loadRecordings()
+            return
+        }
+        guard let titleInfo = RecordingMetadata.normalizedTitleInfo(titleEditDraft) else { return }
+        if titleInfo.normalized == titleEditOriginalTitle {
+            cancelTitleEdit()
+            return
+        }
         let saved = manager.saveSessionTitle(
             titleInfo.normalized,
             for: urls,
